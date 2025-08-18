@@ -16,17 +16,15 @@ export async function createServerSupabaseClient() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll: () => {
-          return cookieStore.getAll().map((cookie) => ({
-            name: cookie.name,
-            value: cookie.value,
-          }))
+        get(name: string) {
+          return cookieStore.get(name)?.value
         },
-        setAll: (cookies) => {
-          cookies.forEach((cookie: { name: string, value: string, options?: CookieOptions }) => {
-            cookieStore.set(cookie.name, cookie.value, cookie.options)
-          })
-        }
+        set(name: string, value: string, options: any) {
+          cookieStore.set(name, value, options)
+        },
+        remove(name: string, options: any) {
+          cookieStore.delete(name)
+        },
       }
     }
   )

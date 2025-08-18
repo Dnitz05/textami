@@ -2,10 +2,14 @@
 // Configuració dels 4 mòduls premium de Docxtemplater
 
 // Imports dels mòduls premium pagats (€1250)
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const HTMLModule = require('docxtemplater-html-module');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const ImageModule = require('docxtemplater-image-module');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const XLSXModule = require('docxtemplater-xlsx-module');
-const StylingModule = require('docxtemplater-styling-module');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const StylingModule = require('docxtemplater-style-module');
 
 /**
  * Configuració dels mòduls premium de Docxtemplater

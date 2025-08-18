@@ -21,9 +21,28 @@ export async function detectVariables(templateBuffer: Buffer): Promise<string[]>
     const zip = new PizZip(templateBuffer);
     const doc = new Docxtemplater(zip, getDocxtemplaterOptions());
     
-    // Obtenir tags (variables)
-    const tags = doc.getTags();
-    const variables = Object.keys(tags);
+    // Compilar primer per obtenir tags
+    try {
+      doc.compile();
+    } catch (error) {
+      // Ignorar errors de compilació per detectar variables
+    }
+    
+    // Obtenir tags (variables) amb getFullText i parser regex
+    const docZip = doc.getZip();
+    const xml = docZip.files['word/document.xml'].asText();
+    
+    // Buscar variables {variable}
+    const regex = /\{([^}]+)\}/g;
+    const variables: string[] = [];
+    let match;
+    
+    while ((match = regex.exec(xml)) !== null) {
+      const variable = match[1].trim();
+      if (variable && !variables.includes(variable)) {
+        variables.push(variable);
+      }
+    }
     
     // Filtrar variables buides o de sistema
     const cleanVariables = variables.filter(variable => 
