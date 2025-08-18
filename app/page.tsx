@@ -25,7 +25,7 @@ export default function Home() {
           <div className="bg-white rounded-lg p-6 shadow-lg">
             <div className="text-3xl mb-4">🔍</div>
             <h3 className="text-xl font-semibold mb-3">Detecció automàtica</h3>
-            <p className="text-gray-600">Troba variables {nom}, {data}, etc.</p>
+            <p className="text-gray-600">Troba variables {'{'} nom {'}'}, {'{'} data {'}'}, etc.</p>
           </div>
           
           <div className="bg-white rounded-lg p-6 shadow-lg">
