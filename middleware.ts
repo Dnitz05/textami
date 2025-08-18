@@ -1,17 +1,16 @@
 // middleware.ts
-// Middleware per autenticació Supabase - SIMPLE
+// Middleware DISABLED per MVP - evitar problemes deployment
 
-import { type NextRequest } from 'next/server'
-import { updateSession } from './lib/supabase/middleware'
+import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  return await updateSession(request)
+  // Per MVP: middleware simple que passa tot
+  return NextResponse.next()
 }
 
 export const config = {
   matcher: [
-    '/dashboard/:path*',
-    '/template/:path*',
-    '/((?!_next/static|_next/image|favicon.ico|api/auth).*)',
+    // Molt restrictiu per MVP
+    '/api/protected/:path*',
   ],
 }
