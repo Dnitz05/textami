@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Textami MVP
 
-## Getting Started
+Generador professional de documents que transforma plantilles Word i dades Excel en documents personalitzats mantenint el format original.
 
-First, run the development server:
+## 🚀 Característiques MVP (v0.1)
+
+✅ **Upload plantilles** - Puja el teu .docx amb format corporatiu  
+✅ **Detecció automàtica** - Troba variables {nom}, {data}, etc.  
+✅ **Dades Excel/CSV** - Connecta les teves dades  
+✅ **Generació massiva** - Crea centenars de documents  
+✅ **Format perfecte** - Manté logos, estils, tot  
+✅ **Export flexible** - DOCX editable o PDF final  
+
+## 🛠️ Tecnologies
+
+- **Frontend**: Next.js 15.4.6, TypeScript, Tailwind CSS
+- **Backend**: Supabase (PostgreSQL + Auth + Storage)
+- **Documents**: Docxtemplater Premium (4 mòduls)
+- **Deploy**: Vercel + GitHub Actions
+
+## 📦 Instal·lació
 
 ```bash
+# Clonar
+git clone https://github.com/Dnitz05/textami.git
+cd textami
+
+# Instal·lar dependencies
+npm install
+
+# Variables entorn
+cp .env.example .env.local
+# Editar .env.local amb les teves claus
+
+# Base de dades
+# Executar docs/database-schema.sql a Supabase Dashboard
+
+# Desenvolupament
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 📝 Roadmap
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### ✅ v0.1 MVP (Actual)
+- Funcionalitats bàsiques
+- Upload → Process → Download
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 🔮 v0.2 (Mes 2)
+- IA integrada (OpenAI)
+- Preview millorat
+- Templates biblioteca
+- Historial generacions
 
-## Learn More
+### 🚀 v1.0 (Futur)
+- Human-in-the-loop complet
+- Knowledge Base amb RAG
+- API pública
+- White label
 
-To learn more about Next.js, take a look at the following resources:
+## 📄 Llicència
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+© 2025 Aitor Gilabert Juan. Tots els drets reservats.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🙏 Crèdits
 
-## Deploy on Vercel
+Reutilitza components Supabase del projecte [ai-sdk-next-openai](https://github.com/Dnitz05/ai-sdk-next-openai).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Creat per [Aitor Gilabert Juan](mailto:aitordelriu@gmail.com)
