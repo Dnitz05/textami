@@ -38,19 +38,19 @@ export default function Home() {
         <div className="text-center space-y-6">
           <div className="space-y-4">
             <a
-              href="/auth/login"
+              href="/generator"
               className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 font-semibold text-lg transition-colors"
             >
-              Començar ara →
+              Generar Documents →
             </a>
             <p className="text-sm text-gray-500">
-              Crea el teu compte gratuït i comença a generar documents
+              Prova l'MVP i genera documents Word amb qualitat professional
             </p>
           </div>
           
           <div className="inline-flex items-center gap-4 bg-white rounded-lg p-4 shadow-lg">
             <span className="text-green-600 font-medium">✅ MVP 0.1.0 amb Docxtemplater Premium</span>
-            <span className="text-blue-600 font-medium">🚀 Next.js 15.4.6 + Supabase</span>
+            <span className="text-blue-600 font-medium">🚀 Next.js 15.4.6</span>
           </div>
         </div>
 
