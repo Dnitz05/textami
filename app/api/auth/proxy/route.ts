@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { action, email, password } = body;
 
-    let response = NextResponse.json({ success: true });
+    let response: NextResponse;
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
