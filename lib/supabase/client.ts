@@ -1,5 +1,5 @@
 // lib/supabase/client.ts
-// Client Supabase per a browser with error handling
+// Client Supabase per a browser - SIMPLE per evitar errors
 'use client'
 import { createBrowserClient } from '@supabase/ssr'
 
@@ -19,37 +19,6 @@ export const createBrowserSupabaseClient = () => {
 
   console.log('Creating Supabase client with URL:', supabaseUrl.substring(0, 30) + '...');
 
-  return createBrowserClient(supabaseUrl, supabaseKey, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true
-    },
-    global: {
-      // Add custom fetch with timeout
-      fetch: async (url, options = {}) => {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-        
-        try {
-          const response = await fetch(url, {
-            ...options,
-            signal: controller.signal,
-          });
-          clearTimeout(timeoutId);
-          return response;
-        } catch (error) {
-          clearTimeout(timeoutId);
-          console.error('Fetch error for URL:', url, error);
-          throw error;
-        }
-      }
-    },
-    realtime: {
-      // Disable realtime for MVP
-      params: {
-        eventsPerSecond: 1
-      }
-    }
-  });
+  // Use basic createBrowserClient - no complex config to avoid issues
+  return createBrowserClient(supabaseUrl, supabaseKey);
 }
