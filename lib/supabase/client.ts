@@ -23,10 +23,33 @@ export const createBrowserSupabaseClient = () => {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      detectSessionInUrl: true
+      detectSessionInUrl: true,
+      // Add retry and timeout options
+      retryDelay: 2000,
+      maxRetries: 3
+    },
+    global: {
+      // Add custom fetch with timeout
+      fetch: async (url, options = {}) => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+        
+        try {
+          const response = await fetch(url, {
+            ...options,
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+          return response;
+        } catch (error) {
+          clearTimeout(timeoutId);
+          console.error('Fetch error for URL:', url, error);
+          throw error;
+        }
+      }
     },
     realtime: {
-      // Disable realtime for MVP to avoid edge runtime issues
+      // Disable realtime for MVP
       params: {
         eventsPerSecond: 1
       }
