@@ -3,10 +3,10 @@ import { useState } from 'react';
 
 interface TemplateUploadResponse {
   success: boolean;
-  fileId: string;
+  templateId: string;
   fileName: string;
   size: number;
-  variables: string[];
+  storagePath: string;
   message: string;
 }
 
@@ -107,14 +107,11 @@ export default function GeneratorPage() {
                       {Math.round(uploadState.template.size / 1024)} KB
                     </div>
                     <div className="text-xs text-blue-600">
-                      {uploadState.template.variables.length} variables detectades
+                      📁 Guardat a Storage
                     </div>
-                    {uploadState.template.variables.length > 0 && (
-                      <div className="text-xs text-left bg-gray-50 p-2 rounded">
-                        <strong>Variables:</strong><br />
-                        {uploadState.template.variables.join(', ')}
-                      </div>
-                    )}
+                    <div className="text-xs text-green-600">
+                      Llest per editor visual
+                    </div>
                   </div>
                 )}
               </div>

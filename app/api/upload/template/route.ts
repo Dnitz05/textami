@@ -1,32 +1,18 @@
 // app/api/upload/template/route.ts
-// API endpoint per processar plantilles Word
+// API endpoint per pujar plantilles Word a Supabase Storage
 import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
-
-// Crear directori d'uploads si no existeix
-async function ensureUploadDir() {
-  const uploadDir = path.join(process.cwd(), 'uploads', 'templates');
-  try {
-    await fs.access(uploadDir);
-  } catch {
-    await fs.mkdir(uploadDir, { recursive: true });
-  }
-  return uploadDir;
-}
-
-// Extreure variables de plantilla Word
-function extractVariables(content: string): string[] {
-  // Buscar patrons com {nom}, {data}, etc.
-  const regex = /\{([^}]+)\}/g;
-  const matches = content.match(regex) || [];
-  const uniqueVars = [...new Set(matches)];
-  return uniqueVars;
-}
 
 export async function POST(request: NextRequest) {
   try {
+    // 1. Crear client Supabase
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    // 2. Processar FormData
     const formData = await request.formData();
     const file = formData.get('template') as File;
     
@@ -37,7 +23,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validar que sigui un fitxer .docx
+    // 3. Validacions
     if (!file.name.endsWith('.docx')) {
       return NextResponse.json(
         { error: 'El fitxer ha de ser .docx' },
@@ -45,7 +31,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validar mida (màx 10MB)
     if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json(
         { error: 'El fitxer no pot superar els 10MB' },
@@ -53,35 +38,44 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const uploadDir = await ensureUploadDir();
-    
-    // Generar nom únic
-    const fileId = crypto.randomUUID();
-    const fileName = `${fileId}.docx`;
-    const filePath = path.join(uploadDir, fileName);
-    
-    // Guardar fitxer
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    await fs.writeFile(filePath, buffer);
+    // 4. Generar IDs únics per MVP sense auth
+    const templateId = crypto.randomUUID();
+    const userId = 'mvp-user'; // Temporal per MVP
 
-    // Extreure text per buscar variables (simplificat)
-    const textContent = buffer.toString('utf-8', 0, Math.min(buffer.length, 5000));
-    const variables = extractVariables(textContent);
+    // 5. Preparar upload
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    const storagePath = `user-${userId}/template-${templateId}/original.docx`;
 
+    // 6. Pujar a Supabase Storage
+    const { data, error: uploadError } = await supabase.storage
+      .from('template-docx')
+      .upload(storagePath, fileBuffer, {
+        contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        upsert: true
+      });
+
+    if (uploadError) {
+      console.error('Error pujant a Supabase Storage:', uploadError);
+      return NextResponse.json(
+        { error: 'Error pujant el fitxer a Storage', details: uploadError.message },
+        { status: 500 }
+      );
+    }
+
+    // 7. Resposta MVP - simple i efectiva
     const response = {
       success: true,
-      fileId,
+      templateId,
       fileName: file.name,
       size: file.size,
-      variables,
-      message: `Plantilla pujada correctament. Detectades ${variables.length} variables.`
+      storagePath: data.path,
+      message: 'Plantilla pujada correctament. Pots continuar amb el pas següent.'
     };
 
     return NextResponse.json(response);
     
   } catch (error) {
-    console.error('Error pujant plantilla:', error);
+    console.error('Error processant upload:', error);
     return NextResponse.json(
       { error: 'Error intern del servidor' },
       { status: 500 }
