@@ -70,40 +70,39 @@ export function AuthForm({
     setLoading(true);
 
     try {
-      if (currentMode === 'signin') {
-        const { data, error } = await supabase.auth.signInWithPassword({
+      // Use proxy API to bypass network issues
+      const response = await fetch('/api/auth/proxy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: currentMode === 'signin' ? 'signin' : 'signup',
           email: email.trim(),
           password,
-        });
+        }),
+      });
 
-        if (error) {
-          throw error;
-        }
+      const result = await response.json();
 
+      if (!response.ok) {
+        throw new Error(result.error || 'Authentication failed');
+      }
+
+      const { data } = result;
+
+      if (currentMode === 'signin') {
         if (data.user) {
           setMessage('Sessió iniciada correctament!');
-          onSuccess?.();
-          router.push(redirectTo);
+          // Refresh the page to update session context
+          window.location.href = redirectTo;
         }
       } else {
         // Signup mode
-        const { data, error } = await supabase.auth.signUp({
-          email: email.trim(),
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
-          },
-        });
-
-        if (error) {
-          throw error;
-        }
-
         if (data.user) {
           if (data.user.email_confirmed_at) {
             setMessage('Compte creat i sessió iniciada!');
-            onSuccess?.();
-            router.push(redirectTo);
+            window.location.href = redirectTo;
           } else {
             setMessage('Compte creat! Revisa el teu email per confirmar-lo.');
             setCurrentMode('signin');
@@ -113,7 +112,7 @@ export function AuthForm({
     } catch (error: any) {
       console.error('Auth error:', error);
       
-      // Handle specific Supabase auth errors
+      // Handle specific auth errors
       let errorMessage = 'Ha ocorregut un error inesperat';
       
       if (error.message) {
@@ -126,6 +125,9 @@ export function AuthForm({
             break;
           case 'Email not confirmed':
             errorMessage = 'Si us plau, confirma el teu email abans de continuar';
+            break;
+          case 'Failed to fetch':
+            errorMessage = 'Error de connexió. Comprova la teva xarxa.';
             break;
           default:
             errorMessage = error.message;
