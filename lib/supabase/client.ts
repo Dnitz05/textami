@@ -23,10 +23,7 @@ export const createBrowserSupabaseClient = () => {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      detectSessionInUrl: true,
-      // Add retry and timeout options
-      retryDelay: 2000,
-      maxRetries: 3
+      detectSessionInUrl: true
     },
     global: {
       // Add custom fetch with timeout
