@@ -1,4 +1,62 @@
+'use client';
+import { useState } from 'react';
+
+interface TemplateUploadResponse {
+  success: boolean;
+  fileId: string;
+  fileName: string;
+  size: number;
+  variables: string[];
+  message: string;
+}
+
 export default function GeneratorPage() {
+  const [uploadState, setUploadState] = useState<{
+    uploading: boolean;
+    template: TemplateUploadResponse | null;
+    error: string | null;
+  }>({
+    uploading: false,
+    template: null,
+    error: null
+  });
+
+  const handleTemplateUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadState({ uploading: true, template: null, error: null });
+
+    try {
+      const formData = new FormData();
+      formData.append('template', file);
+
+      const response = await fetch('/api/upload/template', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Error pujant plantilla');
+      }
+
+      setUploadState({
+        uploading: false,
+        template: result,
+        error: null
+      });
+
+    } catch (error) {
+      setUploadState({
+        uploading: false,
+        template: null,
+        error: error instanceof Error ? error.message : 'Error desconegut'
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-16">
@@ -21,10 +79,44 @@ export default function GeneratorPage() {
                 <p className="text-gray-600 mb-4">
                   Puja el teu fitxer .docx amb variables {'{'} nom {'}'}, {'{'} data {'}'}...
                 </p>
-                <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
-                  Pujar Plantilla
-                </button>
-                <p className="text-xs text-yellow-600 mt-2">Pròximament</p>
+                
+                {!uploadState.template && (
+                  <>
+                    <label className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors cursor-pointer block text-center">
+                      {uploadState.uploading ? 'Pujant...' : 'Pujar Plantilla'}
+                      <input
+                        type="file"
+                        accept=".docx"
+                        onChange={handleTemplateUpload}
+                        disabled={uploadState.uploading}
+                        className="hidden"
+                      />
+                    </label>
+                    {uploadState.error && (
+                      <p className="text-xs text-red-600 mt-2">{uploadState.error}</p>
+                    )}
+                  </>
+                )}
+
+                {uploadState.template && (
+                  <div className="space-y-2">
+                    <div className="text-green-600 text-sm">
+                      ✅ {uploadState.template.fileName}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {Math.round(uploadState.template.size / 1024)} KB
+                    </div>
+                    <div className="text-xs text-blue-600">
+                      {uploadState.template.variables.length} variables detectades
+                    </div>
+                    {uploadState.template.variables.length > 0 && (
+                      <div className="text-xs text-left bg-gray-50 p-2 rounded">
+                        <strong>Variables:</strong><br />
+                        {uploadState.template.variables.join(', ')}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -37,12 +129,18 @@ export default function GeneratorPage() {
                   Puja el fitxer Excel amb les dades per emplenar
                 </p>
                 <button 
-                  disabled 
-                  className="w-full bg-gray-400 text-white py-2 px-4 rounded-md cursor-not-allowed"
+                  disabled={!uploadState.template}
+                  className={`w-full py-2 px-4 rounded-md transition-colors ${
+                    uploadState.template 
+                      ? 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer' 
+                      : 'bg-gray-400 text-white cursor-not-allowed'
+                  }`}
                 >
                   Pujar Dades
                 </button>
-                <p className="text-xs text-gray-500 mt-2">Després de la plantilla</p>
+                <p className="text-xs text-gray-500 mt-2">
+                  {uploadState.template ? 'Pròximament' : 'Primer puja una plantilla'}
+                </p>
               </div>
             </div>
 
