@@ -1,16 +1,41 @@
 // app/api/upload/template/route.ts
 // API endpoint per pujar plantilles Word a Supabase Storage
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@supabase/ssr';
 import crypto from 'crypto';
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Crear client Supabase
-    const supabase = createClient(
+    // 1. Crear client Supabase Server amb auth
+    const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => {
+            return request.cookies.getAll().map(cookie => ({
+              name: cookie.name,
+              value: cookie.value,
+            }))
+          },
+          setAll: () => {
+            // No necessitem setAll en aquest context API
+          }
+        }
+      }
     );
+
+    // 2. Verificar autenticació
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error('Error d\'autenticació:', authError);
+      return NextResponse.json({ 
+        error: 'Usuari no autenticat. Inicia sessió primer.',
+        details: authError?.message 
+      }, { status: 401 });
+    }
+    
+    const userId = user.id;
 
     // 2. Processar FormData
     const formData = await request.formData();
@@ -38,9 +63,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. Generar IDs únics per MVP sense auth
+    // 4. Generar templateId únic
     const templateId = crypto.randomUUID();
-    const userId = 'mvp-user'; // Temporal per MVP
 
     // 5. Preparar upload
     const fileBuffer = Buffer.from(await file.arrayBuffer());
@@ -62,10 +86,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 7. Resposta MVP - simple i efectiva
+    // 7. Resposta amb auth correcta
     const response = {
       success: true,
       templateId,
+      userId,
       fileName: file.name,
       size: file.size,
       storagePath: data.path,
