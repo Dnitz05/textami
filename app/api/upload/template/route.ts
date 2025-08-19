@@ -1,29 +1,13 @@
 // app/api/upload/template/route.ts
 // API endpoint per pujar plantilles Word a Supabase Storage
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
+import { createServerSupabaseClient } from '@/lib/supabase/serverClient';
 import crypto from 'crypto';
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Crear client Supabase Server amb auth
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll: () => {
-            return request.cookies.getAll().map(cookie => ({
-              name: cookie.name,
-              value: cookie.value,
-            }))
-          },
-          setAll: () => {
-            // No necessitem setAll en aquest context API
-          }
-        }
-      }
-    );
+    // 1. Crear client Supabase Server amb auth (usa helper proven)
+    const supabase = await createServerSupabaseClient();
 
     // 2. Verificar autenticació
     const { data: { user }, error: authError } = await supabase.auth.getUser();
