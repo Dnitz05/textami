@@ -68,3 +68,4 @@ Reutilitza components Supabase del projecte [ai-sdk-next-openai](https://github.
 ---
 
 Creat per [Aitor Gilabert Juan](mailto:aitordelriu@gmail.com)
+
