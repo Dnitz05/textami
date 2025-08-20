@@ -63,3 +63,24 @@ export function validateDataFile(file: File): ValidationResult {
 
   return { isValid: true };
 }
+
+// Additional validation functions for Phase 2 API endpoints
+export function validateFileSize(file: File, maxSize: number): { valid: boolean; error?: string } {
+  if (file.size > maxSize) {
+    return {
+      valid: false,
+      error: `File size exceeds ${Math.round(maxSize / (1024 * 1024))}MB limit`
+    }
+  }
+  return { valid: true }
+}
+
+export function validateFileType(file: File, allowedTypes: string[]): { valid: boolean; error?: string } {
+  if (!allowedTypes.includes(file.type)) {
+    return {
+      valid: false,
+      error: `File type not allowed. Allowed types: ${allowedTypes.join(", ")}`
+    }
+  }
+  return { valid: true }
+}

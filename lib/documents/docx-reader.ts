@@ -100,3 +100,18 @@ export async function readDocxFromStorage(storagePath: string): Promise<Buffer> 
     throw new Error(`Error llegint DOCX: ${error.message}`);
   }
 }
+
+// Additional converter function for Phase 2 visual mapping
+export async function convertDocxToHtml(buffer: Buffer): Promise<string> {
+  try {
+    // Basic HTML structure for now - will be enhanced in later phases
+    return `
+      <div>
+        <p data-paragraph-id="p-1">Document content will be converted here.</p>
+        <p data-paragraph-id="p-2">This is a placeholder for DOCX content.</p>
+      </div>
+    `
+  } catch (error) {
+    throw new Error("Failed to convert DOCX to HTML")
+  }
+}
