@@ -5,15 +5,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/serverClient'
 
-interface RouteContext {
-  params: Promise<{
+interface RouteParams {
+  params: {
     id: string
   }
 }
 
-export async function PUT(request: NextRequest, { params }: RouteContext) {
+export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id: templateId } = await params
+    const templateId = params.id
     const body = await request.json()
     const {
       templateName,
@@ -136,9 +136,9 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteContext) {
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id: templateId } = await params
+    const templateId = params.id
     const supabase = createServerSupabaseClient()
 
     // Check if template exists

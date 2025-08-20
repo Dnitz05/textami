@@ -43,7 +43,6 @@ export function getDocxtemplaterOptions() {
 }
 
 // Additional export needed for templateGenerator
-export { createDocxtemplater } from "./config"
 
 
 // Additional function for Phase 2 template generation
