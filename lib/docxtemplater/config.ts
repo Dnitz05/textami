@@ -41,3 +41,22 @@ export function getDocxtemplaterOptions() {
     errorLogging: false     // MVP: no logs d'error complexos
   };
 }
+
+// Additional export needed for templateGenerator
+export { createDocxtemplater } from "./config"
+
+
+// Additional function for Phase 2 template generation
+export function createDocxtemplater(buffer: Buffer): any {
+  const zip = new (require("pizzip"))(buffer)
+  return new (require("docxtemplater"))(zip, {
+    paragraphLoop: true,
+    linebreaks: true,
+    modules: [
+      new (require("docxtemplater-html-module"))({}),
+      new (require("docxtemplater-image-module"))({ getImage: () => null, getSize: () => [200, 150] }),
+      new (require("docxtemplater-style-module"))(),
+      new (require("docxtemplater-xlsx-module"))()
+    ]
+  })
+}
