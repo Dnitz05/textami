@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
 
     // Fetch template with visual mappings
     const { data: template, error: templateError } = await supabase

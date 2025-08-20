@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
 
     // Start transaction
     const { data: template, error: templateError } = await supabase
@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const templateId = searchParams.get('templateId')
 
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
 
     if (templateId) {
       // Get specific template with mappings

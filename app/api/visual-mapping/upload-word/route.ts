@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Initialize Supabase client
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
 
     // Convert Word file to HTML for visual selection
     const fileBuffer = Buffer.from(await file.arrayBuffer())

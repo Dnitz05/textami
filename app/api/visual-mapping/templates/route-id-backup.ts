@@ -30,7 +30,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
 
     // Check if template exists
     const { data: existingTemplate, error: fetchError } = await supabase
@@ -139,7 +139,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const templateId = params.id
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
 
     // Check if template exists
     const { data: existingTemplate, error: fetchError } = await supabase
