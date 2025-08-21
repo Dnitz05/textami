@@ -203,41 +203,22 @@ export class PremiumModulesConfig {
     console.log('🔄 Converting Buffer to ZIP for Premium Modules...')
     const zip = new PizZip(template)
     
-    // Prepare Premium Modules for v4 constructor
-    const modules: any[] = []
-    const attachedModules: string[] = []
-
-    // 1. Styling Module (€500) - Apply first for theme control
-    if (enabledModules.includes('style') && this.modules.stylingModule) {
-      modules.push(this.modules.stylingModule)
-      attachedModules.push('Styling (€500)')
-    }
-
-    // 2. HTML Module (€250) - Process rich content 
-    if (enabledModules.includes('html') && this.modules.htmlModule) {
-      modules.push(this.modules.htmlModule)
-      attachedModules.push('HTML (€250)')
-    }
-
-    // 3. Image Module (€250) - Process images
-    if (enabledModules.includes('image') && this.modules.imageModule) {
-      modules.push(this.modules.imageModule)
-      attachedModules.push('Image (€250)')
-    }
-
-    // 4. XLSX Module (€250) - For Excel generation (if needed)
-    if (enabledModules.includes('xlsx') && this.modules.xlsxModule) {
-      modules.push(this.modules.xlsxModule)
-      attachedModules.push('XLSX (€250)')
-    }
+    // TEMPORARY: Use standard Docxtemplater until Premium Modules are properly configured
+    // The mock modules don't implement the required Docxtemplater interface functions
+    const attachedModules: string[] = ['Standard Docxtemplater (Development Mode)']
     
-    // Create base docxtemplater instance with v4 API including modules
-    console.log('🚀 Creating Docxtemplater v4 with Premium Modules:', attachedModules)
+    console.log('⚠️ Using Standard Docxtemplater (Premium Modules mocks not compatible)')
+    console.log('💡 In production, real Premium Modules (€1,250) would be used here')
+    
+    // Create base docxtemplater instance with v4 API (no modules for now)
     const doc = new Docxtemplater(zip, {
       paragraphLoop: true,
       linebreaks: true,
-      modules: modules, // v4 constructor takes modules in options
+      // modules: [], // Empty until we have real Premium Modules
     })
+    
+    // Log the module status for transparency
+    console.log('📋 Docxtemplater instance created in development mode')
 
     console.log(`📋 Docxtemplater instance created with modules: ${attachedModules.join(', ')}`)
     
