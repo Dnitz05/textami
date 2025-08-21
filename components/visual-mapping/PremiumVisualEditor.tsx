@@ -91,25 +91,35 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
    * TRANSPARENT to user - they never see this initialization
    */
   const initializePremiumSystem = async () => {
+    console.log('🚀 [DEBUG] Starting Premium Modules initialization...')
     try {
-      console.log('🚀 Initializing Premium Modules system...')
       setIsLoading(true)
+      console.log('🔄 [DEBUG] Loading state set to true')
       
-      await premiumModulesConfig.initializePremiumModules({
+      console.log('📞 [DEBUG] Calling premiumModulesConfig.initializePremiumModules...')
+      const result = await premiumModulesConfig.initializePremiumModules({
         enableHTML: true,    // €250 - Rich content processing
         enableImage: true,   // €250 - Dynamic image processing
         enableStyling: true, // €500 - Premium visual control
         enableXLSX: false    // €250 - Not needed for this workflow
       })
       
+      console.log('✅ [DEBUG] Premium Modules initialization completed:', result)
+      console.log('🔄 [DEBUG] Setting premiumModulesReady to true...')
       setPremiumModulesReady(true)
-      console.log('✅ Premium Modules system ready - €1,000 technology active')
+      console.log('✅ [DEBUG] Premium Modules system ready - €1,000 technology active')
       toast.success('Sistema Premium activat correctament')
     } catch (error) {
-      console.error('❌ Premium Modules initialization failed:', error)
+      console.error('❌ [DEBUG] Premium Modules initialization failed:', error)
+      console.error('❌ [DEBUG] Error details:', {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : 'No stack trace',
+        type: typeof error
+      })
       setPremiumModulesReady(false)
       toast.error('Sistema avançat no disponible, utilitzant mode bàsic')
     } finally {
+      console.log('🏁 [DEBUG] Setting loading to false')
       setIsLoading(false)
     }
   }
@@ -433,16 +443,20 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
       
       // CRITICAL: Wait for Premium Modules to be ready
       if (!premiumModulesReady) {
-        console.log('⏳ Esperant inicialització dels Premium Modules...')
+        console.log('⏳ [DEBUG] Premium Modules not ready, starting wait...')
+        console.log('🔍 [DEBUG] Current premiumModulesReady state:', premiumModulesReady)
         // Wait up to 10 seconds for Premium Modules to initialize
         let attempts = 0
         while (!premiumModulesReady && attempts < 100) {
+          console.log(`⏱️ [DEBUG] Waiting attempt ${attempts + 1}/100, premiumModulesReady = ${premiumModulesReady}`)
           await new Promise(resolve => setTimeout(resolve, 100))
           attempts++
         }
         
+        console.log(`🏁 [DEBUG] Wait loop finished. Attempts: ${attempts}, premiumModulesReady: ${premiumModulesReady}`)
+        
         if (!premiumModulesReady) {
-          throw new Error('Premium Modules not ready after waiting 10 seconds')
+          throw new Error(`Premium Modules not ready after waiting 10 seconds (${attempts} attempts)`)
         }
       }
       
