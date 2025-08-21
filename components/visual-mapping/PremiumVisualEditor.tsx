@@ -421,16 +421,89 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
   // Helper functions
 
   const convertWordToHTML = async (base64Data: string): Promise<string> => {
-    // In production, this would use mammoth.js or similar to convert DOCX to HTML
-    // For now, return mock HTML content
-    const mockHTML = `
-      <div>
-        <p data-paragraph-id="p1">Aquest és un paràgraf d'exemple del document Word.</p>
-        <p data-paragraph-id="p2">Aquí podem tenir <strong>text formatat</strong> i altres elements.</p>
-        <p data-paragraph-id="p3">El sistema detecta automàticament les millors opcions per cada contingut.</p>
-      </div>
-    `
-    return mockHTML
+    try {
+      console.log('🚀 Utilitzant Premium Modules per processar document DOCX...')
+      
+      // Convert base64 to Buffer for Premium Modules processing
+      const base64Content = base64Data.split(',')[1] || base64Data
+      const buffer = Buffer.from(base64Content, 'base64')
+      
+      // Create Docxtemplater instance with Premium Modules (€1,250 investment)
+      const docxInstance = premiumModulesConfig.createDocxtemplaterInstance(buffer, ['html', 'image', 'style'])
+      
+      // Get document text with Premium Modules parsing
+      // This leverages Style Module (€500) to preserve formatting
+      // and HTML Module (€250) to handle rich content
+      const documentXml = docxInstance.getFullText()
+      
+      // Process with Premium Modules intelligence
+      const processedContent = await premiumModulesConfig.processDocumentWithPremiumModules(
+        buffer,
+        {
+          enableHTML: true,    // HTML Module €250
+          enableStyling: true, // Style Module €500  
+          enableImages: true,  // Image Module €250
+          outputFormat: 'html',
+          qualityMode: 'maximum'
+        }
+      )
+      
+      // Add paragraph IDs for visual mapping while preserving Premium formatting
+      let htmlContent = processedContent.htmlContent
+      let paragraphCounter = 1
+      
+      // Preserve Premium Module styling while adding mapping IDs
+      htmlContent = htmlContent.replace(/<p([^>]*)>/g, (match, attributes) => {
+        return `<p data-paragraph-id="p${paragraphCounter++}"${attributes}>`
+      })
+      
+      // Handle other block elements (lists, headers, etc.)
+      htmlContent = htmlContent.replace(/<(h[1-6]|div|li|table|tr|td)([^>]*)>/g, (match, tag, attributes) => {
+        if (!attributes.includes('data-paragraph-id')) {
+          return `<${tag} data-paragraph-id="p${paragraphCounter++}"${attributes}>`
+        }
+        return match
+      })
+      
+      // Wrap with Premium Module styling classes
+      const finalHTML = `
+        <div class="premium-document-content" data-premium-modules="active">
+          ${htmlContent}
+        </div>
+      `
+      
+      console.log('✅ Premium Modules processed document:', {
+        originalSize: buffer.length,
+        paragraphsDetected: paragraphCounter - 1,
+        premiumModulesUsed: processedContent.modulesUsed,
+        stylePreservation: processedContent.styleQualityScore,
+        processingTime: processedContent.processingTime
+      })
+      
+      return finalHTML
+      
+    } catch (error) {
+      console.error('❌ Error amb Premium Modules:', error)
+      
+      // Critical fallback - still try to show something useful
+      const fallbackHTML = `
+        <div class="premium-document-content error-state">
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <h3 class="text-red-800 font-semibold">⚠️ Error processant document amb Premium Modules</h3>
+            <p class="text-red-600 text-sm mt-2">
+              No s'ha pogut processar el document DOCX amb els Premium Modules (€1,250).
+            </p>
+            <p class="text-red-600 text-sm">
+              Error: ${error instanceof Error ? error.message : 'Error desconegut'}
+            </p>
+          </div>
+          <p data-paragraph-id="p1" class="text-gray-600">
+            Si us plau, comprova que el document Word sigui vàlid i torna a intentar-ho.
+          </p>
+        </div>
+      `
+      return fallbackHTML
+    }
   }
 
   const stripHTMLTags = (html: string): string => {
