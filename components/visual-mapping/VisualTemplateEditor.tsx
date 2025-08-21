@@ -68,7 +68,7 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
         }))
         
         // Simular contingut del template per testing
-        setWordHtmlContent(`
+        const htmlContent = `
           <div style="font-family: Arial, sans-serif; line-height: 1.6; padding: 20px;">
             <h1>Document de Prova</h1>
             <p>Estimat/da <strong>Nom del Client</strong>,</p>
@@ -79,7 +79,9 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
             <p>Atentament,<br>
             <strong>Nom Empresa</strong></p>
           </div>
-        `)
+        `
+        setWordHtmlContent(htmlContent)
+        setWordContent('Document de Prova\nEstimat/da Nom del Client,\nEns complau informar-vos que la vostra sol·licitud per al projecte Nom del Projecte ha estat aprovada amb un pressupost de Quantitat euros.\nData d\'inici prevista: Data Inici\nData de finalització estimada: Data Fi\nAtentament,\nNom Empresa')
         toast.success(`Template processat: ${templateData.fileName}`)
       } catch (error) {
         console.error('Error loading template:', error)
@@ -393,7 +395,7 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
                   {isLoading ? 'Processing...' : 'Upload Word Template'}
                 </Button>
               </div>
-            ) : fileInfo.template && !wordContent ? (
+            ) : fileInfo.template && !wordHtmlContent ? (
               <div className="text-center py-8">
                 <div className="text-green-600 text-sm mb-2">
                   ✅ {fileInfo.template.fileName}
