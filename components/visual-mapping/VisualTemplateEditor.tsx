@@ -31,7 +31,6 @@ interface VisualMapping {
   word_selection: WordSelection
   mapping_type: 'text' | 'html' | 'image' | 'style'
   docx_syntax: string
-  roi_value: number
 }
 
 export default function VisualTemplateEditor({ templateId }: VisualTemplateEditorProps) {
@@ -145,11 +144,6 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
     }
   }, [])
 
-  // ROI calculation based on mapping type
-  const calculateROI = (mappingType: string): number => {
-    const roiValues = { text: 0, html: 250, image: 250, style: 500 }
-    return roiValues[mappingType as keyof typeof roiValues] || 0
-  }
 
   // Generate Docxtemplater syntax based on mapping type
   const generateDocxSyntax = (column: string, type: string): string => {
@@ -204,8 +198,7 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
         text: selectedText
       },
       mapping_type: 'text',
-      docx_syntax: placeholder,
-      roi_value: calculateROI('text')
+      docx_syntax: placeholder
     }
 
     // Replace selected text with placeholder in HTML
@@ -221,7 +214,7 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
     selection.removeAllRanges()
     
     toast.success(`Mapping creat: "${selectedText}" → ${placeholder}`)
-  }, [selectedColumn, mappingMode, wordHtmlContent, calculateROI])
+  }, [selectedColumn, mappingMode, wordHtmlContent])
 
   // Handle Excel file upload
   const handleExcelUpload = useCallback(async (file: File) => {
@@ -284,8 +277,6 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
     }
   }, [])
 
-  // Calculate total ROI
-  const totalROI = visualMappings.reduce((sum, mapping) => sum + mapping.roi_value, 0)
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -317,16 +308,6 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
         <h1 className="text-2xl font-bold">Visual Template Editor</h1>
         <p className="text-gray-600">Template ID: {templateId || 'New Template'}</p>
       </CardHeader>
-
-      {/* ROI Display */}
-      <Alert variant="info" className="mb-6">
-        <div className="flex justify-between items-center">
-          <span>Premium Modules ROI: €{totalROI} of €1,250 invested</span>
-          <span className="font-bold">
-            {totalROI > 0 ? `${((totalROI / 1250) * 100).toFixed(1)}% utilized` : '0% utilized'}
-          </span>
-        </div>
-      </Alert>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Excel Columns Panel */}
@@ -511,7 +492,6 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
                       </div>
                       <div className="text-xs text-gray-500 mt-1">
                         Columna {mapping.excel_column} • Type: {mapping.mapping_type}
-                        {mapping.roi_value > 0 && ` • ROI: €${mapping.roi_value}`}
                       </div>
                     </div>
                     <button
