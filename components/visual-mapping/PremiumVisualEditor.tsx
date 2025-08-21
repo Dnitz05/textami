@@ -489,11 +489,16 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
     const selectedText = selection.toString().trim()
     
     // Find the closest paragraph or table cell
-    let targetElement = range.commonAncestorContainer
+    let targetElement: Node | null = range.commonAncestorContainer
     
     // Navigate up to find element with data-paragraph-id
     while (targetElement && targetElement.nodeType !== Node.ELEMENT_NODE) {
       targetElement = targetElement.parentNode
+    }
+    
+    if (!targetElement) {
+      console.warn('No element node found for selection')
+      return
     }
     
     let htmlElement = targetElement as HTMLElement
