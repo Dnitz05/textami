@@ -83,12 +83,17 @@ export default function Home() {
         uploading: false
       }))
 
-      // Guardar a localStorage
-      localStorage.setItem('textami_template', JSON.stringify({
-        fileName: file.name,
-        size: file.size,
-        file: file // Guardem el fitxer per poder-lo usar després
-      }))
+      // Convertir fitxer a base64 per guardar al localStorage
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const base64 = e.target?.result as string
+        localStorage.setItem('textami_template', JSON.stringify({
+          fileName: file.name,
+          size: file.size,
+          base64: base64
+        }))
+      }
+      reader.readAsDataURL(file)
 
       console.log('Template carregat:', file.name)
       
@@ -126,13 +131,18 @@ export default function Home() {
         uploading: false
       }))
 
-      // Guardar a localStorage
-      localStorage.setItem('textami_excel', JSON.stringify({
-        fileName: file.name,
-        size: file.size,
-        rows: Math.floor(Math.random() * 100) + 10,
-        file: file // Guardem el fitxer per poder-lo usar després
-      }))
+      // Convertir fitxer Excel a base64 per guardar al localStorage
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const base64 = e.target?.result as string
+        localStorage.setItem('textami_excel', JSON.stringify({
+          fileName: file.name,
+          size: file.size,
+          rows: Math.floor(Math.random() * 100) + 10,
+          base64: base64
+        }))
+      }
+      reader.readAsDataURL(file)
 
       console.log('Excel carregat:', file.name)
       

@@ -67,22 +67,12 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
           template: { fileName: templateData.fileName, size: templateData.size }
         }))
         
-        // Simular contingut del template per testing
-        const htmlContent = `
-          <div style="font-family: Arial, sans-serif; line-height: 1.6; padding: 20px;">
-            <h1>Document de Prova</h1>
-            <p>Estimat/da <strong>Nom del Client</strong>,</p>
-            <p>Ens complau informar-vos que la vostra sol·licitud per al projecte <em>Nom del Projecte</em> 
-            ha estat aprovada amb un pressupost de <strong>Quantitat</strong> euros.</p>
-            <p>Data d'inici prevista: <strong>Data Inici</strong></p>
-            <p>Data de finalització estimada: <strong>Data Fi</strong></p>
-            <p>Atentament,<br>
-            <strong>Nom Empresa</strong></p>
-          </div>
-        `
-        setWordHtmlContent(htmlContent)
-        setWordContent('Document de Prova\nEstimat/da Nom del Client,\nEns complau informar-vos que la vostra sol·licitud per al projecte Nom del Projecte ha estat aprovada amb un pressupost de Quantitat euros.\nData d\'inici prevista: Data Inici\nData de finalització estimada: Data Fi\nAtentament,\nNom Empresa')
-        toast.success(`Template processat: ${templateData.fileName}`)
+        // Processar fitxer Word real
+        if (templateData.base64) {
+          processWordFile(templateData.base64, templateData.fileName)
+        } else {
+          toast.error('No s\'ha trobat el fitxer Word')
+        }
       } catch (error) {
         console.error('Error loading template:', error)
       }
@@ -100,46 +90,12 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
           }
         }))
         
-        // Simular columnes Excel per testing
-        setExcelColumns([
-          {
-            column: 'A',
-            header: 'Nom del Client',
-            sample_data: ['Joan Garcia', 'Maria López', 'Pere Martí'],
-            data_type: 'string'
-          },
-          {
-            column: 'B',
-            header: 'Nom del Projecte',
-            sample_data: ['Web Corporativa', 'App Mobile', 'Sistema CRM'],
-            data_type: 'string'
-          },
-          {
-            column: 'C',
-            header: 'Quantitat',
-            sample_data: [5000, 7500, 12000],
-            data_type: 'number'
-          },
-          {
-            column: 'D',
-            header: 'Data Inici',
-            sample_data: ['2025-01-15', '2025-02-01', '2025-01-20'],
-            data_type: 'date'
-          },
-          {
-            column: 'E',
-            header: 'Data Fi',
-            sample_data: ['2025-03-15', '2025-04-01', '2025-03-20'],
-            data_type: 'date'
-          },
-          {
-            column: 'F',
-            header: 'Nom Empresa',
-            sample_data: ['TechSol SL', 'Innovate Corp', 'Digital Plus'],
-            data_type: 'string'
-          }
-        ])
-        toast.success(`Excel processat: ${excelData.fileName} (${excelData.rows} files)`)
+        // Processar fitxer Excel real
+        if (excelData.base64) {
+          processExcelFile(excelData.base64, excelData.fileName)
+        } else {
+          toast.error('No s\'ha trobat el fitxer Excel')
+        }
       } catch (error) {
         console.error('Error loading excel:', error)
       }
@@ -217,6 +173,73 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
     
     toast.success(`Mapping creat: "${selectedText}" → ${placeholder}`)
   }, [selectedColumn, mappingMode, wordHtmlContent])
+
+  // Process Word file from base64
+  const processWordFile = useCallback(async (base64: string, fileName: string) => {
+    setIsLoading(true)
+    try {
+      // Convert base64 to blob and then to File
+      const response = await fetch(base64)
+      const blob = await response.blob()
+      const file = new File([blob], fileName, { type: blob.type })
+      
+      const formData = new FormData()
+      formData.append('file', file)
+      
+      const apiResponse = await fetch('/api/visual-mapping/upload-word', {
+        method: 'POST', 
+        body: formData
+      })
+      
+      if (!apiResponse.ok) {
+        throw new Error('Failed to process Word file')
+      }
+      
+      const data = await apiResponse.json()
+      setWordContent(data.text || '')
+      setWordHtmlContent(data.html || '')
+      toast.success(`Template processat: ${fileName}`)
+      
+    } catch (error) {
+      console.error('Word processing error:', error)
+      toast.error('Error processant fitxer Word')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  // Process Excel file from base64
+  const processExcelFile = useCallback(async (base64: string, fileName: string) => {
+    setIsLoading(true)
+    try {
+      // Convert base64 to blob and then to File
+      const response = await fetch(base64)
+      const blob = await response.blob()
+      const file = new File([blob], fileName, { type: blob.type })
+      
+      const formData = new FormData()
+      formData.append('file', file)
+      
+      const apiResponse = await fetch('/api/visual-mapping/upload-excel', {
+        method: 'POST',
+        body: formData
+      })
+      
+      if (!apiResponse.ok) {
+        throw new Error('Failed to process Excel file')
+      }
+      
+      const data = await apiResponse.json()
+      setExcelColumns(data.columns || [])
+      toast.success(`Excel processat: ${fileName} (${data.columns?.length || 0} columnes)`)
+      
+    } catch (error) {
+      console.error('Excel processing error:', error)
+      toast.error('Error processant fitxer Excel')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
 
   // Handle Excel file upload
   const handleExcelUpload = useCallback(async (file: File) => {
