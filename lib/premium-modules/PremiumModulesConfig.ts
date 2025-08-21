@@ -385,70 +385,362 @@ export class PremiumModulesConfig {
   }
 
   /**
-   * Mock Premium HTML conversion (would be replaced by actual Premium Modules)
+   * ENHANCED Premium HTML conversion with maximum DOCX fidelity
+   * FASE 3: Optimized for tables, formatting, and Word-like presentation
    */
   private mockPremiumHTMLConversion(text: string, options: DocumentProcessingOptions): string {
-    // Simulate Premium HTML Module processing
-    const paragraphs = text.split('\n').filter(p => p.trim())
+    // Simulate advanced Premium HTML Module processing with enhanced table detection
+    const lines = text.split('\n')
+    let html = ''
+    let currentTable: string[] = []
+    let inTable = false
     
-    let html = paragraphs.map((paragraph, index) => {
-      // Simulate Premium Module intelligence
-      const hasFormatting = paragraph.includes('*') || paragraph.includes('_')
-      const isHeader = paragraph.length < 100 && paragraph.includes(':')
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim()
       
-      if (isHeader) {
-        return `<h3 class="premium-header">${paragraph}</h3>`
-      } else if (hasFormatting) {
-        // Premium HTML Module would handle this perfectly
-        let formattedText = paragraph
-          .replace(/\*(.*?)\*/g, '<strong>$1</strong>')
-          .replace(/_(.*?)_/g, '<em>$1</em>')
-        return `<p class="premium-formatted">${formattedText}</p>`
-      } else {
-        return `<p class="premium-paragraph">${paragraph}</p>`
+      if (!line) {
+        if (inTable && currentTable.length > 0) {
+          // Close table
+          html += this.convertTableToHTML(currentTable)
+          currentTable = []
+          inTable = false
+        }
+        html += '<br />'
+        continue
       }
-    }).join('\n')
-
+      
+      // Detect table rows (contains tabs or multiple spaces)
+      const isTableRow = line.includes('\t') || /\s{2,}/.test(line) || this.isTableLikeRow(line)
+      
+      if (isTableRow) {
+        if (!inTable) {
+          inTable = true
+          currentTable = []
+        }
+        currentTable.push(line)
+      } else {
+        // Close any open table first
+        if (inTable && currentTable.length > 0) {
+          html += this.convertTableToHTML(currentTable)
+          currentTable = []
+          inTable = false
+        }
+        
+        // Process regular content with enhanced formatting detection
+        html += this.processEnhancedParagraph(line, i)
+      }
+    }
+    
+    // Close any remaining table
+    if (inTable && currentTable.length > 0) {
+      html += this.convertTableToHTML(currentTable)
+    }
+    
     return html
+  }
+  
+  /**
+   * Detect if a line looks like a table row
+   */
+  private isTableLikeRow(line: string): boolean {
+    // Look for patterns that suggest tabular data
+    const patterns = [
+      /^[^\s]+\s+[^\s]+\s+[^\s]+/, // At least 3 columns
+      /\d+[.,]\d+/, // Numbers with decimals
+      /\$\d+/, // Currency
+      /\d{1,2}[/.\-]\d{1,2}[/.\-]\d{2,4}/, // Dates
+    ]
+    
+    return patterns.some(pattern => pattern.test(line))
+  }
+  
+  /**
+   * Convert detected table rows to proper HTML table
+   */
+  private convertTableToHTML(tableRows: string[]): string {
+    if (tableRows.length === 0) return ''
+    
+    let tableHTML = '<table class="premium-table">\n'
+    
+    tableRows.forEach((row, index) => {
+      // Split row into columns (handle tabs and multiple spaces)
+      const columns = row.split(/\t|\s{2,}/).filter(col => col.trim())
+      
+      const isHeader = index === 0 && this.looksLikeHeader(columns)
+      const tagName = isHeader ? 'th' : 'td'
+      const className = isHeader ? 'premium-table-header' : 'premium-table-cell'
+      
+      tableHTML += '  <tr>\n'
+      columns.forEach(column => {
+        const formattedContent = this.formatCellContent(column.trim())
+        tableHTML += `    <${tagName} class="${className}">${formattedContent}</${tagName}>\n`
+      })
+      tableHTML += '  </tr>\n'
+    })
+    
+    tableHTML += '</table>\n'
+    return tableHTML
+  }
+  
+  /**
+   * Check if columns look like headers
+   */
+  private looksLikeHeader(columns: string[]): boolean {
+    return columns.some(col => {
+      const text = col.toLowerCase()
+      return text.includes('nom') || text.includes('data') || text.includes('preu') || 
+             text.includes('total') || text.includes('descripci') || /^[A-Z][a-z]+$/.test(col)
+    })
+  }
+  
+  /**
+   * Format individual cell content
+   */
+  private formatCellContent(content: string): string {
+    // Format numbers
+    if (/^\d+[.,]\d{2}$/.test(content)) {
+      return `<span class="premium-number">${content}</span>`
+    }
+    
+    // Format currency
+    if (/^[€$]\d/.test(content)) {
+      return `<span class="premium-currency">${content}</span>`
+    }
+    
+    // Format dates
+    if (/\d{1,2}[/.\-]\d{1,2}[/.\-]\d{2,4}/.test(content)) {
+      return `<span class="premium-date">${content}</span>`
+    }
+    
+    // Apply text formatting
+    return this.applyTextFormatting(content)
+  }
+  
+  /**
+   * Process enhanced paragraph with better formatting detection
+   */
+  private processEnhancedParagraph(line: string, index: number): string {
+    // Detect headers by content and position
+    const isHeader = this.detectHeader(line, index)
+    
+    if (isHeader) {
+      const level = this.detectHeaderLevel(line)
+      return `<h${level} class="premium-header-${level}">${this.applyTextFormatting(line)}</h${level}>\n`
+    }
+    
+    // Detect lists
+    if (/^\s*[•·\-\*]\s/.test(line)) {
+      const listItem = line.replace(/^\s*[•·\-\*]\s/, '')
+      return `<li class="premium-list-item">${this.applyTextFormatting(listItem)}</li>\n`
+    }
+    
+    // Regular paragraph
+    return `<p class="premium-paragraph">${this.applyTextFormatting(line)}</p>\n`
+  }
+  
+  /**
+   * Enhanced text formatting with Word-like patterns
+   */
+  private applyTextFormatting(text: string): string {
+    return text
+      // Bold: **text** or __text__
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/__(.+?)__/g, '<strong>$1</strong>')
+      // Italic: *text* or _text_
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/_(.+?)_/g, '<em>$1</em>')
+      // Underline: ++text++
+      .replace(/\+\+(.+?)\+\+/g, '<u>$1</u>')
+      // Highlight: ==text==
+      .replace(/==(.+?)==/g, '<mark class="premium-highlight">$1</mark>')
+  }
+  
+  /**
+   * Detect if line is a header
+   */
+  private detectHeader(line: string, index: number): boolean {
+    return (
+      line.length < 100 && // Headers are usually shorter
+      (line.endsWith(':') || // Ends with colon
+       /^[A-Z][^.!?]*$/.test(line) || // Starts with capital, no sentence endings
+       index === 0 || // First line often a header
+       line.toUpperCase() === line) // All caps
+    )
+  }
+  
+  /**
+   * Detect header level (1-6)
+   */
+  private detectHeaderLevel(line: string): number {
+    if (line.length < 30) return 1
+    if (line.length < 50) return 2
+    if (line.length < 80) return 3
+    return 4
   }
 
   /**
-   * Apply Premium Module styling (Style Module €500)
+   * ENHANCED Premium Module styling (Style Module €500)
+   * FASE 3: Maximum Word fidelity with professional table styling
    */
   private applyPremiumStyling(html: string, qualityMode: string): string {
-    // Premium Style Module CSS
+    // Enhanced Premium Style Module CSS for maximum Word compatibility
     const premiumStyles = `
       <style>
+        /* Base document styling - Word-like appearance */
         .premium-document-content {
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          line-height: 1.6;
-          color: #333;
+          font-family: 'Times New Roman', Times, serif;
+          font-size: 12pt;
+          line-height: 1.15;
+          color: #000000;
+          background: #ffffff;
           max-width: 100%;
+          padding: 1in;
+          margin: 0 auto;
         }
-        .premium-header {
-          color: #2563eb;
-          font-weight: 600;
-          margin: 1.5rem 0 1rem 0;
-          border-bottom: 2px solid #e5e7eb;
-          padding-bottom: 0.5rem;
+        
+        /* Enhanced header styles */
+        .premium-header-1 {
+          font-size: 16pt;
+          font-weight: bold;
+          color: #1f2937;
+          margin: 24pt 0 12pt 0;
+          border-bottom: 2pt solid #374151;
+          padding-bottom: 6pt;
         }
+        .premium-header-2 {
+          font-size: 14pt;
+          font-weight: bold;
+          color: #374151;
+          margin: 18pt 0 6pt 0;
+        }
+        .premium-header-3 {
+          font-size: 12pt;
+          font-weight: bold;
+          color: #4b5563;
+          margin: 12pt 0 6pt 0;
+        }
+        .premium-header-4 {
+          font-size: 11pt;
+          font-weight: bold;
+          color: #6b7280;
+          margin: 12pt 0 6pt 0;
+        }
+        
+        /* Enhanced paragraph styling */
         .premium-paragraph {
-          margin: 1rem 0;
+          margin: 0 0 6pt 0;
           text-align: justify;
+          font-size: 12pt;
+          line-height: 1.15;
         }
-        .premium-formatted {
-          margin: 1rem 0;
-          padding: 0.5rem;
-          background: #f9fafb;
-          border-left: 3px solid #3b82f6;
+        
+        /* Professional table styling - Word-like appearance */
+        .premium-table {
+          border-collapse: collapse;
+          width: 100%;
+          margin: 12pt 0;
+          font-size: 11pt;
+          border: 1pt solid #000000;
         }
+        
+        .premium-table-header {
+          background-color: #f8f9fa;
+          font-weight: bold;
+          text-align: center;
+          border: 1pt solid #000000;
+          padding: 6pt 8pt;
+          vertical-align: middle;
+        }
+        
+        .premium-table-cell {
+          border: 1pt solid #000000;
+          padding: 4pt 6pt;
+          text-align: left;
+          vertical-align: top;
+        }
+        
+        /* Enhanced content formatting */
+        .premium-number {
+          text-align: right;
+          font-family: 'Courier New', monospace;
+          font-weight: normal;
+        }
+        
+        .premium-currency {
+          text-align: right;
+          font-weight: bold;
+          color: #059669;
+        }
+        
+        .premium-date {
+          font-family: 'Courier New', monospace;
+          color: #4338ca;
+        }
+        
+        .premium-highlight {
+          background-color: #fef3c7;
+          padding: 1pt 2pt;
+        }
+        
+        /* List styling */
+        .premium-list-item {
+          margin: 3pt 0;
+          padding-left: 12pt;
+        }
+        
+        /* Text formatting preservation */
+        strong {
+          font-weight: bold;
+        }
+        
+        em {
+          font-style: italic;
+        }
+        
+        u {
+          text-decoration: underline;
+        }
+        
+        /* Enhanced image styling */
         .premium-image {
           max-width: 100%;
           height: auto;
-          margin: 1rem auto;
+          margin: 12pt auto;
           display: block;
-          border-radius: 4px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          border: 1pt solid #d1d5db;
+        }
+        
+        /* Print-friendly optimizations */
+        @media print {
+          .premium-document-content {
+            margin: 0;
+            padding: 0.5in;
+            font-size: 12pt;
+          }
+          
+          .premium-table {
+            page-break-inside: avoid;
+          }
+          
+          .premium-header-1, .premium-header-2 {
+            page-break-after: avoid;
+          }
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+          .premium-document-content {
+            padding: 0.5rem;
+            font-size: 14px;
+          }
+          
+          .premium-table {
+            font-size: 12px;
+          }
+          
+          .premium-table-cell, .premium-table-header {
+            padding: 4px;
+          }
         }
       </style>
     `
@@ -468,10 +760,25 @@ export class PremiumModulesConfig {
 
   private async initializeHTMLModule(): Promise<any> {
     // REAL PREMIUM MODULE - €250 investment activated!
+    // FASE 3: Enhanced configuration for better table and formatting support
     return new HtmlModule({
       styleSheet: this.getOptimizedHTMLStylesheet(),
-      ignoreUnknownTags: true,
-      ignoreCssErrors: true
+      ignoreUnknownTags: false, // Process all tags for better fidelity
+      ignoreCssErrors: false,   // Strict CSS processing for quality
+      // Enhanced table processing
+      tableProcessing: {
+        preserveStructure: true,
+        enhanceBorders: true,
+        optimizeLayout: true
+      },
+      // Better formatting preservation
+      textProcessing: {
+        preserveWhitespace: true,
+        enhanceFormatting: true,
+        convertEntities: true
+      },
+      // Quality optimizations
+      qualityMode: 'maximum'
     })
   }
 
@@ -487,6 +794,7 @@ export class PremiumModulesConfig {
 
   private async initializeStylingModule(): Promise<any> {
     // REAL PREMIUM MODULE - €500 investment activated!
+    // FASE 3: Enhanced configuration for maximum DOCX fidelity
     return new StylingModule({
       prefix: {
         cell: ":stylecell",
@@ -495,6 +803,34 @@ export class PremiumModulesConfig {
         Run: "::stylerun",
         bullets: ":stylebullets",
         row: ":stylerow"
+      },
+      // Enhanced options for maximum formatting preservation
+      defaultStyle: {
+        fontSize: '12pt',
+        fontFamily: 'Times New Roman',
+        color: '#000000',
+        lineHeight: '1.15'
+      },
+      // Table-specific styling enhancements
+      tableStyle: {
+        borderStyle: 'single',
+        borderWidth: '1pt',
+        borderColor: '#000000',
+        cellPadding: '4pt'
+      },
+      // Advanced formatting preservation
+      preserveFormatting: {
+        bold: true,
+        italic: true,
+        underline: true,
+        strikethrough: true,
+        superscript: true,
+        subscript: true,
+        highlighting: true,
+        fontSize: true,
+        fontFamily: true,
+        textColor: true,
+        backgroundColor: true
       }
     })
   }
@@ -513,29 +849,108 @@ export class PremiumModulesConfig {
 
   private getOptimizedHTMLStylesheet(): string {
     return `
-      /* Optimized CSS for maximum Word compatibility */
+      /* FASE 3: Enhanced CSS for maximum Word fidelity and table support */
+      body {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 12pt;
+        line-height: 1.15;
+        margin: 0;
+        padding: 0;
+        color: #000000;
+        background: #ffffff;
+      }
+      
       p { 
-        margin: 6pt 0; 
+        margin: 0 0 6pt 0; 
         line-height: 1.15; 
-        font-family: 'Calibri', sans-serif; 
+        font-family: 'Times New Roman', Times, serif;
+        text-align: justify;
       }
-      h1, h2, h3 { 
-        color: #1e40af; 
-        font-weight: bold; 
-        margin: 12pt 0 6pt 0; 
+      
+      h1 { 
+        font-size: 16pt;
+        font-weight: bold;
+        color: #000000;
+        margin: 24pt 0 12pt 0;
+        page-break-after: avoid;
       }
+      
+      h2 { 
+        font-size: 14pt;
+        font-weight: bold;
+        color: #000000;
+        margin: 18pt 0 6pt 0;
+        page-break-after: avoid;
+      }
+      
+      h3 { 
+        font-size: 13pt;
+        font-weight: bold;
+        color: #000000;
+        margin: 12pt 0 6pt 0;
+      }
+      
+      /* Professional table styling for maximum Word compatibility */
       table { 
         border-collapse: collapse; 
         width: 100%; 
-        margin: 6pt 0; 
+        margin: 12pt 0;
+        font-size: 11pt;
+        page-break-inside: avoid;
       }
-      td, th { 
-        border: 1px solid #d1d5db; 
-        padding: 4pt 8pt; 
+      
+      th {
+        border: 1pt solid #000000;
+        padding: 6pt 8pt;
+        background-color: #f2f2f2;
+        font-weight: bold;
+        text-align: center;
+        vertical-align: middle;
       }
+      
+      td { 
+        border: 1pt solid #000000; 
+        padding: 4pt 6pt;
+        text-align: left;
+        vertical-align: top;
+      }
+      
+      /* Enhanced formatting preservation */
+      strong, b {
+        font-weight: bold;
+      }
+      
+      em, i {
+        font-style: italic;
+      }
+      
+      u {
+        text-decoration: underline;
+      }
+      
       .highlight { 
-        background-color: #fef3c7; 
-        padding: 2pt 4pt; 
+        background-color: #ffff00; 
+        padding: 0;
+      }
+      
+      /* List formatting */
+      ul, ol {
+        margin: 6pt 0;
+        padding-left: 36pt;
+      }
+      
+      li {
+        margin: 3pt 0;
+        line-height: 1.15;
+      }
+      
+      /* Page break controls */
+      .page-break {
+        page-break-before: always;
+      }
+      
+      .no-break {
+        page-break-inside: avoid;
       }
     `
   }

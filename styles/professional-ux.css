@@ -254,17 +254,187 @@
   100% { left: 100%; }
 }
 
-/* Responsive Design */
+/* Responsive Design - Phase 2: Optimized for 15%-70%-15% Layout */
 @media (max-width: 1024px) {
+  /* Stack layout vertically on tablets */
+  .premium-visual-editor .flex {
+    flex-direction: column;
+  }
+  
+  .premium-visual-editor .w-\[15\%\] {
+    width: 100% !important;
+    max-height: 40vh;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .premium-visual-editor .w-\[70\%\] {
+    width: 100% !important;
+    min-height: 60vh;
+  }
+  
   .professional-sidebar {
     width: 100%;
-    max-height: 50vh;
+    max-height: 40vh;
+    overflow-y: auto;
   }
   
   .excel-column-card,
   .premium-mapping-card {
     padding: 0.75rem;
+    margin-bottom: 0.5rem;
   }
+  
+  /* Compact headers on mobile */
+  .premium-visual-editor h2 {
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Mobile optimization */
+  .premium-visual-editor {
+    min-height: 100vh;
+  }
+  
+  /* Make sidebars collapsible on mobile */
+  .premium-visual-editor .w-\[15\%\] {
+    max-height: 30vh;
+  }
+  
+  .premium-visual-editor .w-\[70\%\] {
+    min-height: 70vh;
+  }
+  
+  /* Optimize text sizes */
+  .excel-column-card .font-medium {
+    font-size: 0.875rem;
+  }
+  
+  .excel-column-card .text-sm {
+    font-size: 0.75rem;
+  }
+  
+  /* Improve touch targets */
+  .excel-column-card,
+  .premium-mapping-card {
+    min-height: 48px;
+    padding: 1rem;
+  }
+}
+
+@media (min-width: 1025px) {
+  /* Desktop optimization for new narrower layout */
+  .premium-visual-editor .w-\[15\%\] {
+    min-width: 200px;
+    max-width: 250px;
+  }
+  
+  .premium-visual-editor .w-\[70\%\] {
+    min-width: 600px;
+  }
+  
+  /* Better document area utilization */
+  .premium-document-content {
+    max-width: none;
+    padding: 1rem 2rem;
+  }
+  
+  /* Optimize Excel panel scrolling */
+  .premium-visual-editor .w-\[15\%\]:first-child {
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  
+  .premium-visual-editor .w-\[15\%\]:first-child::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  .premium-visual-editor .w-\[15\%\]:first-child::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 2px;
+  }
+}
+
+@media (min-width: 1440px) {
+  /* FASE 3: Enhanced large screen optimization */
+  .premium-visual-editor .w-\[15\%\] {
+    max-width: 300px;
+  }
+  
+  .premium-document-content {
+    padding: 0;
+  }
+  
+  .premium-document-viewer {
+    background: #f5f5f5;
+    padding: 30px;
+    border-radius: 12px;
+  }
+  
+  .document-page {
+    max-width: 8.5in;
+    padding: 1.2in;
+    font-size: 12pt;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+  }
+  
+  /* Better Excel column visibility */
+  .excel-column-card {
+    padding: 1rem;
+  }
+}
+
+/* FASE 3: Enhanced document viewer styling */
+.premium-document-viewer {
+  position: relative;
+  min-height: 600px;
+}
+
+.premium-document-viewer .document-page {
+  position: relative;
+  background: #ffffff;
+  margin: 20px auto;
+  transition: all 0.3s ease;
+}
+
+.premium-document-viewer .document-page:hover {
+  transform: translateY(-2px);
+}
+
+/* Enhanced text selection feedback */
+.premium-document-viewer *::selection {
+  background: rgba(59, 130, 246, 0.3);
+  color: inherit;
+}
+
+.premium-document-viewer *::-moz-selection {
+  background: rgba(59, 130, 246, 0.3);
+  color: inherit;
+}
+
+/* Table cell selection enhancement */
+.premium-document-viewer td:hover,
+.premium-document-viewer th:hover {
+  background-color: rgba(59, 130, 246, 0.05) !important;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+/* Header selection enhancement */
+.premium-document-viewer h1:hover,
+.premium-document-viewer h2:hover,
+.premium-document-viewer h3:hover,
+.premium-document-viewer h4:hover,
+.premium-document-viewer h5:hover,
+.premium-document-viewer h6:hover {
+  background-color: rgba(16, 185, 129, 0.05);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-radius: 4px;
+  padding: 2px 4px;
+  margin: -2px -4px;
 }
 
 /* Dark Mode Support */
@@ -320,6 +490,137 @@
   .premium-module-badge {
     border-width: 2px;
   }
+}
+
+/* FASE 3: Enhanced Premium Document Fidelity - Maximum Word-like Display */
+.premium-document-content {
+  /* Maximum Word fidelity styles */
+  font-family: 'Times New Roman', Times, serif;
+  line-height: 1.15; /* Word default line height */
+  color: #000000;
+  background: #f5f5f5; /* Subtle background to highlight document */
+  padding: 0;
+  max-width: none;
+  margin: 0;
+}
+
+/* Document page container for Word-like appearance */
+.premium-document-content .document-page {
+  background: #ffffff;
+  padding: 1in; /* Standard Word margins */
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin: 20px auto;
+  max-width: 8.5in; /* Letter size width */
+  min-height: 11in; /* Letter size height */
+  font-size: 12pt;
+  position: relative;
+}
+
+.premium-document-content p {
+  margin-bottom: 0.5em;
+  text-align: justify;
+  text-indent: 0;
+}
+
+.premium-document-content h1,
+.premium-document-content h2,
+.premium-document-content h3,
+.premium-document-content h4,
+.premium-document-content h5,
+.premium-document-content h6 {
+  font-weight: bold;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  color: #000000;
+}
+
+/* FASE 3: Enhanced table styling for maximum Word fidelity */
+.premium-document-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 12pt 0;
+  font-size: 11pt;
+  border: 1pt solid #000000;
+}
+
+.premium-document-content td,
+.premium-document-content th {
+  border: 1pt solid #000000;
+  padding: 4pt 6pt;
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.15;
+}
+
+.premium-document-content th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Enhanced table cell formatting */
+.premium-document-content .premium-table {
+  page-break-inside: avoid;
+  font-family: 'Times New Roman', Times, serif;
+}
+
+.premium-document-content .premium-table-header {
+  background-color: #f8f9fa;
+  font-weight: bold;
+  text-align: center;
+}
+
+.premium-document-content .premium-table-cell {
+  border: 1pt solid #000000;
+  padding: 4pt 6pt;
+}
+
+.premium-document-content .premium-number {
+  text-align: right;
+  font-family: 'Times New Roman', Times, serif;
+}
+
+.premium-document-content .premium-currency {
+  text-align: right;
+  font-weight: bold;
+  color: #000000; /* Keep black for Word fidelity */
+}
+
+.premium-document-content .premium-date {
+  font-family: 'Times New Roman', Times, serif;
+  color: #000000;
+}
+
+.premium-document-content ul,
+.premium-document-content ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+
+.premium-document-content li {
+  margin-bottom: 0.25em;
+}
+
+/* Preserve Word formatting attributes */
+.premium-document-content [style*="font-weight: bold"],
+.premium-document-content [style*="font-weight:bold"],
+.premium-document-content strong,
+.premium-document-content b {
+  font-weight: bold !important;
+}
+
+.premium-document-content [style*="font-style: italic"],
+.premium-document-content [style*="font-style:italic"],
+.premium-document-content em,
+.premium-document-content i {
+  font-style: italic !important;
+}
+
+.premium-document-content [style*="text-decoration: underline"],
+.premium-document-content [style*="text-decoration:underline"],
+.premium-document-content u {
+  text-decoration: underline !important;
 }
 
 /* Intelligent Positioning States - Phase 2 */

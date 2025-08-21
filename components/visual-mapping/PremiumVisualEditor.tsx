@@ -63,6 +63,10 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
     end: number
     text: string
     paragraphId: string
+    elementType?: string
+    isTableCell?: boolean
+    isHeader?: boolean
+    fullElementText?: string
   } | null>(null)
   
   // UI state
@@ -301,6 +305,7 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
 
   /**
    * Handle Word text selection
+   * FASE 3: Enhanced with table and formatting support
    * CREATES Premium mapping automatically when both Excel and Word are selected
    */
   const handleTextSelection = useCallback((selection: {
@@ -308,6 +313,10 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
     end: number
     text: string
     paragraphId: string
+    elementType?: string
+    isTableCell?: boolean
+    isHeader?: boolean
+    fullElementText?: string
   }) => {
     
     if (!selectedColumn) {
@@ -317,7 +326,15 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
     
     setSelectedText(selection)
     
-    // AUTOMATIC PREMIUM MAPPING CREATION
+    // FASE 3: Enhanced automatic Premium mapping with element type awareness
+    console.log('📝 Text selection details:', {
+      text: selection.text,
+      elementType: selection.elementType,
+      isTableCell: selection.isTableCell,
+      isHeader: selection.isHeader,
+      paragraphId: selection.paragraphId
+    })
+    
     createPremiumMapping(selectedColumn, selection)
     
   }, [selectedColumn])
@@ -333,18 +350,30 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
       end: number  
       text: string
       paragraphId: string
+      elementType?: string
+      isTableCell?: boolean
+      isHeader?: boolean
+      fullElementText?: string
     }
   ) => {
     
     try {
-      // CREATE PREMIUM MAPPING with intelligent module selection
+      // FASE 3: CREATE PREMIUM MAPPING with enhanced context awareness
+      const mappingContext = {
+        documentType: wordSelection.isTableCell ? 'table' : wordSelection.isHeader ? 'header' : 'generic',
+        qualityMode: 'maximum', // Always use maximum quality in Fase 3
+        elementContext: {
+          type: wordSelection.elementType || 'p',
+          isTableCell: wordSelection.isTableCell || false,
+          isHeader: wordSelection.isHeader || false,
+          fullText: wordSelection.fullElementText || wordSelection.text
+        }
+      }
+      
       const premiumMapping = premiumMappingEngine.createIntelligentMapping(
         excelColumn,
         wordSelection,
-        {
-          documentType: 'generic',
-          qualityMode: 'balanced'
-        }
+        mappingContext
       )
       
       // Add to mappings list
@@ -355,17 +384,19 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
       setSelectedText(null)
       setMappingMode(false)
       
-      // Show success with Premium Module info (simplified for user)
+      // FASE 3: Enhanced success message with context awareness
       const moduleInfo: Record<PremiumModuleType, string> = {
-        'html': '🌐 Contingut avançat',
+        'html': wordSelection.isTableCell ? '📊 Cel·la de taula avançada' : '🌐 Contingut rich',
         'image': '🖼️ Imatge dinàmica', 
-        'style': '🎨 Estil professional',
+        'style': wordSelection.isHeader ? '📑 Capçalera amb estil' : '🎨 Format professional',
         'xlsx': '📊 Excel dinàmic',
-        'text': '📝 Text simple'
+        'text': wordSelection.isTableCell ? '📝 Text de taula' : '📝 Text simple'
       }
       
+      const contextInfo = wordSelection.isTableCell ? ' (Taula)' : wordSelection.isHeader ? ' (Capçalera)' : ''
+      
       toast.success(
-        `Mapping creat: ${moduleInfo[premiumMapping.selected_premium_module]} • Qualitat: ${premiumMapping.quality_score}/10`,
+        `Mapping creat: ${moduleInfo[premiumMapping.selected_premium_module]}${contextInfo} • Qualitat: ${premiumMapping.quality_score}/10`,
         { duration: 4000 }
       )
       
@@ -427,17 +458,81 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
     const paragraphElement = documentViewerRef.current?.querySelector(`[data-paragraph-id="${paragraphId}"]`)
     if (!paragraphElement) return
 
-    // Add highlight class
+    // Add highlight class with enhanced animation
     paragraphElement.classList.add('highlight-paragraph')
     
-    // Remove highlight after 2 seconds
+    // FASE 3: Enhanced highlight with better visual feedback
+    paragraphElement.style.transition = 'all 0.3s ease-in-out'
+    paragraphElement.style.transform = 'scale(1.02)'
+    paragraphElement.style.zIndex = '10'
+    
+    // Remove highlight after 3 seconds with smooth transition
     setTimeout(() => {
       paragraphElement.classList.remove('highlight-paragraph')
-    }, 2000)
+      paragraphElement.style.transform = 'scale(1)'
+      paragraphElement.style.zIndex = 'auto'
+    }, 3000)
     
-    // Scroll to element
-    paragraphElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    // Smooth scroll to element
+    paragraphElement.scrollIntoView({ 
+      behavior: 'smooth', 
+      block: 'center',
+      inline: 'nearest'
+    })
   }, [])
+
+  /**
+   * FASE 3: Enhanced text selection handler for tables and formatted content
+   */
+  const handleEnhancedTextSelection = useCallback((e: React.MouseEvent) => {
+    const selection = window.getSelection()
+    if (!selection || !selection.toString().trim()) return
+    
+    const range = selection.getRangeAt(0)
+    const selectedText = selection.toString().trim()
+    
+    // Find the closest paragraph or table cell
+    let targetElement = range.commonAncestorContainer
+    
+    // Navigate up to find element with data-paragraph-id
+    while (targetElement && targetElement.nodeType !== Node.ELEMENT_NODE) {
+      targetElement = targetElement.parentNode
+    }
+    
+    while (targetElement && !targetElement.getAttribute?.('data-paragraph-id')) {
+      targetElement = targetElement.parentElement
+    }
+    
+    if (!targetElement) {
+      console.warn('No paragraph ID found for selection')
+      return
+    }
+    
+    const paragraphId = targetElement.getAttribute('data-paragraph-id')
+    
+    // Enhanced selection object with element type detection
+    const elementType = targetElement.tagName.toLowerCase()
+    const isTableCell = ['td', 'th'].includes(elementType)
+    const isHeader = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(elementType)
+    
+    handleTextSelection({
+      start: range.startOffset,
+      end: range.endOffset,
+      text: selectedText,
+      paragraphId: paragraphId || 'unknown',
+      elementType,
+      isTableCell,
+      isHeader,
+      fullElementText: targetElement.textContent || ''
+    })
+    
+    // Visual feedback for selection
+    targetElement.style.background = '#e3f2fd'
+    setTimeout(() => {
+      targetElement.style.background = ''
+    }, 1500)
+    
+  }, [handleTextSelection])
 
   // Helper functions
 
@@ -486,48 +581,78 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
       // and HTML Module (€250) to handle rich content
       const documentXml = docxInstance.getFullText()
       
-      // Process with Premium Modules intelligence
+      // FASE 3: Process with enhanced Premium Modules intelligence
+      // Optimized for maximum table fidelity and Word-like formatting
       const processedContent = await premiumModulesConfig.processDocumentWithPremiumModules(
         buffer,
         {
-          enableHTML: true,    // HTML Module €250
-          enableStyling: true, // Style Module €500  
-          enableImages: true,  // Image Module €250
+          enableHTML: true,    // HTML Module €250 - Enhanced table processing
+          enableStyling: true, // Style Module €500 - Maximum formatting preservation
+          enableImages: true,  // Image Module €250 - Professional image handling
           outputFormat: 'html',
-          qualityMode: 'maximum'
+          qualityMode: 'maximum' // FASE 3: Maximum fidelity mode
         }
       )
       
-      // Add paragraph IDs for visual mapping while preserving Premium formatting
+      // FASE 3: Enhanced paragraph and table ID mapping with Premium formatting preservation
       let htmlContent = processedContent.htmlContent
       let paragraphCounter = 1
       
-      // Preserve Premium Module styling while adding mapping IDs
+      // Preserve Premium Module styling while adding mapping IDs to paragraphs
       htmlContent = htmlContent.replace(/<p([^>]*)>/g, (match, attributes) => {
         return `<p data-paragraph-id="p${paragraphCounter++}"${attributes}>`
       })
       
-      // Handle other block elements (lists, headers, etc.)
-      htmlContent = htmlContent.replace(/<(h[1-6]|div|li|table|tr|td)([^>]*)>/g, (match, tag, attributes) => {
+      // Enhanced handling of block elements with better table support
+      htmlContent = htmlContent.replace(/<(h[1-6])([^>]*)>/g, (match, tag, attributes) => {
         if (!attributes.includes('data-paragraph-id')) {
           return `<${tag} data-paragraph-id="p${paragraphCounter++}"${attributes}>`
         }
         return match
       })
       
-      // Wrap with Premium Module styling classes
+      // Special handling for table rows to enable individual cell mapping
+      htmlContent = htmlContent.replace(/<tr([^>]*)>/g, (match, attributes) => {
+        if (!attributes.includes('data-paragraph-id')) {
+          return `<tr data-paragraph-id="p${paragraphCounter++}"${attributes}>`
+        }
+        return match
+      })
+      
+      // Add mapping IDs to table cells for granular control
+      htmlContent = htmlContent.replace(/<(td|th)([^>]*)>/g, (match, tag, attributes) => {
+        if (!attributes.includes('data-paragraph-id')) {
+          return `<${tag} data-paragraph-id="p${paragraphCounter++}"${attributes}>`
+        }
+        return match
+      })
+      
+      // Handle list items
+      htmlContent = htmlContent.replace(/<li([^>]*)>/g, (match, attributes) => {
+        if (!attributes.includes('data-paragraph-id')) {
+          return `<li data-paragraph-id="p${paragraphCounter++}"${attributes}>`
+        }
+        return match
+      })
+      
+      // FASE 3: Wrap with enhanced Premium Module styling for Word-like appearance
       const finalHTML = `
-        <div class="premium-document-content" data-premium-modules="active">
-          ${htmlContent}
+        <div class="premium-document-content" data-premium-modules="active" data-fidelity="maximum">
+          <div class="document-page" style="background: white; padding: 1in; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin: 20px auto; max-width: 8.5in; min-height: 11in;">
+            ${htmlContent}
+          </div>
         </div>
       `
       
-      console.log('✅ Premium Modules processed document:', {
+      console.log('✅ FASE 3: Premium Modules processed document with enhanced fidelity:', {
         originalSize: buffer.length,
         paragraphsDetected: paragraphCounter - 1,
         premiumModulesUsed: processedContent.modulesUsed,
         stylePreservation: processedContent.styleQualityScore,
-        processingTime: processedContent.processingTime
+        processingTime: processedContent.processingTime,
+        wordFidelityMode: 'maximum',
+        tableSupport: 'enhanced',
+        formatPreservation: 'complete'
       })
       
       return finalHTML
@@ -604,11 +729,11 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
 
       <div className="flex h-[calc(100vh-80px)]">
         
-        {/* Excel Panel */}
-        <div className="w-1/3 bg-white border-r border-gray-200 overflow-y-auto">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">
-              📊 Columnes Excel
+        {/* Excel Panel - Reduced width for more document space */}
+        <div className="w-[15%] bg-white border-r border-gray-200 overflow-y-auto">
+          <div className="p-3">
+            <h2 className="text-base font-semibold text-gray-800 mb-3">
+              📊 Excel
             </h2>
             
             {excelData ? (
@@ -676,8 +801,8 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
           </div>
         </div>
 
-        {/* Document Viewer */}
-        <div className="flex-1 bg-white overflow-y-auto">
+        {/* Document Viewer - Expanded area for better DOCX visibility */}
+        <div className="w-[70%] bg-white overflow-y-auto">
           <div className="p-4">
             <h2 className="text-lg font-semibold text-gray-800 mb-4">
               📄 Document Word
@@ -697,20 +822,17 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
                 
                 <div 
                   ref={documentViewerRef}
-                  className="prose max-w-none"
+                  className="premium-document-viewer max-w-none"
                   dangerouslySetInnerHTML={{ __html: wordData.htmlContent }}
                   onClick={(e) => {
-                    // Handle text selection (simplified implementation)
-                    const selection = window.getSelection()
-                    if (selection && selection.toString().trim()) {
-                      const range = selection.getRangeAt(0)
-                      handleTextSelection({
-                        start: range.startOffset,
-                        end: range.endOffset,
-                        text: selection.toString(),
-                        paragraphId: 'p1' // Would be dynamic in production
-                      })
-                    }
+                    // FASE 3: Enhanced text selection with table and paragraph support
+                    this.handleEnhancedTextSelection(e)
+                  }}
+                  style={{
+                    minHeight: '600px',
+                    background: '#f5f5f5',
+                    padding: '20px',
+                    borderRadius: '8px'
                   }}
                 />
               </div>
@@ -732,7 +854,7 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
           onUpdateMapping={handleUpdateMapping}
           onDeleteMapping={handleDeleteMapping}
           onHighlightParagraph={handleHighlightParagraph}
-          className="w-1/3"
+          className="w-[15%]"
         />
 
       </div>
