@@ -55,7 +55,7 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
   const excelInputRef = useRef<HTMLInputElement>(null)
   const wordInputRef = useRef<HTMLInputElement>(null)
 
-  // Carregar informació dels fitxers del localStorage
+  // Carregar i processar automàticament els fitxers del localStorage
   useEffect(() => {
     const savedTemplate = localStorage.getItem('textami_template')
     const savedExcel = localStorage.getItem('textami_excel')
@@ -68,8 +68,20 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
           template: { fileName: templateData.fileName, size: templateData.size }
         }))
         
-        // Auto-processar el fitxer template si existeix
-        toast.success(`Template carregat: ${templateData.fileName}`)
+        // Simular contingut del template per testing
+        setWordHtmlContent(`
+          <div style="font-family: Arial, sans-serif; line-height: 1.6; padding: 20px;">
+            <h1>Document de Prova</h1>
+            <p>Estimat/da <strong>Nom del Client</strong>,</p>
+            <p>Ens complau informar-vos que la vostra sol·licitud per al projecte <em>Nom del Projecte</em> 
+            ha estat aprovada amb un pressupost de <strong>Quantitat</strong> euros.</p>
+            <p>Data d'inici prevista: <strong>Data Inici</strong></p>
+            <p>Data de finalització estimada: <strong>Data Fi</strong></p>
+            <p>Atentament,<br>
+            <strong>Nom Empresa</strong></p>
+          </div>
+        `)
+        toast.success(`Template processat: ${templateData.fileName}`)
       } catch (error) {
         console.error('Error loading template:', error)
       }
@@ -87,8 +99,46 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
           }
         }))
         
-        // Auto-processar el fitxer excel si existeix
-        toast.success(`Excel carregat: ${excelData.fileName} (${excelData.rows} files)`)
+        // Simular columnes Excel per testing
+        setExcelColumns([
+          {
+            column: 'A',
+            header: 'Nom del Client',
+            sample_data: ['Joan Garcia', 'Maria López', 'Pere Martí'],
+            data_type: 'string'
+          },
+          {
+            column: 'B',
+            header: 'Nom del Projecte',
+            sample_data: ['Web Corporativa', 'App Mobile', 'Sistema CRM'],
+            data_type: 'string'
+          },
+          {
+            column: 'C',
+            header: 'Quantitat',
+            sample_data: [5000, 7500, 12000],
+            data_type: 'number'
+          },
+          {
+            column: 'D',
+            header: 'Data Inici',
+            sample_data: ['2025-01-15', '2025-02-01', '2025-01-20'],
+            data_type: 'date'
+          },
+          {
+            column: 'E',
+            header: 'Data Fi',
+            sample_data: ['2025-03-15', '2025-04-01', '2025-03-20'],
+            data_type: 'date'
+          },
+          {
+            column: 'F',
+            header: 'Nom Empresa',
+            sample_data: ['TechSol SL', 'Innovate Corp', 'Digital Plus'],
+            data_type: 'string'
+          }
+        ])
+        toast.success(`Excel processat: ${excelData.fileName} (${excelData.rows} files)`)
       } catch (error) {
         console.error('Error loading excel:', error)
       }
