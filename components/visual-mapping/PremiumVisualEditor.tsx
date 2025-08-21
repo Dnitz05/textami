@@ -501,7 +501,7 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
       return
     }
     
-    let htmlElement = targetElement as HTMLElement
+    let htmlElement: HTMLElement | null = targetElement as HTMLElement
     while (htmlElement && !htmlElement.getAttribute?.('data-paragraph-id')) {
       htmlElement = htmlElement.parentElement
     }
