@@ -37,10 +37,12 @@ interface VisualMapping {
 export default function VisualTemplateEditor({ templateId }: VisualTemplateEditorProps) {
   const [excelColumns, setExcelColumns] = useState<ExcelColumn[]>([])
   const [wordContent, setWordContent] = useState<string>('')
+  const [wordHtmlContent, setWordHtmlContent] = useState<string>('')
   const [visualMappings, setVisualMappings] = useState<VisualMapping[]>([])
   const [selectedColumn, setSelectedColumn] = useState<ExcelColumn | null>(null)
   const [selectedText, setSelectedText] = useState<WordSelection | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [mappingMode, setMappingMode] = useState(false)
   const [fileInfo, setFileInfo] = useState<{
     template: { fileName: string; size: number } | null;
     excel: { fileName: string; size: number; rows: number } | null;
@@ -109,45 +111,67 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
     }
   }
 
-  // Handle Excel column selection
-  const handleColumnSelect = useCallback((column: ExcelColumn) => {
-    setSelectedColumn(column)
-  }, [])
 
-  // Handle Word text selection (simplified simulation)
-  const handleTextSelect = useCallback((text: string) => {
-    const start = wordContent.indexOf(text)
-    if (start !== -1) {
-      setSelectedText({
-        start,
-        end: start + text.length,
-        text
-      })
-    }
-  }, [wordContent])
 
-  // Create visual mapping
-  const createMapping = useCallback((mappingType: 'text' | 'html' | 'image' | 'style') => {
-    if (!selectedColumn || !selectedText) return
-
-    const mapping: VisualMapping = {
-      id: `mapping-${Date.now()}`,
-      excel_column: selectedColumn.column,
-      word_selection: selectedText,
-      mapping_type: mappingType,
-      docx_syntax: generateDocxSyntax(selectedColumn.column, mappingType),
-      roi_value: calculateROI(mappingType)
-    }
-
-    setVisualMappings(prev => [...prev, mapping])
-    setSelectedColumn(null)
-    setSelectedText(null)
-  }, [selectedColumn, selectedText])
 
   // Remove mapping
   const removeMapping = useCallback((mappingId: string) => {
     setVisualMappings(prev => prev.filter(m => m.id !== mappingId))
   }, [])
+
+  // Handle column selection for mapping
+  const handleColumnSelect = useCallback((column: ExcelColumn) => {
+    setSelectedColumn(column)
+    setMappingMode(true)
+    toast(`Selecciona text al document per associar amb "${column.header}"`, { icon: '👆' })
+  }, [])
+
+  // Handle text selection in Word document
+  const handleTextSelection = useCallback(() => {
+    if (!selectedColumn || !mappingMode) return
+    
+    const selection = window.getSelection()
+    if (!selection || selection.rangeCount === 0) return
+    
+    const range = selection.getRangeAt(0)
+    const selectedText = selection.toString().trim()
+    
+    if (!selectedText) {
+      toast.error('Selecciona text vàlid')
+      return
+    }
+
+    // Generate placeholder syntax
+    const placeholder = `{${selectedColumn.column}}`
+    
+    // Create mapping
+    const mapping: VisualMapping = {
+      id: `mapping-${Date.now()}`,
+      excel_column: selectedColumn.column,
+      word_selection: {
+        start: range.startOffset,
+        end: range.endOffset,
+        text: selectedText
+      },
+      mapping_type: 'text',
+      docx_syntax: placeholder,
+      roi_value: calculateROI('text')
+    }
+
+    // Replace selected text with placeholder in HTML
+    const newHtml = wordHtmlContent.replace(selectedText, `<span class="placeholder" style="background-color: #e3f2fd; padding: 2px 4px; border-radius: 3px; font-weight: bold;">${placeholder}</span>`)
+    setWordHtmlContent(newHtml)
+
+    // Add mapping
+    setVisualMappings(prev => [...prev, mapping])
+    
+    // Reset selection state
+    setSelectedColumn(null)
+    setMappingMode(false)
+    selection.removeAllRanges()
+    
+    toast.success(`Mapping creat: "${selectedText}" → ${placeholder}`)
+  }, [selectedColumn, mappingMode, wordHtmlContent, calculateROI])
 
   // Handle Excel file upload
   const handleExcelUpload = useCallback(async (file: File) => {
@@ -158,7 +182,7 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
       const formData = new FormData()
       formData.append('file', file)
       
-      const response = await fetch('/api/upload/excel', {
+      const response = await fetch('/api/visual-mapping/upload-excel', {
         method: 'POST',
         body: formData
       })
@@ -188,7 +212,7 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
       const formData = new FormData()
       formData.append('file', file)
       
-      const response = await fetch('/api/upload/template', {
+      const response = await fetch('/api/visual-mapping/upload-word', {
         method: 'POST', 
         body: formData
       })
@@ -198,7 +222,8 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
       }
       
       const data = await response.json()
-      setWordContent(data.content || '')
+      setWordContent(data.text || '')
+      setWordHtmlContent(data.html || '')
       toast.success('Word template processed successfully')
       
     } catch (error) {
@@ -292,19 +317,25 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
               </div>
             ) : (
               <div className="space-y-2">
+                <div className="text-sm text-gray-600 mb-3">
+                  Click en una capçalera per començar el mapping:
+                </div>
                 {excelColumns.map((column) => (
                   <div
                     key={column.column}
                     onClick={() => handleColumnSelect(column)}
-                    className={`p-3 border rounded cursor-pointer transition-colors ${
+                    className={`p-3 border rounded cursor-pointer transition-all ${
                       selectedColumn?.column === column.column
-                        ? 'bg-blue-50 border-blue-300'
-                        : 'hover:bg-gray-50'
+                        ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-200'
+                        : 'hover:bg-gray-50 hover:border-gray-300'
                     }`}
                   >
-                    <div className="font-medium">{column.column}: {column.header}</div>
-                    <div className="text-sm text-gray-500">
-                      Type: {column.data_type} • Sample: {column.sample_data.slice(0, 2).join(', ')}
+                    <div className="font-medium text-blue-700">{column.header}</div>
+                    <div className="text-xs text-gray-500">
+                      Columna {column.column} • {column.data_type}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1">
+                      Mostra: {column.sample_data.slice(0, 2).join(', ')}
                     </div>
                   </div>
                 ))}
@@ -350,23 +381,46 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
                 </Button>
               </div>
             ) : (
-              <div className="border rounded p-4 bg-gray-50 max-h-64 overflow-y-auto">
-                <div className="whitespace-pre-wrap font-mono text-sm">
-                  {wordContent.split('\n').map((line, idx) => (
-                    <div key={idx} className="mb-1">
-                      {line.split(' ').map((word, wordIdx) => (
-                        <span
-                          key={wordIdx}
-                          onClick={() => handleTextSelect(word)}
-                          className={`cursor-pointer hover:bg-yellow-200 px-1 ${
-                            selectedText?.text === word ? 'bg-yellow-300' : ''
-                          }`}
-                        >
-                          {word}{' '}
-                        </span>
-                      ))}
+              <div className="space-y-3">
+                {mappingMode && selectedColumn && (
+                  <div className="bg-blue-50 border border-blue-200 rounded p-3">
+                    <div className="text-sm font-medium text-blue-800">
+                      Selecciona text per associar amb: "{selectedColumn.header}"
                     </div>
-                  ))}
+                    <div className="text-xs text-blue-600 mt-1">
+                      Selecciona text al document i després fes click al botó "Crear Mapping"
+                    </div>
+                    <button
+                      onClick={handleTextSelection}
+                      className="mt-2 px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                    >
+                      Crear Mapping
+                    </button>
+                    <button
+                      onClick={() => {
+                        setMappingMode(false)
+                        setSelectedColumn(null)
+                      }}
+                      className="mt-2 ml-2 px-3 py-1 bg-gray-300 text-gray-700 text-xs rounded hover:bg-gray-400"
+                    >
+                      Cancel·lar
+                    </button>
+                  </div>
+                )}
+                <div 
+                  className="border rounded p-4 bg-white max-h-96 overflow-y-auto"
+                  style={{ userSelect: 'text' }}
+                >
+                  {wordHtmlContent ? (
+                    <div 
+                      className="prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ __html: wordHtmlContent }}
+                    />
+                  ) : (
+                    <div className="text-gray-500 italic">
+                      El contingut del document apareixerà aquí...
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -374,71 +428,49 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
         </Card>
       </div>
 
-      {/* Mapping Controls */}
-      {selectedColumn && selectedText && (
-        <Card className="mt-6">
-          <CardHeader>
-            <h3 className="text-lg font-semibold">Create Visual Mapping</h3>
-            <p className="text-sm text-gray-600">
-              Column "{selectedColumn.column}" → Text "{selectedText.text}"
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-3">
-              <Button 
-                onClick={() => createMapping('text')}
-                variant="secondary"
-              >
-                Text Mapping (€0)
-              </Button>
-              <Button 
-                onClick={() => createMapping('html')}
-                variant="primary"
-              >
-                HTML Mapping (€250)
-              </Button>
-              <Button 
-                onClick={() => createMapping('image')}
-                variant="primary"
-              >
-                Image Mapping (€250)
-              </Button>
-              <Button 
-                onClick={() => createMapping('style')}
-                variant="primary"
-              >
-                Style Mapping (€500)
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Current Mappings */}
       {visualMappings.length > 0 && (
         <Card className="mt-6">
           <CardHeader>
-            <h3 className="text-lg font-semibold">Visual Mappings</h3>
+            <h3 className="text-lg font-semibold">Placeholders Generats</h3>
+            <p className="text-sm text-gray-600">
+              Associacions entre columnes Excel i text del document
+            </p>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {visualMappings.map((mapping) => (
-                <div key={mapping.id} className="flex items-center justify-between p-3 border rounded">
-                  <div className="flex-1">
-                    <div className="font-medium">
-                      {mapping.excel_column} → "{mapping.word_selection.text}"
+                <div key={mapping.id} className="p-4 border rounded-lg bg-gray-50">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-mono rounded">
+                          {mapping.docx_syntax}
+                        </span>
+                        <span className="text-xs text-gray-500">placeholder generat</span>
+                      </div>
+                      <div className="text-sm">
+                        <span className="font-medium text-blue-700">
+                          {excelColumns.find(col => col.column === mapping.excel_column)?.header}
+                        </span>
+                        <span className="text-gray-500 mx-2">→</span>
+                        <span className="bg-yellow-100 px-1 rounded">
+                          "{mapping.word_selection.text}"
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Columna {mapping.excel_column} • Type: {mapping.mapping_type}
+                        {mapping.roi_value > 0 && ` • ROI: €${mapping.roi_value}`}
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-600">
-                      Type: {mapping.mapping_type} • Syntax: {mapping.docx_syntax} • ROI: €{mapping.roi_value}
-                    </div>
+                    <button
+                      onClick={() => removeMapping(mapping.id)}
+                      className="text-red-600 hover:text-red-800 text-xs px-2 py-1 hover:bg-red-50 rounded"
+                    >
+                      Eliminar
+                    </button>
                   </div>
-                  <Button
-                    onClick={() => removeMapping(mapping.id)}
-                    variant="danger"
-                    size="sm"
-                  >
-                    Remove
-                  </Button>
                 </div>
               ))}
             </div>
