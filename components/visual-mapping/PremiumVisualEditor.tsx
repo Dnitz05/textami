@@ -69,6 +69,7 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
   const [isLoading, setIsLoading] = useState(false)
   const [mappingMode, setMappingMode] = useState(false)
   const [showPremiumInsights, setShowPremiumInsights] = useState(false)
+  const [premiumModulesReady, setPremiumModulesReady] = useState(false)
   
   // File input refs
   const excelInputRef = useRef<HTMLInputElement>(null)
@@ -92,6 +93,7 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
   const initializePremiumSystem = async () => {
     try {
       console.log('🚀 Initializing Premium Modules system...')
+      setIsLoading(true)
       
       await premiumModulesConfig.initializePremiumModules({
         enableHTML: true,    // €250 - Rich content processing
@@ -100,10 +102,15 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
         enableXLSX: false    // €250 - Not needed for this workflow
       })
       
+      setPremiumModulesReady(true)
       console.log('✅ Premium Modules system ready - €1,000 technology active')
+      toast.success('Sistema Premium activat correctament')
     } catch (error) {
       console.error('❌ Premium Modules initialization failed:', error)
+      setPremiumModulesReady(false)
       toast.error('Sistema avançat no disponible, utilitzant mode bàsic')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -424,6 +431,23 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
     try {
       console.log('🚀 Utilitzant Premium Modules per processar document DOCX...')
       
+      // CRITICAL: Wait for Premium Modules to be ready
+      if (!premiumModulesReady) {
+        console.log('⏳ Esperant inicialització dels Premium Modules...')
+        // Wait up to 10 seconds for Premium Modules to initialize
+        let attempts = 0
+        while (!premiumModulesReady && attempts < 100) {
+          await new Promise(resolve => setTimeout(resolve, 100))
+          attempts++
+        }
+        
+        if (!premiumModulesReady) {
+          throw new Error('Premium Modules not ready after waiting 10 seconds')
+        }
+      }
+      
+      console.log('✅ Premium Modules ready, processing document...')
+      
       // Convert base64 to Buffer for Premium Modules processing
       const base64Content = base64Data.split(',')[1] || base64Data
       const buffer = Buffer.from(base64Content, 'base64')
@@ -533,8 +557,20 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
           {/* Premium status indicator */}
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm text-gray-600">Sistema Premium Actiu</span>
+              <div className={`w-2 h-2 rounded-full ${
+                premiumModulesReady 
+                  ? 'bg-green-500 animate-pulse' 
+                  : isLoading 
+                    ? 'bg-yellow-500 animate-spin' 
+                    : 'bg-red-500'
+              }`}></div>
+              <span className="text-sm text-gray-600">
+                {premiumModulesReady 
+                  ? 'Sistema Premium Actiu (€1,250)' 
+                  : isLoading 
+                    ? 'Inicialitzant Premium Modules...' 
+                    : 'Premium Modules Inactius'}
+              </span>
             </div>
           </div>
         </div>
@@ -621,7 +657,13 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
               📄 Document Word
             </h2>
             
-            {wordData ? (
+            {!premiumModulesReady ? (
+              <div className="text-center text-yellow-600 py-8">
+                <div className="animate-spin w-8 h-8 border-4 border-yellow-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                <p className="font-medium">Inicialitzant Premium Modules...</p>
+                <p className="text-sm mt-2">Sistema de €1,250 carregant-se per oferir qualitat màxima</p>
+              </div>
+            ) : wordData ? (
               <div>
                 <div className="text-sm text-gray-600 mb-4">
                   {wordData.metadata.paragraphCount} paràgrafs • Complexitat: {wordData.metadata.complexityLevel} • {wordData.metadata.premiumOpportunities} oportunitats
