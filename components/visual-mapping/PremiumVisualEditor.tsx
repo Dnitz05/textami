@@ -17,7 +17,8 @@ import {
   premiumModulesConfig,
   type ExcelColumnAnalysis,
   type PremiumMapping,
-  type PremiumModuleType
+  type PremiumModuleType,
+  type MappingCreationOptions
 } from '@/lib/premium-modules'
 
 // Import Professional UX components (Phase 2)
@@ -359,9 +360,9 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
     
     try {
       // FASE 3: CREATE PREMIUM MAPPING with enhanced context awareness
-      const mappingContext = {
-        documentType: wordSelection.isTableCell ? 'report' : 'generic' as const,
-        qualityMode: 'maximum' as const, // Always use maximum quality in Fase 3
+      const mappingContext: MappingCreationOptions = {
+        documentType: wordSelection.isTableCell ? 'report' : 'generic',
+        qualityMode: 'maximum', // Always use maximum quality in Fase 3
         consistencyOptimization: true
       }
       
@@ -457,15 +458,16 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
     paragraphElement.classList.add('highlight-paragraph')
     
     // FASE 3: Enhanced highlight with better visual feedback
-    paragraphElement.style.transition = 'all 0.3s ease-in-out'
-    paragraphElement.style.transform = 'scale(1.02)'
-    paragraphElement.style.zIndex = '10'
+    const htmlElement = paragraphElement as HTMLElement
+    htmlElement.style.transition = 'all 0.3s ease-in-out'
+    htmlElement.style.transform = 'scale(1.02)'
+    htmlElement.style.zIndex = '10'
     
     // Remove highlight after 3 seconds with smooth transition
     setTimeout(() => {
       paragraphElement.classList.remove('highlight-paragraph')
-      paragraphElement.style.transform = 'scale(1)'
-      paragraphElement.style.zIndex = 'auto'
+      htmlElement.style.transform = 'scale(1)'
+      htmlElement.style.zIndex = 'auto'
     }, 3000)
     
     // Smooth scroll to element
@@ -494,19 +496,20 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
       targetElement = targetElement.parentNode
     }
     
-    while (targetElement && !targetElement.getAttribute?.('data-paragraph-id')) {
-      targetElement = targetElement.parentElement
+    let htmlElement = targetElement as HTMLElement
+    while (htmlElement && !htmlElement.getAttribute?.('data-paragraph-id')) {
+      htmlElement = htmlElement.parentElement
     }
     
-    if (!targetElement) {
+    if (!htmlElement) {
       console.warn('No paragraph ID found for selection')
       return
     }
     
-    const paragraphId = targetElement.getAttribute('data-paragraph-id')
+    const paragraphId = htmlElement.getAttribute('data-paragraph-id')
     
     // Enhanced selection object with element type detection
-    const elementType = targetElement.tagName.toLowerCase()
+    const elementType = htmlElement.tagName.toLowerCase()
     const isTableCell = ['td', 'th'].includes(elementType)
     const isHeader = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(elementType)
     
@@ -518,13 +521,13 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
       elementType,
       isTableCell,
       isHeader,
-      fullElementText: targetElement.textContent || ''
+      fullElementText: htmlElement.textContent || ''
     })
     
     // Visual feedback for selection
-    targetElement.style.background = '#e3f2fd'
+    htmlElement.style.background = '#e3f2fd'
     setTimeout(() => {
-      targetElement.style.background = ''
+      htmlElement.style.background = ''
     }, 1500)
     
   }, [handleTextSelection])

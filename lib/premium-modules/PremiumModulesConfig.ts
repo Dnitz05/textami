@@ -764,21 +764,7 @@ export class PremiumModulesConfig {
     return new HtmlModule({
       styleSheet: this.getOptimizedHTMLStylesheet(),
       ignoreUnknownTags: false, // Process all tags for better fidelity
-      ignoreCssErrors: false,   // Strict CSS processing for quality
-      // Enhanced table processing
-      tableProcessing: {
-        preserveStructure: true,
-        enhanceBorders: true,
-        optimizeLayout: true
-      },
-      // Better formatting preservation
-      textProcessing: {
-        preserveWhitespace: true,
-        enhanceFormatting: true,
-        convertEntities: true
-      },
-      // Quality optimizations
-      qualityMode: 'maximum'
+      ignoreCssErrors: false   // Strict CSS processing for quality
     })
   }
 
@@ -803,34 +789,6 @@ export class PremiumModulesConfig {
         Run: "::stylerun",
         bullets: ":stylebullets",
         row: ":stylerow"
-      },
-      // Enhanced options for maximum formatting preservation
-      defaultStyle: {
-        fontSize: '12pt',
-        fontFamily: 'Times New Roman',
-        color: '#000000',
-        lineHeight: '1.15'
-      },
-      // Table-specific styling enhancements
-      tableStyle: {
-        borderStyle: 'single',
-        borderWidth: '1pt',
-        borderColor: '#000000',
-        cellPadding: '4pt'
-      },
-      // Advanced formatting preservation
-      preserveFormatting: {
-        bold: true,
-        italic: true,
-        underline: true,
-        strikethrough: true,
-        superscript: true,
-        subscript: true,
-        highlighting: true,
-        fontSize: true,
-        fontFamily: true,
-        textColor: true,
-        backgroundColor: true
       }
     })
   }
