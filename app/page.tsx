@@ -2,8 +2,99 @@
 import { useState } from 'react';
 import AuthForm from '@/components/AuthForm';
 
+interface UploadState {
+  template: {
+    fileName: string
+    size: number
+  } | null
+  excel: {
+    fileName: string
+    size: number
+    rows: number
+  } | null
+  uploading: boolean
+  error: string | null
+}
+
 export default function Home() {
   const [showAuth, setShowAuth] = useState(false);
+  const [uploadState, setUploadState] = useState<UploadState>({
+    template: null,
+    excel: null,
+    uploading: false,
+    error: null
+  });
+
+  const handleTemplateUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploadState(prev => ({ ...prev, uploading: true, error: null }))
+
+    try {
+      // Validar tipus de fitxer
+      if (!file.name.match(/\.docx$/)) {
+        throw new Error('Només fitxers Word (.docx)')
+      }
+
+      // Simular upload
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      
+      setUploadState(prev => ({
+        ...prev,
+        template: {
+          fileName: file.name,
+          size: file.size
+        },
+        uploading: false
+      }))
+
+      console.log('Template carregat:', file.name)
+      
+    } catch (error) {
+      setUploadState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Error pujant template',
+        uploading: false
+      }))
+    }
+  }
+
+  const handleExcelUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploadState(prev => ({ ...prev, uploading: true, error: null }))
+
+    try {
+      // Validar tipus de fitxer
+      if (!file.name.match(/\.(xlsx|xls)$/)) {
+        throw new Error('Només fitxers Excel (.xlsx, .xls)')
+      }
+
+      // Simular upload
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      
+      setUploadState(prev => ({
+        ...prev,
+        excel: {
+          fileName: file.name,
+          size: file.size,
+          rows: Math.floor(Math.random() * 100) + 10 // Simular rows
+        },
+        uploading: false
+      }))
+
+      console.log('Excel carregat:', file.name)
+      
+    } catch (error) {
+      setUploadState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Error pujant Excel',
+        uploading: false
+      }))
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -36,22 +127,117 @@ export default function Home() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto mb-16">
+          {/* Step 1: Upload Template */}
           <div className="bg-white rounded-lg p-6 shadow-lg">
-            <div className="text-3xl mb-4">📤</div>
-            <h3 className="text-xl font-semibold mb-3">Upload plantilles</h3>
-            <p className="text-gray-600">Puja el teu .docx amb format corporatiu</p>
+            <div className="text-center">
+              <div className="text-4xl mb-4">📄</div>
+              <h3 className="text-xl font-semibold mb-3">1. Plantilla Word</h3>
+              <p className="text-gray-600 mb-4">
+                Puja el teu fitxer .docx original
+              </p>
+              
+              {!uploadState.template && (
+                <>
+                  <label className={`w-full py-2 px-4 rounded-md transition-colors cursor-pointer block text-center ${
+                    uploadState.uploading 
+                      ? 'bg-gray-400 text-white cursor-not-allowed' 
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}>
+                    {uploadState.uploading ? 'Pujant...' : 'Pujar Template'}
+                    <input
+                      type="file"
+                      accept=".docx"
+                      onChange={handleTemplateUpload}
+                      disabled={uploadState.uploading}
+                      className="hidden"
+                    />
+                  </label>
+                  {uploadState.error && (
+                    <p className="text-xs text-red-600 mt-2">{uploadState.error}</p>
+                  )}
+                </>
+              )}
+
+              {uploadState.template && (
+                <div className="space-y-2">
+                  <div className="text-green-600 text-sm">
+                    ✅ {uploadState.template.fileName}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {Math.round(uploadState.template.size / 1024)} KB
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
           
+          {/* Step 2: Upload Excel */}
           <div className="bg-white rounded-lg p-6 shadow-lg">
-            <div className="text-3xl mb-4">🔍</div>
-            <h3 className="text-xl font-semibold mb-3">Detecció automàtica</h3>
-            <p className="text-gray-600">Troba variables {'{'} nom {'}'}, {'{'} data {'}'}, etc.</p>
+            <div className="text-center">
+              <div className="text-4xl mb-4">📊</div>
+              <h3 className="text-xl font-semibold mb-3">2. Dades Excel</h3>
+              <p className="text-gray-600 mb-4">
+                Puja el fitxer amb les dades
+              </p>
+              
+              {!uploadState.excel && (
+                <>
+                  <label className={`w-full py-2 px-4 rounded-md transition-colors cursor-pointer block text-center ${
+                    uploadState.template 
+                      ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                      : 'bg-gray-400 text-white cursor-not-allowed'
+                  }`}>
+                    {uploadState.uploading ? 'Pujant...' : 'Pujar Dades'}
+                    <input
+                      type="file"
+                      accept=".xlsx,.xls"
+                      onChange={handleExcelUpload}
+                      disabled={!uploadState.template || uploadState.uploading}
+                      className="hidden"
+                    />
+                  </label>
+                  {uploadState.error && (
+                    <p className="text-xs text-red-600 mt-2">{uploadState.error}</p>
+                  )}
+                </>
+              )}
+
+              {uploadState.excel && (
+                <div className="space-y-2">
+                  <div className="text-green-600 text-sm">
+                    ✅ {uploadState.excel.fileName}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {Math.round(uploadState.excel.size / 1024)} KB
+                  </div>
+                  <div className="text-xs text-blue-600">
+                    📊 {uploadState.excel.rows} files de dades
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
           
+          {/* Step 3: Visual Editor */}
           <div className="bg-white rounded-lg p-6 shadow-lg">
-            <div className="text-3xl mb-4">⚡</div>
-            <h3 className="text-xl font-semibold mb-3">Generació massiva</h3>
-            <p className="text-gray-600">Crea centenars de documents perfectes</p>
+            <div className="text-center">
+              <div className="text-4xl mb-4">🎨</div>
+              <h3 className="text-xl font-semibold mb-3">3. Editor Visual</h3>
+              <p className="text-gray-600 mb-4">
+                Associa visualment les columnes amb el text
+              </p>
+              <button 
+                disabled={!uploadState.template || !uploadState.excel}
+                onClick={() => window.location.href = '/generator'}
+                className={`w-full py-2 px-4 rounded-md transition-colors ${
+                  uploadState.template && uploadState.excel
+                    ? 'bg-green-600 text-white hover:bg-green-700 cursor-pointer' 
+                    : 'bg-gray-400 text-white cursor-not-allowed'
+                }`}
+              >
+                Obrir Editor Visual
+              </button>
+            </div>
           </div>
         </div>
 
