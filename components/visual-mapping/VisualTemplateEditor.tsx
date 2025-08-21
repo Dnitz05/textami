@@ -3,7 +3,7 @@
 
 "use client"
 
-import React, { useState, useCallback, useRef } from 'react'
+import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { Button, Card, CardHeader, CardContent, Alert } from '@/components/ui'
 import { ArrowUpTrayIcon as Upload } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
@@ -41,10 +41,57 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
   const [selectedColumn, setSelectedColumn] = useState<ExcelColumn | null>(null)
   const [selectedText, setSelectedText] = useState<WordSelection | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [fileInfo, setFileInfo] = useState<{
+    template: { fileName: string; size: number } | null;
+    excel: { fileName: string; size: number; rows: number } | null;
+  }>({
+    template: null,
+    excel: null
+  })
   
   // File input refs
   const excelInputRef = useRef<HTMLInputElement>(null)
   const wordInputRef = useRef<HTMLInputElement>(null)
+
+  // Carregar informació dels fitxers del localStorage
+  useEffect(() => {
+    const savedTemplate = localStorage.getItem('textami_template')
+    const savedExcel = localStorage.getItem('textami_excel')
+    
+    if (savedTemplate) {
+      try {
+        const templateData = JSON.parse(savedTemplate)
+        setFileInfo(prev => ({ 
+          ...prev, 
+          template: { fileName: templateData.fileName, size: templateData.size }
+        }))
+        
+        // Auto-processar el fitxer template si existeix
+        toast.success(`Template carregat: ${templateData.fileName}`)
+      } catch (error) {
+        console.error('Error loading template:', error)
+      }
+    }
+    
+    if (savedExcel) {
+      try {
+        const excelData = JSON.parse(savedExcel)
+        setFileInfo(prev => ({ 
+          ...prev, 
+          excel: { 
+            fileName: excelData.fileName, 
+            size: excelData.size, 
+            rows: excelData.rows 
+          }
+        }))
+        
+        // Auto-processar el fitxer excel si existeix
+        toast.success(`Excel carregat: ${excelData.fileName} (${excelData.rows} files)`)
+      } catch (error) {
+        console.error('Error loading excel:', error)
+      }
+    }
+  }, [])
 
   // ROI calculation based on mapping type
   const calculateROI = (mappingType: string): number => {
@@ -213,7 +260,7 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
             <h2 className="text-lg font-semibold">Excel Columns</h2>
           </CardHeader>
           <CardContent>
-            {excelColumns.length === 0 ? (
+            {!fileInfo.excel ? (
               <div className="text-center py-8 text-gray-500">
                 <p>Upload an Excel file to see columns</p>
                 <Button 
@@ -223,6 +270,24 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
                 >
                   <Upload className="w-4 h-4 mr-2" />
                   {isLoading ? 'Processing...' : 'Upload Excel File'}
+                </Button>
+              </div>
+            ) : fileInfo.excel && excelColumns.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="text-green-600 text-sm mb-2">
+                  ✅ {fileInfo.excel.fileName}
+                </div>
+                <div className="text-xs text-gray-500 mb-2">
+                  {Math.round(fileInfo.excel.size / 1024)} KB • {fileInfo.excel.rows} files
+                </div>
+                <Button 
+                  onClick={() => excelInputRef.current?.click()}
+                  disabled={isLoading}
+                  className="mt-2"
+                  variant="secondary"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Process Excel Columns
                 </Button>
               </div>
             ) : (
@@ -254,7 +319,7 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
             <h2 className="text-lg font-semibold">Word Template</h2>
           </CardHeader>
           <CardContent>
-            {!wordContent ? (
+            {!fileInfo.template ? (
               <div className="text-center py-8 text-gray-500">
                 <p>Upload a Word template to see content</p>
                 <Button 
@@ -264,6 +329,24 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
                 >
                   <Upload className="w-4 h-4 mr-2" />
                   {isLoading ? 'Processing...' : 'Upload Word Template'}
+                </Button>
+              </div>
+            ) : fileInfo.template && !wordContent ? (
+              <div className="text-center py-8">
+                <div className="text-green-600 text-sm mb-2">
+                  ✅ {fileInfo.template.fileName}
+                </div>
+                <div className="text-xs text-gray-500 mb-2">
+                  {Math.round(fileInfo.template.size / 1024)} KB
+                </div>
+                <Button 
+                  onClick={() => wordInputRef.current?.click()}
+                  disabled={isLoading}
+                  className="mt-2"
+                  variant="secondary"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Process Word Content
                 </Button>
               </div>
             ) : (

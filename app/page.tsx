@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AuthForm from '@/components/AuthForm';
 
 interface UploadState {
@@ -25,6 +25,40 @@ export default function Home() {
     error: null
   });
 
+  // Recuperar dades del localStorage en carregar la pàgina
+  useEffect(() => {
+    const savedTemplate = localStorage.getItem('textami_template')
+    const savedExcel = localStorage.getItem('textami_excel')
+    
+    if (savedTemplate) {
+      try {
+        const templateData = JSON.parse(savedTemplate)
+        setUploadState(prev => ({ 
+          ...prev, 
+          template: { fileName: templateData.fileName, size: templateData.size }
+        }))
+      } catch (error) {
+        console.error('Error loading template from localStorage:', error)
+      }
+    }
+    
+    if (savedExcel) {
+      try {
+        const excelData = JSON.parse(savedExcel)
+        setUploadState(prev => ({ 
+          ...prev, 
+          excel: { 
+            fileName: excelData.fileName, 
+            size: excelData.size, 
+            rows: excelData.rows 
+          }
+        }))
+      } catch (error) {
+        console.error('Error loading excel from localStorage:', error)
+      }
+    }
+  }, [])
+
   const handleTemplateUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
@@ -47,6 +81,13 @@ export default function Home() {
           size: file.size
         },
         uploading: false
+      }))
+
+      // Guardar a localStorage
+      localStorage.setItem('textami_template', JSON.stringify({
+        fileName: file.name,
+        size: file.size,
+        file: file // Guardem el fitxer per poder-lo usar després
       }))
 
       console.log('Template carregat:', file.name)
@@ -83,6 +124,14 @@ export default function Home() {
           rows: Math.floor(Math.random() * 100) + 10 // Simular rows
         },
         uploading: false
+      }))
+
+      // Guardar a localStorage
+      localStorage.setItem('textami_excel', JSON.stringify({
+        fileName: file.name,
+        size: file.size,
+        rows: Math.floor(Math.random() * 100) + 10,
+        file: file // Guardem el fitxer per poder-lo usar després
       }))
 
       console.log('Excel carregat:', file.name)
@@ -228,7 +277,7 @@ export default function Home() {
               </p>
               <button 
                 disabled={!uploadState.template || !uploadState.excel}
-                onClick={() => window.location.href = '/generator'}
+                onClick={() => window.location.href = '/editor'}
                 className={`w-full py-2 px-4 rounded-md transition-colors ${
                   uploadState.template && uploadState.excel
                     ? 'bg-green-600 text-white hover:bg-green-700 cursor-pointer' 
