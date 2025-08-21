@@ -203,39 +203,41 @@ export class PremiumModulesConfig {
     console.log('🔄 Converting Buffer to ZIP for Premium Modules...')
     const zip = new PizZip(template)
     
-    // Create base docxtemplater instance with modern API
-    const doc = new Docxtemplater(zip, {
-      paragraphLoop: true,
-      linebreaks: true,
-      // Modern constructor requires ZIP object, not raw Buffer
-    })
-
-    // Attach enabled Premium Modules in optimal order
+    // Prepare Premium Modules for v4 constructor
+    const modules: any[] = []
     const attachedModules: string[] = []
 
     // 1. Styling Module (€500) - Apply first for theme control
     if (enabledModules.includes('style') && this.modules.stylingModule) {
-      doc.attachModule(this.modules.stylingModule)
+      modules.push(this.modules.stylingModule)
       attachedModules.push('Styling (€500)')
     }
 
     // 2. HTML Module (€250) - Process rich content 
     if (enabledModules.includes('html') && this.modules.htmlModule) {
-      doc.attachModule(this.modules.htmlModule)
+      modules.push(this.modules.htmlModule)
       attachedModules.push('HTML (€250)')
     }
 
     // 3. Image Module (€250) - Process images
     if (enabledModules.includes('image') && this.modules.imageModule) {
-      doc.attachModule(this.modules.imageModule)
+      modules.push(this.modules.imageModule)
       attachedModules.push('Image (€250)')
     }
 
     // 4. XLSX Module (€250) - For Excel generation (if needed)
     if (enabledModules.includes('xlsx') && this.modules.xlsxModule) {
-      doc.attachModule(this.modules.xlsxModule)
+      modules.push(this.modules.xlsxModule)
       attachedModules.push('XLSX (€250)')
     }
+    
+    // Create base docxtemplater instance with v4 API including modules
+    console.log('🚀 Creating Docxtemplater v4 with Premium Modules:', attachedModules)
+    const doc = new Docxtemplater(zip, {
+      paragraphLoop: true,
+      linebreaks: true,
+      modules: modules, // v4 constructor takes modules in options
+    })
 
     console.log(`📋 Docxtemplater instance created with modules: ${attachedModules.join(', ')}`)
     
