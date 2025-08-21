@@ -5,7 +5,7 @@
 
 import React, { useState, useCallback, useRef } from 'react'
 import { Button, Card, CardHeader, CardContent, Alert } from '@/components/ui'
-import { Upload } from '@heroicons/react/24/outline'
+import { ArrowUpTrayIcon as Upload } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
 
 interface VisualTemplateEditorProps {
