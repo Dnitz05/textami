@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import VisualTemplateEditor from '@/components/visual-mapping/VisualTemplateEditor';
+import PremiumVisualEditor from '@/components/visual-mapping/PremiumVisualEditor';
 
 export default function EditorPage() {
   const [files, setFiles] = useState<{
@@ -30,10 +30,10 @@ export default function EditorPage() {
           <div className="flex justify-between items-center mb-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                🎨 Editor Visual de Plantilles
+                ⭐ Editor Visual Premium
               </h1>
               <p className="text-gray-600">
-                Connecta visualment les columnes d'Excel amb el text del document Word
+                Sistema intel·ligent amb tecnologia Premium Modules - Qualitat professional automàtica
               </p>
             </div>
             <button 
@@ -45,7 +45,7 @@ export default function EditorPage() {
           </div>
         </div>
 
-        <VisualTemplateEditor />
+        <PremiumVisualEditor />
       </div>
     </div>
   );

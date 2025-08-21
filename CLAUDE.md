@@ -9,7 +9,6 @@
   - Image Module: €250 - `{%variable}` for dynamic images  
   - Style Module: €500 - `{variable:style="..."}` for preserving formatting
   - XLSX Module: €250 - for Excel generation
-- **ROI tracking is mandatory** for all implementations
 
 ## Technology Stack
 - **Framework**: Next.js 15.4.6 with React 19.1.0 and TypeScript
@@ -24,14 +23,17 @@
 ✅ **CORRECT WORKFLOW:**
 1. User uploads Excel file FIRST
 2. User uploads normal Word document (no predefined variables)
-3. User VISUALLY MARKS Excel columns and Word text
-4. System creates automatic associations
-5. Visual marking is the core value proposition worth €1,250
+3. User VISUALLY MARKS Excel columns and Word text (Click Excel → Click Word)
+4. System automatically chooses optimal Premium Module (transparent to user)
+5. System creates automatic associations with professional results
+6. User experiences magical, professional workflow without technical complexity
 
 ❌ **INCORRECT WORKFLOW:**
 - Users uploading Word documents with predefined {variables}
 - Manual variable syntax creation
 - Any non-visual mapping approach
+- Exposing Premium Module choices to users
+- Making users aware of technical implementation details
 
 ## Current Implementation Status
 
@@ -124,10 +126,16 @@ npm run prettier        # Code formatting
 - Maximum line limits enforced per component
 
 ### Premium Modules Usage
-- **Always track ROI** for Premium Modules usage
-- Calculate module value in visual mappings
-- Display ROI statistics to justify €1,250 investment
-- Priority order: Style (€500) > HTML (€250) > Image (€250) > Text (€0)
+- **MODULES ARE PROGRAMMER TOOLS, NOT USER OPTIONS**
+- Use premium modules based on UTILITY, PROFESSIONAL RESULTS, and TIME SAVINGS
+- **AUTOMATIC AND TRANSPARENT** - User never sees or chooses modules
+- Style Module: `{variable:style="..."}` - When content needs formatting preservation
+- HTML Module: `{~~variable}` - When content contains rich text/HTML  
+- Image Module: `{%variable}` - When content references images
+- XLSX Module: Excel generation - When generating Excel outputs
+- Priority: Functional need > Professional quality > Time savings > Simple text
+- **User Experience**: Click Excel → Click Word → Automatic optimal mapping
+- **Result**: User only sees magical and professional experience without knowing the technical complexity behind
 
 ### Code Standards
 - **TypeScript strict mode** enforced
@@ -144,7 +152,7 @@ npm run prettier        # Code formatting
 
 ## Critical Success Factors
 1. **Visual mapping must work flawlessly** - core value proposition
-2. **Premium Modules ROI must be tracked and maximized**
+2. **Premium Modules must be leveraged** - €1,250 investment
 3. **Excel + Word visual association is non-negotiable**
 4. **Keep implementation simple and focused** (learned from scope creep)
 5. **All file operations must be robust with proper error handling**
