@@ -360,14 +360,9 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
     try {
       // FASE 3: CREATE PREMIUM MAPPING with enhanced context awareness
       const mappingContext = {
-        documentType: wordSelection.isTableCell ? 'table' : wordSelection.isHeader ? 'header' : 'generic',
-        qualityMode: 'maximum', // Always use maximum quality in Fase 3
-        elementContext: {
-          type: wordSelection.elementType || 'p',
-          isTableCell: wordSelection.isTableCell || false,
-          isHeader: wordSelection.isHeader || false,
-          fullText: wordSelection.fullElementText || wordSelection.text
-        }
+        documentType: wordSelection.isTableCell ? 'report' : 'generic' as const,
+        qualityMode: 'maximum' as const, // Always use maximum quality in Fase 3
+        consistencyOptimization: true
       }
       
       const premiumMapping = premiumMappingEngine.createIntelligentMapping(
@@ -826,7 +821,7 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
                   dangerouslySetInnerHTML={{ __html: wordData.htmlContent }}
                   onClick={(e) => {
                     // FASE 3: Enhanced text selection with table and paragraph support
-                    this.handleEnhancedTextSelection(e)
+                    handleEnhancedTextSelection(e)
                   }}
                   style={{
                     minHeight: '600px',
