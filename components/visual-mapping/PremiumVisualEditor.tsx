@@ -125,12 +125,24 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
     
     if (savedTemplate) {
       try {
+        console.log('📄 Loading saved Word template from localStorage...')
         const templateData = JSON.parse(savedTemplate)
+        console.log('🔍 Template data structure:', {
+          hasBase64: !!templateData.base64,
+          fileName: templateData.fileName,
+          size: templateData.size,
+          base64Length: templateData.base64 ? templateData.base64.length : 0,
+          base64Preview: templateData.base64 ? templateData.base64.substring(0, 50) + '...' : 'none'
+        })
+        
         if (templateData.base64) {
           await processWordFileWithPremiumIntelligence(templateData.base64, templateData.fileName, templateData.size)
+        } else {
+          console.error('❌ No base64 data in saved template')
+          toast.error('Document Word corromput al localStorage')
         }
       } catch (error) {
-        console.error('Error loading template:', error)
+        console.error('❌ Error loading template:', error)
         toast.error('Error carregant plantilla Word')
       }
     }
@@ -444,7 +456,29 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
       const base64Content = base64Data.split(',')[1] || base64Data
       const buffer = Buffer.from(base64Content, 'base64')
       
+      // Validate buffer before Premium Modules processing
+      console.log('🔍 Buffer validation:', {
+        size: buffer.length,
+        isEmpty: buffer.length === 0,
+        startsWithPK: buffer.length > 4 && buffer[0] === 0x50 && buffer[1] === 0x4B, // DOCX is ZIP format
+        first4Bytes: buffer.length > 4 ? Array.from(buffer.subarray(0, 4)) : 'too short'
+      })
+      
+      if (buffer.length === 0) {
+        throw new Error('Document buffer is empty - invalid DOCX file')
+      }
+      
+      if (buffer.length < 100) {
+        throw new Error(`Document buffer too small (${buffer.length} bytes) - likely corrupted DOCX`)
+      }
+      
+      // DOCX files should start with PK (ZIP signature)
+      if (!(buffer[0] === 0x50 && buffer[1] === 0x4B)) {
+        console.warn('⚠️ Document may not be valid DOCX (missing ZIP signature)')
+      }
+      
       // Create Docxtemplater instance with Premium Modules (€1,250 investment)
+      console.log('🚀 Creating Docxtemplater instance with Premium Modules...')
       const docxInstance = premiumModulesConfig.createDocxtemplaterInstance(buffer, ['html', 'image', 'style'])
       
       // Get document text with Premium Modules parsing
