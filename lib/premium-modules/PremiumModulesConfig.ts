@@ -5,12 +5,11 @@
 import Docxtemplater from 'docxtemplater'
 import PizZip from 'pizzip'
 
-// Premium Module imports (these would be the actual premium modules)
-// Note: These are the actual premium modules that cost €1,250 total
-// import HtmlModule from 'docxtemplater-html-module'     // €250
-// import ImageModule from 'docxtemplater-image-module'   // €250  
-// import StylingModule from 'docxtemplater-styling-module' // €500
-// import XlsxModule from 'docxtemplater-xlsx-module'     // €250
+// Premium Module imports - REAL PREMIUM MODULES NOW AVAILABLE! €1,250 total
+import HtmlModule from 'docxtemplater-html-module'     // €250
+import ImageModule from 'docxtemplater-image-module'   // €250  
+import StylingModule from 'docxtemplater-style-module' // €500
+import XlsxModule from 'docxtemplater-xlsx-module'     // €250
 
 // For development/testing, we'll create mock implementations
 interface PremiumModuleInterface {
@@ -193,7 +192,7 @@ export class PremiumModulesConfig {
   public createDocxtemplaterInstance(
     template: Buffer | Uint8Array,
     enabledModules: ('html' | 'image' | 'style' | 'xlsx')[] = ['html', 'image', 'style']
-  ): Docxtemplater {
+  ): any {
     
     if (!this.isInitialized) {
       throw new Error('Premium Modules not initialized. Call initializePremiumModules() first.')
@@ -203,23 +202,42 @@ export class PremiumModulesConfig {
     console.log('🔄 Converting Buffer to ZIP for Premium Modules...')
     const zip = new PizZip(template)
     
-    // TEMPORARY: Use standard Docxtemplater until Premium Modules are properly configured
-    // The mock modules don't implement the required Docxtemplater interface functions
-    const attachedModules: string[] = ['Standard Docxtemplater (Development Mode)']
+    // REAL PREMIUM MODULES INTEGRATION - €1,250 investment activated!
+    const modules: any[] = []
+    const attachedModules: string[] = []
     
-    console.log('⚠️ Using Standard Docxtemplater (Premium Modules mocks not compatible)')
-    console.log('💡 In production, real Premium Modules (€1,250) would be used here')
+    // Attach enabled Premium Modules
+    if (enabledModules.includes('html') && this.modules.htmlModule) {
+      modules.push(this.modules.htmlModule)
+      attachedModules.push('HTML Module (€250)')
+    }
     
-    // Create base docxtemplater instance with v4 API (no modules for now)
+    if (enabledModules.includes('image') && this.modules.imageModule) {
+      modules.push(this.modules.imageModule)
+      attachedModules.push('Image Module (€250)')
+    }
+    
+    if (enabledModules.includes('style') && this.modules.stylingModule) {
+      modules.push(this.modules.stylingModule)
+      attachedModules.push('Styling Module (€500)')
+    }
+    
+    if (enabledModules.includes('xlsx') && this.modules.xlsxModule) {
+      modules.push(this.modules.xlsxModule)
+      attachedModules.push('XLSX Module (€250)')
+    }
+    
+    console.log('🚀 REAL Premium Modules activated:', attachedModules.join(', '))
+    console.log('💰 Total investment leveraged: €1,250')
+    
+    // Create docxtemplater instance with REAL Premium Modules
     const doc = new Docxtemplater(zip, {
+      modules,
       paragraphLoop: true,
       linebreaks: true,
-      // modules: [], // Empty until we have real Premium Modules
     })
     
     // Log the module status for transparency
-    console.log('📋 Docxtemplater instance created in development mode')
-
     console.log(`📋 Docxtemplater instance created with modules: ${attachedModules.join(', ')}`)
     
     return doc
@@ -449,97 +467,46 @@ export class PremiumModulesConfig {
   // Private initialization methods
 
   private async initializeHTMLModule(): Promise<any> {
-    // In production, this would be:
-    // return new HtmlModule({
-    //   styleSheet: this.getOptimizedHTMLStylesheet(),
-    //   ignoreUnknownTags: 'inline',
-    //   ignoreCssErrors: true
-    // })
-
-    // Mock implementation for development
-    return {
-      name: 'HTMLModule',
-      cost: 250,
-      config: {
-        styleSheet: this.getOptimizedHTMLStylesheet(),
-        ignoreUnknownTags: 'inline',
-        ignoreCssErrors: true,
-        // Performance optimization: Cache common translations
-        enableCaching: true
-      }
-    }
+    // REAL PREMIUM MODULE - €250 investment activated!
+    return new HtmlModule({
+      styleSheet: this.getOptimizedHTMLStylesheet(),
+      ignoreUnknownTags: true,
+      ignoreCssErrors: true
+    })
   }
 
   private async initializeImageModule(): Promise<any> {
-    // In production, this would be:
-    // return new ImageModule({
-    //   getImage: this.getOptimizedImageGetter(),
-    //   getSize: this.getIntelligentSizeCalculator(),
-    //   getProps: this.getEnhancedImageProps(),
-    //   dpi: 150
-    // })
-
-    // Mock implementation for development
-    return {
-      name: 'ImageModule',
-      cost: 250,
-      config: {
-        getImage: this.getOptimizedImageGetter(),
-        getSize: this.getIntelligentSizeCalculator(),
-        getProps: this.getEnhancedImageProps(),
-        dpi: 150,
-        // Performance optimization: Async processing
-        asyncProcessing: true,
-        // Quality optimization: Auto-optimization
-        autoOptimization: true
-      }
-    }
+    // REAL PREMIUM MODULE - €250 investment activated!
+    return new ImageModule({
+      getImage: this.getOptimizedImageGetter(),
+      getSize: this.getIntelligentSizeCalculator(),
+      getProps: this.getEnhancedImageProps(),
+      dpi: 150
+    })
   }
 
   private async initializeStylingModule(): Promise<any> {
-    // In production, this would be:
-    // return new StylingModule({
-    //   dropGenericStyleParagraph: true
-    // })
-
-    // Mock implementation for development  
-    return {
-      name: 'StylingModule',
-      cost: 500, // Premium tier
-      config: {
-        dropGenericStyleParagraph: true,
-        // Premium feature: Advanced styling
-        enableAdvancedStyling: true,
-        // Premium feature: Theme control
-        enableThemeControl: true,
-        // Premium feature: Conditional formatting
-        enableConditionalFormatting: true
+    // REAL PREMIUM MODULE - €500 investment activated!
+    return new StylingModule({
+      prefix: {
+        cell: ":stylecell",
+        paragraph: ":stylepar", 
+        run: ":stylerun",
+        Run: "::stylerun",
+        bullets: ":stylebullets",
+        row: ":stylerow"
       }
-    }
+    })
   }
 
   private async initializeXLSXModule(): Promise<any> {
-    // In production, this would be:
-    // return new XlsxModule({
-    //   fmts: this.getOptimizedFormats(),
-    //   preferTemplateFormat: true,
-    //   keepRowHeight: 'always',
-    //   innerLoopNewLine: false
-    // })
-
-    // Mock implementation for development
-    return {
-      name: 'XLSXModule', 
-      cost: 250,
-      config: {
-        fmts: this.getOptimizedFormats(),
-        preferTemplateFormat: true,
-        keepRowHeight: 'always',
-        innerLoopNewLine: false,
-        // Performance optimization: Batch processing
-        enableBatchProcessing: true
-      }
-    }
+    // REAL PREMIUM MODULE - €250 investment activated!
+    return new XlsxModule({
+      fmts: this.getOptimizedFormats(),
+      preferTemplateFormat: true,
+      keepRowHeight: 'always',
+      innerLoopNewLine: false
+    })
   }
 
   // Optimization helper methods
@@ -590,9 +557,9 @@ export class PremiumModulesConfig {
   }
 
   private getIntelligentSizeCalculator() {
-    return (img: Buffer, tagValue: string, tagName: string, context: any) => {
+    return (imgData: string | Buffer, data: any, tagValue: string, options: any): [number, number] => {
       // Intelligent sizing based on container and content
-      const containerWidth = context?.containerWidth || 500
+      const containerWidth = options?.containerWidth || 500
       const maxWidth = Math.min(containerWidth * 0.8, 400)
       const maxHeight = maxWidth * 0.75 // 4:3 aspect ratio default
       
@@ -603,13 +570,15 @@ export class PremiumModulesConfig {
   }
 
   private getEnhancedImageProps() {
-    return (img: Buffer, tagValue: string, tagName: string) => {
+    return (imgData: string | Buffer, data: any, tagValue: string, options: any) => {
       // Enhanced image properties for professional output
       return {
-        caption: `Figure: ${tagName}`,
+        caption: {
+          text: `Figure: ${tagValue}`,
+          align: 'center'
+        },
         altText: `Dynamic image: ${tagValue}`,
-        alignment: 'center',
-        quality: 'high'
+        imageFit: 'contain'
       }
     }
   }
