@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "../styles/professional-ux.css";
 
 :root {
   --background: #ffffff;

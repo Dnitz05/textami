@@ -1,5 +1,5 @@
 // components/visual-mapping/PremiumVisualEditor.tsx
-// TEXTAMI PREMIUM VISUAL MAPPING SYSTEM - Phase 1
+// TEXTAMI PREMIUM VISUAL MAPPING SYSTEM - Phase 2
 // Professional visual mapping with Premium Modules intelligence (€1,250)
 
 "use client"
@@ -19,6 +19,9 @@ import {
   type PremiumMapping,
   type PremiumModuleType
 } from '@/lib/premium-modules'
+
+// Import Professional UX components (Phase 2)
+import ProfessionalSidebar from './ProfessionalSidebar'
 
 interface PremiumVisualEditorProps {
   templateId?: string
@@ -360,6 +363,61 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
     }
   }, [])
 
+  // Professional Sidebar handlers (Phase 2)
+
+  const handleCreateMappingFromSidebar = useCallback((excelColumn: ExcelColumnAnalysis, paragraphId: string) => {
+    // Find the paragraph text by ID
+    const paragraphElement = documentViewerRef.current?.querySelector(`[data-paragraph-id="${paragraphId}"]`)
+    if (!paragraphElement) return
+
+    const paragraphText = paragraphElement.textContent || ''
+    
+    // Create a word selection object
+    const wordSelection = {
+      start: 0,
+      end: paragraphText.length,
+      text: paragraphText,
+      paragraphId
+    }
+
+    // Set selection state and create mapping
+    setSelectedColumn(excelColumn)
+    setSelectedText(wordSelection)
+    createPremiumMapping(excelColumn, wordSelection)
+  }, [])
+
+  const handleUpdateMapping = useCallback((mappingId: string, updates: Partial<PremiumMapping>) => {
+    setPremiumMappings(prev => 
+      prev.map(mapping => 
+        mapping.id === mappingId 
+          ? { ...mapping, ...updates }
+          : mapping
+      )
+    )
+    toast.success('Mapping actualitzat')
+  }, [])
+
+  const handleDeleteMapping = useCallback((mappingId: string) => {
+    setPremiumMappings(prev => prev.filter(mapping => mapping.id !== mappingId))
+    toast.success('Mapping eliminat')
+  }, [])
+
+  const handleHighlightParagraph = useCallback((paragraphId: string) => {
+    const paragraphElement = documentViewerRef.current?.querySelector(`[data-paragraph-id="${paragraphId}"]`)
+    if (!paragraphElement) return
+
+    // Add highlight class
+    paragraphElement.classList.add('highlight-paragraph')
+    
+    // Remove highlight after 2 seconds
+    setTimeout(() => {
+      paragraphElement.classList.remove('highlight-paragraph')
+    }, 2000)
+    
+    // Scroll to element
+    paragraphElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [])
+
   // Helper functions
 
   const convertWordToHTML = async (base64Data: string): Promise<string> => {
@@ -524,61 +582,17 @@ export default function PremiumVisualEditor({ templateId }: PremiumVisualEditorP
           </div>
         </div>
 
-        {/* Mappings Sidebar */}
-        <div className="w-1/3 bg-gray-50 border-l border-gray-200 overflow-y-auto">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">
-              🎯 Mappings Creats
-            </h2>
-            
-            {premiumMappings.length > 0 ? (
-              <div className="space-y-3">
-                {premiumMappings.map((mapping, index) => (
-                  <div key={mapping.id} className="bg-white rounded-lg border border-gray-200 p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center space-x-2">
-                        <span className="w-6 h-6 bg-blue-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                          {index + 1}
-                        </span>
-                        <span className="font-medium text-gray-900">
-                          {mapping.excel_column.header}
-                        </span>
-                      </div>
-                      
-                      {/* Premium Module badge */}
-                      <div className={`px-2 py-1 text-xs font-medium rounded ${
-                        mapping.selected_premium_module === 'html' ? 'bg-blue-100 text-blue-800' :
-                        mapping.selected_premium_module === 'image' ? 'bg-green-100 text-green-800' :
-                        mapping.selected_premium_module === 'style' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {mapping.selected_premium_module.toUpperCase()}
-                      </div>
-                    </div>
-                    
-                    <div className="text-sm text-gray-600 mb-2">
-                      "{mapping.word_selection.text.substring(0, 50)}..."
-                    </div>
-                    
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span>Qualitat: {mapping.quality_score}/10</span>
-                      {mapping.performance_benefit > 0 && (
-                        <span className="text-green-600">+{mapping.performance_benefit}min</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center text-gray-500 py-8">
-                <p className="text-sm">No hi ha mappings creats</p>
-                <p className="text-xs mt-2">
-                  Selecciona una columna Excel i després clica text al document Word
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
+        {/* Professional Sidebar - Phase 2 */}
+        <ProfessionalSidebar 
+          mappings={premiumMappings}
+          excelColumns={excelData?.columns || []}
+          documentRef={documentViewerRef}
+          onCreateMapping={handleCreateMappingFromSidebar}
+          onUpdateMapping={handleUpdateMapping}
+          onDeleteMapping={handleDeleteMapping}
+          onHighlightParagraph={handleHighlightParagraph}
+          className="w-1/3"
+        />
 
       </div>
 
