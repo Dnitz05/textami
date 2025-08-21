@@ -198,11 +198,12 @@ export class PremiumModulesConfig {
       throw new Error('Premium Modules not initialized. Call initializePremiumModules() first.')
     }
 
-    // Create base docxtemplater instance
-    const doc = new Docxtemplater()
-    
-    // Load template
-    doc.loadZip(template as any)
+    // Create base docxtemplater instance with modern API
+    const doc = new Docxtemplater(template, {
+      paragraphLoop: true,
+      linebreaks: true,
+      // Modern constructor requires zip data directly
+    })
 
     // Attach enabled Premium Modules in optimal order
     const attachedModules: string[] = []
