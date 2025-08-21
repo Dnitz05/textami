@@ -103,13 +103,14 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
   }, [])
 
 
-  // Generate Docxtemplater syntax based on mapping type
+  // Generate Docxtemplater syntax based on mapping type using Premium Modules
   const generateDocxSyntax = (column: string, type: string): string => {
     switch (type) {
-      case 'html': return `{~~${column}}`
-      case 'image': return `{%${column}}`
-      case 'style': return `{${column}:style="..."}`
-      default: return `{${column}}`
+      case 'html': return `{~~${column}}`  // HTML Module - €250
+      case 'image': return `{%${column}}`  // Image Module - €250  
+      case 'style': return `{${column}:style="color:blue;font-weight:bold"}`  // Style Module - €500
+      case 'xlsx': return `{${column}}`    // XLSX Module - €250
+      default: return `{${column}}`        // Text básic
     }
   }
 
@@ -128,8 +129,8 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
     toast(`Selecciona text al document per associar amb "${column.header}"`, { icon: '👆' })
   }, [])
 
-  // Handle text selection in Word document
-  const handleTextSelection = useCallback(() => {
+  // Handle text selection with mapping type choice
+  const handleTextSelection = useCallback((mappingType: 'text' | 'html' | 'image' | 'style' = 'text') => {
     if (!selectedColumn || !mappingMode) return
     
     const selection = window.getSelection()
@@ -143,8 +144,8 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
       return
     }
 
-    // Generate placeholder syntax
-    const placeholder = `{${selectedColumn.column}}`
+    // Generate placeholder syntax using Premium Modules
+    const placeholder = generateDocxSyntax(selectedColumn.column, mappingType)
     
     // Create mapping
     const mapping: VisualMapping = {
@@ -155,12 +156,20 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
         end: range.endOffset,
         text: selectedText
       },
-      mapping_type: 'text',
+      mapping_type: mappingType,
       docx_syntax: placeholder
     }
 
+    // Choose color based on mapping type (Premium Module value)
+    const colors = {
+      text: '#e3f2fd',    // Basic - €0
+      html: '#e8f5e8',    // HTML Module - €250
+      image: '#fff3e0',   // Image Module - €250
+      style: '#f3e5f5'    // Style Module - €500
+    }
+
     // Replace selected text with placeholder in HTML
-    const newHtml = wordHtmlContent.replace(selectedText, `<span class="placeholder" style="background-color: #e3f2fd; padding: 2px 4px; border-radius: 3px; font-weight: bold;">${placeholder}</span>`)
+    const newHtml = wordHtmlContent.replace(selectedText, `<span class="placeholder" style="background-color: ${colors[mappingType]}; padding: 2px 4px; border-radius: 3px; font-weight: bold;">${placeholder}</span>`)
     setWordHtmlContent(newHtml)
 
     // Add mapping
@@ -171,8 +180,15 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
     setMappingMode(false)
     selection.removeAllRanges()
     
-    toast.success(`Mapping creat: "${selectedText}" → ${placeholder}`)
-  }, [selectedColumn, mappingMode, wordHtmlContent])
+    const moduleNames = {
+      text: 'Text bàsic',
+      html: 'HTML Module (€250)',
+      image: 'Image Module (€250)', 
+      style: 'Style Module (€500)'
+    }
+    
+    toast.success(`${moduleNames[mappingType]}: "${selectedText}" → ${placeholder}`)
+  }, [selectedColumn, mappingMode, wordHtmlContent, generateDocxSyntax])
 
   // Process Word file from base64
   const processWordFile = useCallback(async (base64: string, fileName: string) => {
@@ -332,6 +348,13 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
       <CardHeader>
         <h1 className="text-2xl font-bold">Visual Template Editor</h1>
         <p className="text-gray-600">Template ID: {templateId || 'New Template'}</p>
+        <div className="flex gap-2 mt-3 text-xs">
+          <span className="px-2 py-1 bg-green-100 text-green-700 rounded">🎨 HTML Module</span>
+          <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded">🖼️ Image Module</span>
+          <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded">✨ Style Module</span>
+          <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded">📊 XLSX Module</span>
+          <span className="text-gray-500 ml-2">€1,250 Premium Investment</span>
+        </div>
       </CardHeader>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -446,18 +469,38 @@ export default function VisualTemplateEditor({ templateId }: VisualTemplateEdito
                     <div className="text-xs text-blue-600 mt-1">
                       Selecciona text al document i després fes click al botó "Crear Mapping"
                     </div>
-                    <button
-                      onClick={handleTextSelection}
-                      className="mt-2 px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
-                    >
-                      Crear Mapping
-                    </button>
+                    <div className="grid grid-cols-2 gap-2 mt-3">
+                      <button
+                        onClick={() => handleTextSelection('text')}
+                        className="px-3 py-2 bg-gray-100 text-gray-800 text-xs rounded hover:bg-gray-200"
+                      >
+                        📝 Text Simple
+                      </button>
+                      <button
+                        onClick={() => handleTextSelection('html')}
+                        className="px-3 py-2 bg-green-100 text-green-800 text-xs rounded hover:bg-green-200"
+                      >
+                        🎨 HTML (€250)
+                      </button>
+                      <button
+                        onClick={() => handleTextSelection('image')}
+                        className="px-3 py-2 bg-orange-100 text-orange-800 text-xs rounded hover:bg-orange-200"
+                      >
+                        🖼️ Image (€250)
+                      </button>
+                      <button
+                        onClick={() => handleTextSelection('style')}
+                        className="px-3 py-2 bg-purple-100 text-purple-800 text-xs rounded hover:bg-purple-200"
+                      >
+                        ✨ Style (€500)
+                      </button>
+                    </div>
                     <button
                       onClick={() => {
                         setMappingMode(false)
                         setSelectedColumn(null)
                       }}
-                      className="mt-2 ml-2 px-3 py-1 bg-gray-300 text-gray-700 text-xs rounded hover:bg-gray-400"
+                      className="mt-2 px-3 py-1 bg-gray-300 text-gray-700 text-xs rounded hover:bg-gray-400 w-full"
                     >
                       Cancel·lar
                     </button>
