@@ -3,6 +3,7 @@
 // Optimized configuration for maximum Premium Module performance and quality
 
 import Docxtemplater from 'docxtemplater'
+import PizZip from 'pizzip'
 
 // Premium Module imports (these would be the actual premium modules)
 // Note: These are the actual premium modules that cost €1,250 total
@@ -198,11 +199,15 @@ export class PremiumModulesConfig {
       throw new Error('Premium Modules not initialized. Call initializePremiumModules() first.')
     }
 
+    // Create ZIP object from Buffer using PizZip
+    console.log('🔄 Converting Buffer to ZIP for Premium Modules...')
+    const zip = new PizZip(template)
+    
     // Create base docxtemplater instance with modern API
-    const doc = new Docxtemplater(template, {
+    const doc = new Docxtemplater(zip, {
       paragraphLoop: true,
       linebreaks: true,
-      // Modern constructor requires zip data directly
+      // Modern constructor requires ZIP object, not raw Buffer
     })
 
     // Attach enabled Premium Modules in optimal order
