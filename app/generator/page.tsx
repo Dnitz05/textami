@@ -320,8 +320,8 @@ export default function GeneratorPage() {
     
     // Prepare data for localStorage (progressive data)
     const documentData = {
-      templateId: aiState.template.templateId,
-      fileName: aiState.template.fileName,
+      templateId: aiState.template!.templateId,
+      fileName: aiState.template!.fileName,
       placeholders: aiState.aiAnalysis?.placeholders || [],
       transcription: aiState.aiAnalysis?.transcription || '',
       htmlPreview: aiState.aiAnalysis?.htmlPreview
@@ -333,7 +333,7 @@ export default function GeneratorPage() {
     } : null;
     
     const generationData = {
-      template: aiState.template,
+      template: aiState.template!,
       documentData: aiState.aiAnalysis,
       mappings: mappingState.mappings,
       excelData: excelState.analysis,
@@ -359,7 +359,7 @@ export default function GeneratorPage() {
     });
     
     // Redirect to advanced interface
-    const url = `/generator/advanced?templateId=${aiState.template.templateId}`;
+    const url = `/generator/advanced?templateId=${aiState.template!.templateId}`;
     console.log('🔄 Redirecting to advanced interface:', url);
     
     window.location.href = url;
