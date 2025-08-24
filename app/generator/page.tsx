@@ -249,6 +249,7 @@ export default function GeneratorPage() {
     });
 
     // Redirect to advanced interface
+    console.log('🔄 Redirecting to advanced interface NOW!');
     window.location.href = `/generator/advanced?templateId=${aiState.template.templateId}`;
   };
 

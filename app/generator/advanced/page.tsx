@@ -345,13 +345,35 @@ function AdvancedGeneratorContent() {
             <div className="bg-white shadow-lg rounded-lg p-8 min-h-96">
               {documentData ? (
                 <div className="space-y-4">
-                  <div className="prose max-w-none">
-                    <div dangerouslySetInnerHTML={{ 
-                      __html: documentData.transcription.replace(
-                        new RegExp(`(${documentData.placeholders.map(p => p.text).join('|')})`, 'gi'),
-                        '<mark class="bg-yellow-200 px-1 rounded">$1</mark>'
-                      )
-                    }} />
+                  <div className="prose max-w-none text-gray-900">
+                    {documentData.transcription ? (
+                      <div dangerouslySetInnerHTML={{ 
+                        __html: documentData.transcription.replace(
+                          new RegExp(`(${documentData.placeholders.map(p => p.text).join('|')})`, 'gi'),
+                          '<mark class="bg-yellow-200 px-1 rounded font-semibold">$1</mark>'
+                        )
+                      }} />
+                    ) : (
+                      <div className="p-8 text-center">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-4">📄 {documentData.fileName}</h2>
+                        <div className="p-6 bg-blue-50 rounded-lg">
+                          <p className="text-lg text-blue-800 mb-2">Document Analysis Complete</p>
+                          <p className="text-blue-600">🔍 Detected {documentData.placeholders.length} placeholders</p>
+                          <div className="mt-4 flex flex-wrap gap-2 justify-center">
+                            {documentData.placeholders.slice(0, 8).map((placeholder, idx) => (
+                              <span key={idx} className="bg-yellow-200 px-3 py-1 rounded-full text-sm font-medium text-yellow-800">
+                                {placeholder.text}
+                              </span>
+                            ))}
+                            {documentData.placeholders.length > 8 && (
+                              <span className="bg-gray-200 px-3 py-1 rounded-full text-sm text-gray-600">
+                                +{documentData.placeholders.length - 8} more
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
                   {documentData.placeholders.length > 0 && (
