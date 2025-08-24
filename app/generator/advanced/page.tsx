@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 interface DocumentData {
@@ -31,7 +31,7 @@ interface MappingProposal {
   reasoning: string;
 }
 
-export default function AdvancedGeneratorPage() {
+function AdvancedGeneratorContent() {
   const searchParams = useSearchParams();
   const [documentData, setDocumentData] = useState<DocumentData | null>(null);
   const [excelData, setExcelData] = useState<ExcelData | null>(null);
@@ -455,5 +455,24 @@ export default function AdvancedGeneratorPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function AdvancedGeneratorPage() {
+  return (
+    <Suspense fallback={
+      <div className="h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-gray-400 mb-4">
+            <svg className="w-8 h-8 mx-auto animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </div>
+          <div className="text-gray-600">Loading advanced interface...</div>
+        </div>
+      </div>
+    }>
+      <AdvancedGeneratorContent />
+    </Suspense>
   );
 }
