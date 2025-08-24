@@ -37,11 +37,18 @@ interface MappingProposal {
 }
 
 export default function GeneratorPage() {
-  // DEBUG: Verificar environment variables a la consola
-  console.log('🔍 Client Environment Variables Check:', {
-    SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'MISSING',
-    SUPABASE_ANON: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'SET' : 'MISSING'
-  });
+  // DEBUG: Verificar environment variables i component lifecycle
+  useEffect(() => {
+    console.log('🔍 GeneratorPage MOUNTED - Environment Variables Check:', {
+      SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'MISSING',
+      SUPABASE_ANON: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'SET' : 'MISSING',
+      timestamp: Date.now()
+    });
+    
+    return () => {
+      console.log('🔄 GeneratorPage UNMOUNTED');
+    };
+  }, []);
   
   const [aiState, setAiState] = useState<{
     processing: boolean;
