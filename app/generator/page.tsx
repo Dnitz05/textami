@@ -223,55 +223,33 @@ export default function GeneratorPage() {
   const handleGenerate = async () => {
     if (!aiState.template?.templateId || !mappingState.mappings.length || !excelState.analysis) return;
 
-    setGenerateState({ loading: true, error: null });
+    console.log('🎯 Redirecting to advanced interface...');
 
-    try {
-      console.log('🚀 Starting document generation...');
+    // Store data in localStorage for advanced interface
+    const documentData = {
+      templateId: aiState.template.templateId,
+      fileName: aiState.template.fileName,
+      placeholders: aiState.aiAnalysis?.placeholders || [],
+      transcription: aiState.aiAnalysis?.transcription || ''
+    };
 
-      // Create sample data from Excel for generation (first 5 rows for testing)
-      const sampleData = Array.from({ length: Math.min(5, excelState.analysis.totalRows) }, (_, i) => {
-        const row: Record<string, any> = {};
-        excelState.analysis!.columns.forEach(col => {
-          row[col.header] = col.sampleData[i % col.sampleData.length] || `Sample ${i + 1}`;
-        });
-        return row;
-      });
+    const excelData = {
+      fileName: excelState.analysis.fileName,
+      columns: excelState.analysis.columns
+    };
 
-      const response = await fetch('/api/ai-docx/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          templateId: aiState.template.templateId,
-          mappings: mappingState.mappings.map(m => ({
-            placeholder: m.placeholder,
-            excelColumn: m.excelColumn,
-            excelHeader: m.excelHeader
-          })),
-          excelData: sampleData,
-          batchSize: 5
-        })
-      });
+    localStorage.setItem('textami_document_data', JSON.stringify(documentData));
+    localStorage.setItem('textami_excel_data', JSON.stringify(excelData));
+    localStorage.setItem('textami_mappings', JSON.stringify(mappingState.mappings));
 
-      const result = await response.json();
-      console.log('📄 Generation response:', result);
+    console.log('💾 Data stored in localStorage:', {
+      document: documentData,
+      excel: excelData,
+      mappings: mappingState.mappings.length
+    });
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Error en document generation');
-      }
-
-      setGenerateState({ loading: false, error: null });
-      console.log('✅ Documents generated:', result.totalGenerated);
-
-      // Show success message
-      alert(`✅ Generated ${result.totalGenerated} documents successfully!`);
-
-    } catch (error) {
-      console.error('❌ Generation error:', error);
-      setGenerateState({
-        loading: false,
-        error: error instanceof Error ? error.message : 'Error desconegut en generation'
-      });
-    }
+    // Redirect to advanced interface
+    window.location.href = `/generator/advanced?templateId=${aiState.template.templateId}`;
   };
 
   return (
