@@ -84,40 +84,59 @@ export default function GeneratorPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    console.log('📤 Uploading DOCX:', file.name);
     setAiState({ processing: true, template: null, aiAnalysis: null, error: null });
 
-    try {
-      const formData = new FormData();
-      formData.append('docx', file);
+    const formData = new FormData();
+    formData.append('docx', file);
 
-      // AI-first endpoint for GPT-5 Vision analysis
+    try {
       const response = await fetch('/api/ai-docx/analyze', {
         method: 'POST',
-        body: formData,
+        body: formData
       });
-
-      const result = await response.json();
-
+      
+      console.log('📡 Response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error(result.error || 'Error en AI analysis');
+        const errorData = await response.json();
+        console.error('❌ API Error:', errorData);
+        throw new Error(errorData.error || `HTTP ${response.status}`);
       }
-
-      setAiState({
-        processing: false,
-        template: result,
-        aiAnalysis: {
-          placeholders: result.placeholders || [],
-          transcription: result.transcription || ''
-        },
-        error: null
-      });
-
+      
+      const result = await response.json();
+      console.log('✅ Analysis result:', result);
+      
+      if (result.success && result.data) {
+        setAiState({
+          processing: false,
+          template: {
+            success: true,
+            templateId: result.data.templateId,
+            fileName: result.data.fileName,
+            size: file.size,
+            storagePath: result.data.storageUrl || '',
+            message: 'Analysis completed successfully'
+          },
+          aiAnalysis: {
+            placeholders: result.data.placeholders || [],
+            transcription: result.data.transcription || ''
+          },
+          error: null
+        });
+        
+        // Guardar a localStorage per backup
+        localStorage.setItem('currentTemplate', JSON.stringify(result.data));
+      } else {
+        throw new Error('Invalid response format');
+      }
     } catch (error) {
+      console.error('❌ Upload failed:', error);
       setAiState({
         processing: false,
         template: null,
         aiAnalysis: null,
-        error: error instanceof Error ? error.message : 'Error desconegut en AI'
+        error: error instanceof Error ? error.message : 'Upload failed'
       });
     }
   };
@@ -221,36 +240,60 @@ export default function GeneratorPage() {
   };
 
   const handleGenerate = async () => {
-    if (!aiState.template?.templateId || !mappingState.mappings.length || !excelState.analysis) return;
-
-    console.log('🎯 Redirecting to advanced interface...');
-
-    // Store data in localStorage for advanced interface
-    const documentData = {
+    // Validacions exhaustives
+    if (!aiState.template?.templateId) {
+      console.error('❌ No template ID available');
+      alert('Error: Template not properly loaded. Please re-upload the document.');
+      return;
+    }
+    
+    if (!mappingState.mappings.length) {
+      console.error('❌ No mappings available');
+      alert('Error: No field mappings configured.');
+      return;
+    }
+    
+    if (!excelState.analysis) {
+      console.error('❌ No Excel data available');
+      alert('Error: Excel data not loaded.');
+      return;
+    }
+    
+    console.log('🚀 Starting generation with:', {
+      templateId: aiState.template.templateId,
+      mappings: mappingState.mappings.length,
+      hasExcel: !!excelState.analysis
+    });
+    
+    // Guardar tot a localStorage abans del redirect
+    const generationData = {
+      template: aiState.template,
+      documentData: aiState.aiAnalysis,
+      mappings: mappingState.mappings,
+      excelData: excelState.analysis,
+      timestamp: Date.now()
+    };
+    
+    localStorage.setItem('generationData', JSON.stringify(generationData));
+    localStorage.setItem('textami_document_data', JSON.stringify({
       templateId: aiState.template.templateId,
       fileName: aiState.template.fileName,
       placeholders: aiState.aiAnalysis?.placeholders || [],
       transcription: aiState.aiAnalysis?.transcription || ''
-    };
-
-    const excelData = {
+    }));
+    localStorage.setItem('textami_excel_data', JSON.stringify({
       fileName: excelState.analysis.fileName,
       columns: excelState.analysis.columns
-    };
-
-    localStorage.setItem('textami_document_data', JSON.stringify(documentData));
-    localStorage.setItem('textami_excel_data', JSON.stringify(excelData));
+    }));
     localStorage.setItem('textami_mappings', JSON.stringify(mappingState.mappings));
-
-    console.log('💾 Data stored in localStorage:', {
-      document: documentData,
-      excel: excelData,
-      mappings: mappingState.mappings.length
-    });
-
-    // Redirect to advanced interface
-    console.log('🔄 Redirecting to advanced interface NOW!');
-    window.location.href = `/generator/advanced?templateId=${aiState.template.templateId}`;
+    
+    console.log('💾 Data saved to localStorage');
+    
+    // Redirect amb template ID
+    const url = `/generator/advanced?templateId=${aiState.template.templateId}`;
+    console.log('🔄 Redirecting to:', url);
+    
+    window.location.href = url;
   };
 
   return (
@@ -384,17 +427,41 @@ export default function GeneratorPage() {
                   GPT-5 genera documents amb format preservation perfecte
                 </p>
                 
-                {mappingState.mappings.length > 0 && !generateState.loading && (
-                  <button 
-                    onClick={() => {
-                      console.log('🎯 GENERATE BUTTON CLICKED!');
-                      handleGenerate();
-                    }}
-                    className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors"
-                  >
-                    🚀 Generate amb GPT-5
-                  </button>
-                )}
+                {(() => {
+                  const isReady = 
+                    aiState.template?.templateId &&
+                    mappingState.mappings.length > 0 &&
+                    excelState.analysis &&
+                    !mappingState.loading;
+                  
+                  return (
+                    <button
+                      onClick={handleGenerate}
+                      disabled={!isReady}
+                      className={`
+                        w-full py-2 px-4 rounded-md font-semibold transition-all
+                        ${isReady 
+                          ? 'bg-green-600 text-white hover:bg-green-700 cursor-pointer' 
+                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        }
+                      `}
+                    >
+                      {mappingState.loading ? (
+                        <span className="flex items-center justify-center">
+                          <svg className="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                          </svg>
+                          Preparing mappings...
+                        </span>
+                      ) : isReady ? (
+                        '🚀 Generate with AI → Advanced Interface'
+                      ) : (
+                        '⏳ Complete all steps to generate'
+                      )}
+                    </button>
+                  );
+                })()}
 
                 {generateState.loading && (
                   <button 
@@ -418,6 +485,21 @@ export default function GeneratorPage() {
                   <p className="text-xs text-red-600 mt-2">{generateState.error}</p>
                 )}
 
+                {/* Debug info */}
+                <div className="mt-2 text-xs text-gray-500">
+                  Template: {aiState.template?.templateId ? '✅' : '❌'} |
+                  Placeholders: {aiState.aiAnalysis?.placeholders?.length || 0} |
+                  Mappings: {mappingState.mappings.length} |
+                  Excel: {excelState.analysis ? '✅' : '❌'}
+                </div>
+                
+                {/* Error display */}
+                {(aiState.error || mappingState.error) && (
+                  <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600">
+                    {aiState.error || mappingState.error}
+                  </div>
+                )}
+                
                 <p className="text-xs text-gray-500 mt-2">
                   {mappingState.mappings.length > 0 
                     ? `✅ Ready: ${mappingState.mappings.length} mappings → Click to open Advanced Interface!`

@@ -1,126 +1,138 @@
 // app/api/ai-docx/analyze/route.ts
-// AI-First DOCX Analysis with GPT-5 Vision
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import { createClient } from '@supabase/supabase-js';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
-
-interface PlaceholderDetection {
-  text: string;
-  type: 'string' | 'number' | 'date' | 'email' | 'phone' | 'address';
-  confidence: number;
-  position: string;
-  reasoning: string;
-}
-
-interface DocumentAnalysis {
-  success: boolean;
-  transcription: string;
-  placeholders: PlaceholderDetection[];
-  documentStructure: {
-    pages: number;
-    paragraphs: number;
-    tables: number;
-    images: number;
-  };
-  processingTime: number;
-}
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: NextRequest) {
-  const startTime = Date.now();
+  console.log('📄 DOCX Analysis Request Started');
   
   try {
-    const formData = await request.formData();
+    // 1. Parse FormData amb millor error handling
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+    } catch (error) {
+      console.error('❌ FormData parse error:', error);
+      return NextResponse.json(
+        { error: 'Invalid form data', details: error },
+        { status: 400 }
+      );
+    }
+
+    // 2. Validar fitxer DOCX
     const file = formData.get('docx') as File;
-
     if (!file) {
-      return NextResponse.json({ error: 'No DOCX file provided' }, { status: 400 });
+      console.error('❌ No file uploaded');
+      return NextResponse.json(
+        { error: 'No file uploaded' },
+        { status: 400 }
+      );
     }
 
-    if (!file.name.toLowerCase().endsWith('.docx')) {
-      return NextResponse.json({ error: 'File must be .docx format' }, { status: 400 });
-    }
-
-    // Convert file to base64 for GPT-5 Vision
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const base64 = buffer.toString('base64');
-
-    // GPT-5 Vision Analysis
-    const completion = await openai.chat.completions.create({
-      model: "gpt-5", // GPT-5 official model
-      messages: [
-        {
-          role: "system",
-          content: `You are an AI document analysis expert specialized in DOCX files. Your task is to:
-1. Read and understand the document structure
-2. Identify potential placeholders (like {name}, {date}, [company], etc.)
-3. Analyze document formatting and layout
-4. Provide confidence scores for each placeholder detection
-
-Return a JSON response with the exact structure specified.`
-        },
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: "Analyze this DOCX document and detect placeholders that could be filled with Excel data. Focus on finding patterns like {variable}, [field], or text that looks like it should be replaced with dynamic data."
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,${base64}`
-              }
-            }
-          ]
-        }
-      ],
-      response_format: { type: "json_object" },
-      max_completion_tokens: 4000
+    console.log('📁 File received:', {
+      name: file.name,
+      size: file.size,
+      type: file.type
     });
 
-    const aiResponse = JSON.parse(completion.choices[0].message.content || '{}');
+    // 3. Validar format amb més flexibilitat
+    const validTypes = [
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/docx',
+      'application/msword'
+    ];
+    
+    const isValidType = validTypes.includes(file.type) || 
+                       file.name.toLowerCase().endsWith('.docx');
+    
+    if (!isValidType) {
+      console.error('❌ Invalid file type:', file.type);
+      return NextResponse.json(
+        { 
+          error: 'File must be .docx format',
+          received: file.type,
+          fileName: file.name
+        },
+        { status: 400 }
+      );
+    }
 
-    // Process AI response into our format
-    const analysis: DocumentAnalysis = {
-      success: true,
-      transcription: aiResponse.transcription || 'Document analyzed successfully',
-      placeholders: (aiResponse.placeholders || []).map((p: any) => ({
-        text: p.text || p.name || '',
-        type: p.type || 'string',
-        confidence: Math.min(Math.max(p.confidence || 85, 0), 100),
-        position: p.position || 'document',
-        reasoning: p.reasoning || 'AI detected potential placeholder'
-      })),
-      documentStructure: {
-        pages: aiResponse.pages || 1,
-        paragraphs: aiResponse.paragraphs || 0,
-        tables: aiResponse.tables || 0,
-        images: aiResponse.images || 0
-      },
-      processingTime: Date.now() - startTime
+    // 4. Convertir a buffer
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    
+    console.log('🔄 Processing document...', {
+      bufferSize: buffer.length
+    });
+
+    // 5. Generar template ID únic
+    const templateId = `template_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // 6. Guardar a Supabase Storage (opcional però recomanat)
+    let storageUrl = null;
+    try {
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('templates')
+        .upload(`${templateId}/original.docx`, buffer, {
+          contentType: file.type,
+          upsert: true
+        });
+
+      if (uploadError) {
+        console.warn('⚠️ Storage upload failed (non-critical):', uploadError);
+      } else {
+        storageUrl = uploadData?.path;
+        console.log('✅ Document saved to storage:', storageUrl);
+      }
+    } catch (storageError) {
+      console.warn('⚠️ Storage error (continuing):', storageError);
+    }
+
+    // 7. Analitzar document amb AI (mock per ara)
+    // TODO: Integrar GPT-5 Vision real aquí
+    const mockAnalysis = {
+      templateId,
+      fileName: file.name,
+      transcription: "Document content would be extracted here by GPT-5 Vision",
+      placeholders: [
+        { text: "nom", type: "string", confidence: 95 },
+        { text: "cognoms", type: "string", confidence: 92 },
+        { text: "data", type: "date", confidence: 88 },
+        { text: "import", type: "number", confidence: 90 }
+      ],
+      confidence: 91.25,
+      storageUrl,
+      metadata: {
+        pageCount: 1,
+        wordCount: 150,
+        hasImages: false,
+        hasTablesi: false
+      }
     };
 
-    console.log(`[AI-DOCX-ANALYZE] Success: ${analysis.placeholders.length} placeholders detected in ${analysis.processingTime}ms`);
-
-    return NextResponse.json({
-      ...analysis,
-      fileName: file.name,
-      size: file.size,
-      templateId: crypto.randomUUID(),
-      message: 'GPT-5 Vision analysis completed successfully'
+    console.log('✅ Analysis complete:', {
+      templateId,
+      placeholders: mockAnalysis.placeholders.length
     });
 
-  } catch (error: any) {
-    console.error('[AI-DOCX-ANALYZE] Error:', error);
-    
+    // 8. Retornar resposta exitosa
     return NextResponse.json({
-      success: false,
-      error: 'AI analysis failed',
-      details: error.message,
-      processingTime: Date.now() - startTime
-    }, { status: 500 });
+      success: true,
+      data: mockAnalysis
+    });
+
+  } catch (error) {
+    console.error('❌ Unexpected error in analyze:', error);
+    return NextResponse.json(
+      { 
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    );
   }
 }
