@@ -64,6 +64,13 @@ function AdvancedGeneratorContent() {
       url: window.location.href
     });
 
+    console.log('📦 RAW LOCALSTORAGE DATA:', {
+      storedDoc: storedDoc ? storedDoc.substring(0, 100) + '...' : null,
+      storedExcel: storedExcel ? storedExcel.substring(0, 100) + '...' : null,
+      storedMappings: storedMappings ? storedMappings.substring(0, 100) + '...' : null,
+      storedGeneration: storedGeneration ? storedGeneration.substring(0, 100) + '...' : null
+    });
+
     if (storedDoc) {
       const docData = JSON.parse(storedDoc);
       console.log('📄 Document data loaded:', docData);
@@ -83,10 +90,25 @@ function AdvancedGeneratorContent() {
       const genData = JSON.parse(storedGeneration);
       console.log('💾 Generation data loaded:', genData);
     }
+
+    // Final state debug
+    console.log('🎯 FINAL STATE AFTER LOADING:', {
+      documentData,
+      excelData: !!excelData,
+      mappings: mappings.length,
+      readyToGenerate: !!(documentData?.templateId && mappings.length && excelData)
+    });
   }, [searchParams]);
 
   const handleGenerate = async () => {
-    if (!documentData?.templateId || !mappings.length || !excelData) return;
+    if (!documentData?.templateId || !mappings.length || !excelData) {
+      console.error('🚨 Cannot generate - missing required data:', {
+        hasDocument: !!documentData?.templateId,
+        hasMappings: mappings.length > 0,
+        hasExcel: !!excelData
+      });
+      return;
+    }
 
     setGenerateState({ loading: true, error: null, success: false });
 
