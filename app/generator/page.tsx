@@ -191,18 +191,36 @@ export default function GeneratorPage() {
 
   // AUTO-TRIGGER MAPPINGS when both files are uploaded  
   useEffect(() => {
-    if (aiState.aiAnalysis?.placeholders && excelState.analysis?.columns && !mappingState.loading && mappingState.mappings.length === 0) {
+    const shouldFetchMappings = 
+      aiState.aiAnalysis?.placeholders?.length > 0 &&
+      excelState.analysis?.columns?.length > 0 &&
+      !mappingState.loading &&
+      mappingState.mappings.length === 0;
+    
+    if (shouldFetchMappings) {
       console.log('🤖 Both files ready, auto-fetching AI mappings...', {
         placeholders: aiState.aiAnalysis.placeholders.length,
-        columns: excelState.analysis.columns.length
+        columns: excelState.analysis.columns.length,
+        currentMappings: mappingState.mappings.length,
+        loading: mappingState.loading
       });
       fetchMappings();
     }
-  }, [aiState.aiAnalysis, excelState.analysis, mappingState.loading, mappingState.mappings.length]);
+  }, [aiState.aiAnalysis?.placeholders, excelState.analysis?.columns]);
 
   const fetchMappings = async () => {
-    if (!aiState.aiAnalysis?.placeholders || !excelState.analysis?.columns) return;
+    if (!aiState.aiAnalysis?.placeholders || !excelState.analysis?.columns) {
+      console.warn('⚠️ fetchMappings called without required data');
+      return;
+    }
+    
+    // Evitar múltiples crides simultànies
+    if (mappingState.loading) {
+      console.log('⏳ Mappings already loading, skipping...');
+      return;
+    }
 
+    console.log('🚀 Starting fetchMappings...');
     setMappingState({ loading: true, mappings: [], error: null });
 
     try {
@@ -227,13 +245,17 @@ export default function GeneratorPage() {
         throw new Error(result.error || 'Error en AI mapping');
       }
 
+      const mappings = result.proposals || [];
       setMappingState({
         loading: false,
-        mappings: result.proposals || [],
+        mappings: mappings,
         error: null
       });
 
-      console.log('✅ Mappings loaded:', result.proposals?.length || 0);
+      console.log('✅ Mappings loaded successfully:', {
+        count: mappings.length,
+        timestamp: new Date().toISOString()
+      });
 
     } catch (error) {
       console.error('❌ Mapping error:', error);
