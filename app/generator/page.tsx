@@ -37,6 +37,12 @@ interface MappingProposal {
 }
 
 export default function GeneratorPage() {
+  // DEBUG: Verificar environment variables a la consola
+  console.log('🔍 Client Environment Variables Check:', {
+    SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'MISSING',
+    SUPABASE_ANON: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'SET' : 'MISSING'
+  });
+  
   const [aiState, setAiState] = useState<{
     processing: boolean;
     template: TemplateUploadResponse | null;
@@ -321,12 +327,18 @@ export default function GeneratorPage() {
                 
                 {!aiState.template && (
                   <>
-                    <label className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors cursor-pointer block text-center">
+                    <label 
+                      onClick={() => console.log('🖱️ DOCX Label clicked!')}
+                      className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors cursor-pointer block text-center"
+                    >
                       {aiState.processing ? 'GPT-5 Analitzant...' : 'Upload per AI Analysis'}
                       <input
                         type="file"
                         accept=".docx"
-                        onChange={handleAiDocumentAnalysis}
+                        onChange={(e) => {
+                          console.log('📁 DOCX Input activated!', e.target.files?.[0]?.name);
+                          handleAiDocumentAnalysis(e);
+                        }}
                         disabled={aiState.processing}
                         className="hidden"
                       />
@@ -367,18 +379,24 @@ export default function GeneratorPage() {
 
                 {!excelState.analysis && (
                   <>
-                    <label className={`w-full py-2 px-4 rounded-md transition-colors block text-center ${
+                    <label 
+                      onClick={() => console.log('🖱️ Excel Label clicked!')}
+                      className={`w-full py-2 px-4 rounded-md transition-colors block text-center ${
                         aiState.template && !excelState.processing
                           ? 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer' 
                           : 'bg-gray-400 text-white cursor-not-allowed'
-                      }`}>
+                      }`}
+                    >
                       {excelState.processing ? 'GPT-5 Mini Analitzant Excel...' : 'Upload Excel per AI'}
                       <input
                         type="file"
                         accept=".xlsx,.xls,.csv"
                         disabled={!aiState.template || excelState.processing}
                         className="hidden"
-                        onChange={handleExcelAnalysis}
+                        onChange={(e) => {
+                          console.log('📊 Excel Input activated!', e.target.files?.[0]?.name);
+                          handleExcelAnalysis(e);
+                        }}
                       />
                     </label>
                     {excelState.error && (
