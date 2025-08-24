@@ -47,8 +47,15 @@ export default function GeneratorPage() {
     processing: boolean;
     template: TemplateUploadResponse | null;
     aiAnalysis: {
-      placeholders: Array<{text: string, confidence: number}>;
+      placeholders: Array<{
+        text: string, 
+        confidence: number, 
+        type?: string, 
+        originalMatch?: string, 
+        position?: number
+      }>;
       transcription: string;
+      htmlPreview?: string;
     } | null;
     error: string | null;
   }>({
@@ -372,7 +379,7 @@ export default function GeneratorPage() {
                 )}
 
                 {aiState.template && aiState.aiAnalysis && (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div className="text-green-600 text-sm">
                       ✅ {aiState.template.fileName}
                     </div>
@@ -612,6 +619,55 @@ export default function GeneratorPage() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Document Preview Section */}
+          {aiState.template && aiState.aiAnalysis && (
+            <div className="mt-8 bg-white rounded-lg p-6 shadow-lg">
+              <div className="text-center mb-4">
+                <h3 className="text-xl font-semibold text-gray-900">📄 Document Preview with AI Placeholders</h3>
+                <p className="text-sm text-gray-600">Interactive preview - click highlighted placeholders to see mappings</p>
+              </div>
+              
+              <div className="max-h-96 overflow-y-auto border rounded-lg">
+                {aiState.aiAnalysis.htmlPreview ? (
+                  <div 
+                    className="prose max-w-none"
+                    dangerouslySetInnerHTML={{ __html: aiState.aiAnalysis.htmlPreview }}
+                    onClick={(e) => {
+                      const target = e.target as HTMLElement;
+                      if (target.classList.contains('placeholder-highlight')) {
+                        const placeholder = target.dataset.placeholder;
+                        const type = target.dataset.type;
+                        console.log('🖱️ Placeholder clicked:', { placeholder, type });
+                        // TODO: Show mapping info or edit modal
+                      }
+                    }}
+                  />
+                ) : (
+                  <div className="p-8 text-center text-gray-500">
+                    <div className="text-4xl mb-4">📄</div>
+                    <p>Document preview loading...</p>
+                    <div className="mt-4 text-sm">
+                      <strong>Content:</strong> {aiState.aiAnalysis.transcription?.substring(0, 200)}...
+                    </div>
+                    <div className="mt-2 text-sm">
+                      <strong>Placeholders found:</strong> {aiState.aiAnalysis.placeholders.map(p => p.text).join(', ')}
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="text-sm text-gray-600">Detected placeholders:</span>
+                {aiState.aiAnalysis.placeholders.map((placeholder, idx) => (
+                  <span key={idx} className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">
+                    <span className="w-2 h-2 bg-yellow-400 rounded-full"></span>
+                    {placeholder.text} ({placeholder.type})
+                  </span>
+                ))}
+              </div>
             </div>
           )}
 
