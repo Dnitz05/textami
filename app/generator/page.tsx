@@ -164,16 +164,16 @@ export default function GeneratorPage() {
     }
   };
 
-  // AUTO-TRIGGER MAPPINGS when both files are uploaded
+  // AUTO-TRIGGER MAPPINGS when both files are uploaded  
   useEffect(() => {
-    if (aiState.aiAnalysis?.placeholders && excelState.analysis?.columns) {
-      console.log('🤖 Both files ready, fetching AI mappings...', {
+    if (aiState.aiAnalysis?.placeholders && excelState.analysis?.columns && !mappingState.loading && mappingState.mappings.length === 0) {
+      console.log('🤖 Both files ready, auto-fetching AI mappings...', {
         placeholders: aiState.aiAnalysis.placeholders.length,
         columns: excelState.analysis.columns.length
       });
       fetchMappings();
     }
-  }, [aiState.aiAnalysis, excelState.analysis]);
+  }, [aiState.aiAnalysis, excelState.analysis, mappingState.loading, mappingState.mappings.length]);
 
   const fetchMappings = async () => {
     if (!aiState.aiAnalysis?.placeholders || !excelState.analysis?.columns) return;
@@ -386,7 +386,10 @@ export default function GeneratorPage() {
                 
                 {mappingState.mappings.length > 0 && !generateState.loading && (
                   <button 
-                    onClick={handleGenerate}
+                    onClick={() => {
+                      console.log('🎯 GENERATE BUTTON CLICKED!');
+                      handleGenerate();
+                    }}
                     className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors"
                   >
                     🚀 Generate amb GPT-5
@@ -417,10 +420,12 @@ export default function GeneratorPage() {
 
                 <p className="text-xs text-gray-500 mt-2">
                   {mappingState.mappings.length > 0 
-                    ? `Ready: ${mappingState.mappings.length} mappings configured`
+                    ? `✅ Ready: ${mappingState.mappings.length} mappings → Click to open Advanced Interface!`
                     : mappingState.loading 
                       ? 'Waiting for AI mappings...'
-                      : 'Upload both files first'}
+                      : aiState.aiAnalysis && excelState.analysis 
+                        ? 'AI mapping in progress...'
+                        : 'Upload both files first'}
                 </p>
               </div>
             </div>
