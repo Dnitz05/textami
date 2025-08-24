@@ -53,10 +53,36 @@ function AdvancedGeneratorContent() {
     const storedDoc = localStorage.getItem('textami_document_data');
     const storedExcel = localStorage.getItem('textami_excel_data');
     const storedMappings = localStorage.getItem('textami_mappings');
+    const storedGeneration = localStorage.getItem('generationData');
 
-    if (storedDoc) setDocumentData(JSON.parse(storedDoc));
-    if (storedExcel) setExcelData(JSON.parse(storedExcel));
-    if (storedMappings) setMappings(JSON.parse(storedMappings));
+    console.log('🔍 ADVANCED PAGE DEBUG:', {
+      templateId,
+      hasStoredDoc: !!storedDoc,
+      hasStoredExcel: !!storedExcel,
+      hasStoredMappings: !!storedMappings,
+      hasGenerationData: !!storedGeneration,
+      url: window.location.href
+    });
+
+    if (storedDoc) {
+      const docData = JSON.parse(storedDoc);
+      console.log('📄 Document data loaded:', docData);
+      setDocumentData(docData);
+    }
+    if (storedExcel) {
+      const excelData = JSON.parse(storedExcel);
+      console.log('📊 Excel data loaded:', excelData);
+      setExcelData(excelData);
+    }
+    if (storedMappings) {
+      const mappingData = JSON.parse(storedMappings);
+      console.log('🔗 Mappings loaded:', mappingData);
+      setMappings(mappingData);
+    }
+    if (storedGeneration) {
+      const genData = JSON.parse(storedGeneration);
+      console.log('💾 Generation data loaded:', genData);
+    }
   }, [searchParams]);
 
   const handleGenerate = async () => {

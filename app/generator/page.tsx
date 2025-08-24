@@ -275,6 +275,16 @@ export default function GeneratorPage() {
   };
 
   const handleGenerate = async () => {
+    console.log('🔥 GENERATE CLICKED - Full State Debug:', {
+      templateId: aiState.template?.templateId,
+      hasTemplate: !!aiState.template,
+      hasAnalysis: !!aiState.aiAnalysis,
+      placeholdersCount: aiState.aiAnalysis?.placeholders?.length ?? 0,
+      mappingsCount: mappingState.mappings.length,
+      hasExcel: !!excelState.analysis,
+      excelColumns: excelState.analysis?.columns?.length ?? 0
+    });
+    
     // Validacions exhaustives
     if (!aiState.template?.templateId) {
       console.error('❌ No template ID available');
