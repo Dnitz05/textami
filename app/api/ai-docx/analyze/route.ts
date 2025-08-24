@@ -2,15 +2,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 export async function POST(request: NextRequest) {
   console.log('📄 DOCX Analysis Request Started');
   
   try {
+    // Initialize Supabase client with error handling
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    let supabase = null;
+    if (supabaseUrl && supabaseServiceKey) {
+      try {
+        supabase = createClient(supabaseUrl, supabaseServiceKey);
+        console.log('✅ Supabase client initialized');
+      } catch (error) {
+        console.warn('⚠️ Supabase initialization failed:', error);
+      }
+    } else {
+      console.warn('⚠️ Supabase environment variables not found, storage will be skipped');
+    }
     // 1. Parse FormData amb millor error handling
     let formData: FormData;
     try {
@@ -74,22 +84,26 @@ export async function POST(request: NextRequest) {
     
     // 6. Guardar a Supabase Storage (opcional però recomanat)
     let storageUrl = null;
-    try {
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('templates')
-        .upload(`${templateId}/original.docx`, buffer, {
-          contentType: file.type,
-          upsert: true
-        });
+    if (supabase) {
+      try {
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('templates')
+          .upload(`${templateId}/original.docx`, buffer, {
+            contentType: file.type,
+            upsert: true
+          });
 
-      if (uploadError) {
-        console.warn('⚠️ Storage upload failed (non-critical):', uploadError);
-      } else {
-        storageUrl = uploadData?.path;
-        console.log('✅ Document saved to storage:', storageUrl);
+        if (uploadError) {
+          console.warn('⚠️ Storage upload failed (non-critical):', uploadError);
+        } else {
+          storageUrl = uploadData?.path;
+          console.log('✅ Document saved to storage:', storageUrl);
+        }
+      } catch (storageError) {
+        console.warn('⚠️ Storage error (continuing):', storageError);
       }
-    } catch (storageError) {
-      console.warn('⚠️ Storage error (continuing):', storageError);
+    } else {
+      console.log('⚠️ Skipping storage upload (Supabase not available)');
     }
 
     // 7. Analitzar document amb AI (mock per ara)
