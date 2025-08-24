@@ -1,61 +1,87 @@
-# Textami MVP
+# Textami AI-First
 
-Generador professional de documents que transforma plantilles Word i dades Excel en documents personalitzats mantenint el format original.
+**Generador intel·ligent de documents** que utilitza GPT-5 Vision per transformar plantilles Word i dades Excel en documents personalitzats amb **zero configuració manual**.
 
-## 🚀 Característiques MVP (v0.1)
+## 📋 Estat Actual del Projecte
 
-✅ **Upload plantilles** - Puja el teu .docx amb format corporatiu  
-✅ **Detecció automàtica** - Troba variables {nom}, {data}, etc.  
-✅ **Dades Excel/CSV** - Connecta les teves dades  
-✅ **Generació massiva** - Crea centenars de documents  
-✅ **Format perfecte** - Manté logos, estils, tot  
-✅ **Export flexible** - DOCX editable o PDF final  
+**Status:** Fase 1 - Desenvolupament Intel·ligència Artificial  
+**Backend:** 80% implementat (4/4 APIs funcionals)  
+**Frontend:** 20% implementat (MVP bàsic)  
+**Motor Generació:** PENDENT DECISIÓ (docxtemplater vs alternatives)
 
-## 🛠️ Tecnologies
+## 🚀 Característiques AI-First
 
-- **Frontend**: Next.js 15.4.6, TypeScript, Tailwind CSS
-- **Backend**: Supabase (PostgreSQL + Auth + Storage)
-- **Documents**: Docxtemplater Premium (4 mòduls)
-- **Deploy**: Vercel + GitHub Actions
+✅ **Upload DOCX** → GPT-5 Vision llegeix i analitza automàticament (UI funcional)
+✅ **AI Placeholder Detection** → Detecta camps automàticament amb confidence scores (backend)
+🔄 **Excel Intelligence** → Analitza columnes i proposa mappings intel·ligents (backend ready, UI pending)
+🔄 **AI Document Generation** → Genera documents preservant format (backend ready, UI pending)  
+❌ **Batch Processing** → Processos massius optimitzats amb IA (no implementat)
+✅ **Zero Configuration** → Cap setup manual, tot automàtic (AI endpoints)  
 
-## 📦 Instal·lació
+## 🏗️ Estratègia de Desenvolupament
+
+**Arquitectura de 4 Fases (AI-First, Docxtemplater-Last):**
+- **Fase 1:** 🔄 Intel·ligència Artificial (EN CURS)
+- **Fase 2:** ⏳ Interfície d'Usuari Professional  
+- **Fase 3:** ⏳ Backend Agnòstic amb Factory Pattern
+- **Fase 4:** 🎯 DECISIÓ + Implementació Motor de Generació
+
+## 🧠 Stack AI-First
+
+- **AI Engine**: OpenAI GPT-5 Vision API
+- **Frontend**: Next.js 15.4.6, React 19.1.0, TypeScript strict
+- **Database**: Supabase (PostgreSQL + Storage)
+- **Styling**: Tailwind CSS 4.0
+- **Deploy**: Vercel Edge Functions
+- **Motor Generació**: PER DETERMINAR (docxtemplater vs alternatives)
+
+## ⚡ Quick Start
 
 ```bash
-# Clonar
+# Clone repository
 git clone https://github.com/Dnitz05/textami.git
 cd textami
 
-# Instal·lar dependencies
+# Install dependencies
 npm install
 
-# Variables entorn
+# Setup environment
 cp .env.example .env.local
-# Editar .env.local amb les teves claus
+# Add your OpenAI API key: OPENAI_API_KEY=sk-...
 
-# Base de dades
-# Executar docs/database-schema.sql a Supabase Dashboard
+# Run database migrations
+# Execute supabase/migrations/001_complete_schema.sql in Supabase Dashboard
 
-# Desenvolupament
+# Start development
 npm run dev
 ```
 
-## 📝 Roadmap
+## 🎯 AI Workflow
 
-### ✅ v0.1 MVP (Actual)
-- Funcionalitats bàsiques
-- Upload → Process → Download
+```
+📤 Upload DOCX → 🧠 GPT-5 Analysis → 📊 Excel Upload → 🎯 AI Mapping → ✨ Generate Documents
+     (2s)              (5s)              (1s)           (3s)           (10s)
+```
 
-### 🔮 v0.2 (Mes 2)
-- IA integrada (OpenAI)
-- Preview millorat
-- Templates biblioteca
-- Historial generacions
+## 🔮 Roadmap AI-Enhanced
 
-### 🚀 v1.0 (Futur)
-- Human-in-the-loop complet
-- Knowledge Base amb RAG
-- API pública
-- White label
+### ✅ v0.1 AI MVP (Current)
+- GPT-5 Vision document analysis
+- AI placeholder detection
+- Intelligent mapping proposals  
+- AI document generation
+
+### 🚀 v0.2 AI Enhanced (Next Month)
+- Multi-model AI (Claude, Gemini fallbacks)
+- AI template library
+- Advanced confidence scoring
+- Context memory
+
+### 🌟 v1.0 AI Enterprise (Q1 2026)  
+- Custom AI model training
+- RAG Knowledge Base
+- White-label AI platform
+- API ecosystem
 
 ## 📄 Llicència
 

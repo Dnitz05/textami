@@ -50,7 +50,7 @@ CREATE TABLE templates (
   original_filename TEXT NOT NULL,
   mime_type TEXT DEFAULT 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' NOT NULL,
   variables JSONB DEFAULT '[]'::jsonb NOT NULL,
-  premium_features JSONB DEFAULT '{}'::jsonb NOT NULL,
+  ai_features JSONB DEFAULT '{}'::jsonb NOT NULL,
   sample_data JSONB DEFAULT '{}'::jsonb NOT NULL,
   category TEXT DEFAULT 'general' CHECK (category IN ('general', 'business', 'legal', 'marketing', 'hr', 'finance')),
   is_public BOOLEAN DEFAULT false NOT NULL,

@@ -1,0 +1,1811 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TEXTAMI - Generació Intel·ligent de Documents</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            color: #2c3e50;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .app-container {
+            display: flex;
+            height: 100vh;
+            background: white;
+        }
+        
+        /* Sidebar Left - Workflow & AI Instructions */
+        .sidebar-left {
+            width: 320px;
+            background: #ffffff;
+            border-right: 1px solid #e1e4e8;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .logo {
+            padding: 20px;
+            border-bottom: 1px solid #e1e4e8;
+            font-size: 20px;
+            font-weight: 600;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #e1e4e8;
+            background: #f8f9fa;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            font-size: 13px;
+            color: #6c757d;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+            background: white;
+        }
+        
+        .tab:hover {
+            background: #f1f3f5;
+        }
+        
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .tab-panel {
+            display: none;
+        }
+        
+        .tab-panel.active {
+            display: block;
+        }
+        
+        /* Workflow Steps */
+        .workflow-step {
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .workflow-step.active {
+            background: #e3f2fd;
+            border-left: 3px solid #3b82f6;
+        }
+        
+        .workflow-step.completed {
+            background: #f1f8f4;
+        }
+        
+        .workflow-step:hover {
+            background: #e9ecef;
+        }
+        
+        .step-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .workflow-step.active .step-icon {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .workflow-step.completed .step-icon {
+            background: #22c55e;
+            color: white;
+        }
+        
+        .step-info {
+            flex: 1;
+        }
+        
+        .step-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .step-status {
+            font-size: 11px;
+            color: #6c757d;
+            margin-top: 2px;
+        }
+        
+        /* AI Instructions Panel */
+        .ai-section {
+            margin-bottom: 24px;
+        }
+        
+        .ai-section-header {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6c757d;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .ai-instruction-card {
+            background: white;
+            border: 1px solid #e1e4e8;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            position: relative;
+            transition: all 0.3s;
+        }
+        
+        .ai-instruction-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-color: #3b82f6;
+        }
+        
+        .instruction-type {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .instruction-type.general {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .instruction-type.specific {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+        
+        .instruction-text {
+            font-size: 13px;
+            color: #2c3e50;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+        
+        .knowledge-references {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #f0f0f0;
+        }
+        
+        .knowledge-ref {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            background: #f0f9ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 12px;
+            font-size: 11px;
+            color: #1e40af;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .knowledge-ref:hover {
+            background: #dbeafe;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .instruction-target {
+            font-size: 11px;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .add-instruction-btn {
+            width: 100%;
+            padding: 10px;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            background: transparent;
+            color: #6c757d;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .add-instruction-btn:hover {
+            border-color: #3b82f6;
+            color: #3b82f6;
+            background: #f0f9ff;
+        }
+        
+        /* Knowledge Base Panel */
+        .knowledge-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            border: 1px solid #e1e4e8;
+            transition: all 0.3s;
+        }
+        
+        .knowledge-item:hover {
+            background: white;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
+        
+        .knowledge-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .knowledge-tag {
+            display: inline-block;
+            padding: 2px 6px;
+            background: #e9ecef;
+            border-radius: 4px;
+            font-size: 10px;
+            color: #495057;
+        }
+        
+        .knowledge-description {
+            font-size: 12px;
+            color: #6c757d;
+            line-height: 1.4;
+            margin-bottom: 6px;
+        }
+        
+        .knowledge-usage {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-top: 6px;
+            border-top: 1px solid #e9ecef;
+            font-size: 11px;
+        }
+        
+        .usage-label {
+            color: #6c757d;
+        }
+        
+        .usage-count {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+        
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #f8f9fa;
+        }
+        
+        /* Top Bar */
+        .top-bar {
+            background: white;
+            border-bottom: 1px solid #e1e4e8;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .document-title {
+            font-size: 15px;
+            font-weight: 500;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .document-icon {
+            width: 24px;
+            height: 24px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+        }
+        
+        .ai-status {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .ai-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: #f0f9ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #1e40af;
+        }
+        
+        .ai-model {
+            font-size: 12px;
+            color: #6c757d;
+        }
+        
+        /* Document Viewer */
+        .document-viewer {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 24px;
+            overflow: auto;
+            background: #f8f9fa;
+        }
+        
+        .document-container {
+            background: white;
+            width: 100%;
+            max-width: 850px;
+            min-height: 1100px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-radius: 4px;
+            position: relative;
+            padding: 80px 70px;
+            font-family: 'Times New Roman', serif;
+            line-height: 1.8;
+            color: #000;
+        }
+        
+        /* Document Styles */
+        .document-header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .document-header h1 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+        
+        .document-header p {
+            font-size: 14px;
+            color: #6c757d;
+            font-style: italic;
+        }
+        
+        .document-section {
+            margin-bottom: 32px;
+            position: relative;
+        }
+        
+        .document-section h2 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #2c3e50;
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 8px;
+        }
+        
+        .document-section p {
+            margin-bottom: 12px;
+            text-align: justify;
+        }
+        
+        /* AI Instruction Markers */
+        .has-instruction {
+            position: relative;
+            background: linear-gradient(90deg, #f0f9ff 0%, transparent 4px);
+            border-left: 3px solid #3b82f6;
+            padding-left: 12px;
+            margin-left: -12px;
+        }
+        
+        .instruction-marker {
+            position: absolute;
+            right: -30px;
+            top: 0;
+            width: 24px;
+            height: 24px;
+            background: #3b82f6;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .instruction-tooltip {
+            position: absolute;
+            right: -250px;
+            top: 30px;
+            width: 220px;
+            background: white;
+            border: 1px solid #e1e4e8;
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 100;
+            display: none;
+        }
+        
+        .instruction-marker:hover .instruction-tooltip {
+            display: block;
+        }
+        
+        /* Field Detection */
+        .field-placeholder {
+            display: inline-block;
+            min-width: 120px;
+            padding: 0 4px;
+            position: relative;
+            transition: all 0.3s;
+            margin: 0 2px;
+            cursor: pointer;
+        }
+        
+        .field-detected {
+            background: rgba(255, 193, 7, 0.15);
+            border-bottom: 2px solid #ffc107;
+            position: relative;
+        }
+        
+        .field-detected:hover {
+            background: rgba(255, 193, 7, 0.25);
+        }
+        
+        .field-original {
+            display: none;
+        }
+        
+        .field-detected .field-original {
+            display: inline;
+            text-decoration: line-through;
+            opacity: 0.3;
+            font-size: 0.9em;
+        }
+        
+        .field-detected:hover .field-original {
+            opacity: 0.5;
+        }
+        
+        .field-label {
+            position: absolute;
+            top: -28px;
+            left: 0;
+            background: #495057;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: -apple-system, sans-serif;
+            white-space: nowrap;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .field-label .dropdown-icon {
+            font-size: 8px;
+            opacity: 0.7;
+        }
+        
+        .field-confidence {
+            position: absolute;
+            top: -28px;
+            right: -35px;
+            background: #22c55e;
+            color: white;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-family: -apple-system, sans-serif;
+        }
+        
+        .field-value {
+            color: #1e40af;
+            font-weight: 500;
+        }
+        
+        /* Field Dropdown Menu */
+        .field-dropdown {
+            position: absolute;
+            top: -5px;
+            left: 0;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 100;
+            min-width: 200px;
+            display: none;
+            font-family: -apple-system, sans-serif;
+            padding: 4px;
+        }
+        
+        .field-dropdown.show {
+            display: block;
+        }
+        
+        .dropdown-option {
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .dropdown-option:hover {
+            background: #f8f9fa;
+        }
+        
+        .dropdown-option.selected {
+            background: #e3f2fd;
+            font-weight: 500;
+        }
+        
+        .dropdown-option.selected span:first-child {
+            color: #1976d2;
+        }
+        
+        .dropdown-option.danger {
+            color: #dc3545;
+        }
+        
+        .dropdown-option.danger:hover {
+            background: #fff5f5;
+        }
+        
+        .dropdown-divider {
+            height: 1px;
+            background: #e9ecef;
+            margin: 4px 8px;
+        }
+        
+        /* Sidebar Right - Fields & Data */
+        .sidebar-right {
+            width: 340px;
+            background: white;
+            border-left: 1px solid #e1e4e8;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .sidebar-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e1e4e8;
+            background: #f8f9fa;
+        }
+        
+        .sidebar-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .fields-section {
+            margin-bottom: 24px;
+        }
+        
+        .section-header {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6c757d;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .field-count {
+            background: #e9ecef;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+        
+        .field-item {
+            background: #f8f9fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .field-item:hover {
+            border-color: #3b82f6;
+            background: white;
+            transform: translateX(4px);
+        }
+        
+        .field-item.mapped {
+            background: #f0fdf4;
+            border-color: #22c55e;
+            border-left: 3px solid #22c55e;
+        }
+        
+        .field-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        
+        .field-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .field-type {
+            background: white;
+            border: 1px solid #e1e4e8;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            color: #6c757d;
+        }
+        
+        .field-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 11px;
+            color: #6c757d;
+        }
+        
+        .confidence-badge {
+            color: #3b82f6;
+        }
+        
+        .mapped-to {
+            color: #22c55e;
+        }
+        
+        /* Action Buttons */
+        .action-bar {
+            padding: 16px 20px;
+            border-top: 1px solid #e1e4e8;
+            background: white;
+            display: flex;
+            gap: 12px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: 1px solid #e1e4e8;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            color: #2c3e50;
+        }
+        
+        .btn:hover {
+            background: #f8f9fa;
+        }
+        
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        /* Modal for AI Instructions */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e1e4e8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: none;
+            background: #f8f9fa;
+            color: #6c757d;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-close:hover {
+            background: #e9ecef;
+        }
+        
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .form-input:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .form-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .form-hint {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+        
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #e1e4e8;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Left - Workflow & AI -->
+        <div class="sidebar-left">
+            <div class="logo">
+                <div class="logo-icon">T</div>
+                <span>TEXTAMI</span>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('workflow')">
+                    📋 Workflow
+                </div>
+                <div class="tab" onclick="switchTab('ai')">
+                    🤖 Instruccions IA
+                </div>
+                <div class="tab" onclick="switchTab('knowledge')">
+                    📚 Coneixements
+                </div>
+            </div>
+            
+            <div class="tab-content">
+                <!-- Workflow Tab -->
+                <div id="workflow-tab" class="tab-panel active">
+                    <div class="workflow-step active">
+                        <div class="step-icon">📤</div>
+                        <div class="step-info">
+                            <div class="step-name">Document Upload</div>
+                            <div class="step-status">Analitzant amb IA...</div>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-icon">🔍</div>
+                        <div class="step-info">
+                            <div class="step-name">Detecció de Camps</div>
+                            <div class="step-status">20 camps detectats</div>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-icon">📊</div>
+                        <div class="step-info">
+                            <div class="step-name">Carregar Dades</div>
+                            <div class="step-status">Pendent</div>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-icon">🔗</div>
+                        <div class="step-info">
+                            <div class="step-name">Mapejar Camps</div>
+                            <div class="step-status">Pendent</div>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-icon">✨</div>
+                        <div class="step-info">
+                            <div class="step-name">Generar Documents</div>
+                            <div class="step-status">Pendent</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- AI Instructions Tab -->
+                <div id="ai-tab" class="tab-panel">
+                    <div class="ai-section">
+                        <div class="ai-section-header">
+                            Instruccions Generals
+                            <button onclick="openInstructionModal('general')" style="background: none; border: none; color: #3b82f6; cursor: pointer; font-size: 18px;">+</button>
+                        </div>
+                        <div class="ai-instruction-card">
+                            <div class="instruction-type general">GENERAL</div>
+                            <div class="instruction-text">
+                                Utilitza un to formal i professional en tot el document. Assegura't que tots els termes legals siguin precisos segons la legislació catalana vigent.
+                            </div>
+                            <div class="knowledge-references">
+                                <span class="knowledge-ref">📚 legal_terms</span>
+                                <span class="knowledge-ref">📖 llei_arrendaments_2024</span>
+                            </div>
+                            <div class="instruction-target">
+                                📄 Aplicat a tot el document
+                            </div>
+                        </div>
+                        <div class="ai-instruction-card">
+                            <div class="instruction-type general">GENERAL</div>
+                            <div class="instruction-text">
+                                Les dates sempre en format DD/MM/AAAA. Els imports monetaris amb el símbol € i dues decimals. Valida tots els camps segons les regles establertes.
+                            </div>
+                            <div class="knowledge-references">
+                                <span class="knowledge-ref">🔧 validation_rules</span>
+                                <span class="knowledge-ref">📊 format_standards</span>
+                            </div>
+                            <div class="instruction-target">
+                                📄 Aplicat a tot el document
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="ai-section">
+                        <div class="ai-section-header">
+                            Instruccions Específiques
+                            <button onclick="openInstructionModal('specific')" style="background: none; border: none; color: #3b82f6; cursor: pointer; font-size: 18px;">+</button>
+                        </div>
+                        <div class="ai-instruction-card">
+                            <div class="instruction-type specific">PARÀGRAF</div>
+                            <div class="instruction-text">
+                                Si el llogater és una empresa, afegeix el CIF i el representant legal. Utilitza el format estàndard per a empreses.
+                            </div>
+                            <div class="knowledge-references">
+                                <span class="knowledge-ref">📋 company_template</span>
+                                <span class="knowledge-ref">🔧 validation_rules</span>
+                                <span class="knowledge-ref">📖 tipus_societats</span>
+                            </div>
+                            <div class="instruction-target">
+                                📍 Secció: REUNITS - Paràgraf 2
+                            </div>
+                        </div>
+                        <div class="ai-instruction-card">
+                            <div class="instruction-type specific">SECCIÓ</div>
+                            <div class="instruction-text">
+                                Calcula automàticament la data de finalització sumant els anys de durada a la data d'inici. Aplica les regles de renovació segons LAU.
+                            </div>
+                            <div class="knowledge-references">
+                                <span class="knowledge-ref">📅 calcul_dates</span>
+                                <span class="knowledge-ref">📖 llei_arrendaments_2024</span>
+                            </div>
+                            <div class="instruction-target">
+                                📍 Secció: SEGONA - DURADA
+                            </div>
+                        </div>
+                        <div class="ai-instruction-card">
+                            <div class="instruction-type specific">CAMP</div>
+                            <div class="instruction-text">
+                                Si l'import supera els 1000€, suggereix revisar els preus de mercat de la zona i afegeix una nota informativa.
+                            </div>
+                            <div class="knowledge-references">
+                                <span class="knowledge-ref">📊 rental_prices_bcn</span>
+                                <span class="knowledge-ref">📈 index_preus_2024</span>
+                                <span class="knowledge-ref">🗺️ zones_barcelona</span>
+                            </div>
+                            <div class="instruction-target">
+                                📍 Camp: Import Renda
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="add-instruction-btn" onclick="openInstructionModal()">
+                        + Afegir Nova Instrucció IA
+                    </button>
+                </div>
+                
+                <!-- Knowledge Base Tab -->
+                <div id="knowledge-tab" class="tab-panel">
+                    <div class="ai-section">
+                        <div class="ai-section-header">
+                            Base de Coneixements
+                            <button onclick="openKnowledgeModal()" style="background: none; border: none; color: #3b82f6; cursor: pointer; font-size: 18px;">+</button>
+                        </div>
+                        
+                        <div class="knowledge-item">
+                            <div class="knowledge-title">
+                                📋 <span>company_template</span>
+                                <span class="knowledge-tag">Plantilla</span>
+                            </div>
+                            <div class="knowledge-description">
+                                Format estàndard per a empreses: "[Nom Empresa], amb CIF [número], representada per [Nom Representant] en qualitat de [Càrrec]"
+                            </div>
+                            <div class="knowledge-usage">
+                                <span class="usage-label">Utilitzat en:</span>
+                                <span class="usage-count">3 instruccions</span>
+                            </div>
+                        </div>
+                        
+                        <div class="knowledge-item">
+                            <div class="knowledge-title">
+                                📊 <span>rental_prices_bcn</span>
+                                <span class="knowledge-tag">Dades</span>
+                            </div>
+                            <div class="knowledge-description">
+                                Preus mitjans de lloguer a Barcelona per zones: Eixample (1200€), Gràcia (1000€), Sants (950€)...
+                            </div>
+                            <div class="knowledge-usage">
+                                <span class="usage-label">Utilitzat en:</span>
+                                <span class="usage-count">1 instrucció</span>
+                            </div>
+                        </div>
+                        
+                        <div class="knowledge-item">
+                            <div class="knowledge-title">
+                                📖 <span>legal_terms</span>
+                                <span class="knowledge-tag">Glossari</span>
+                            </div>
+                            <div class="knowledge-description">
+                                Definicions legals: Arrendador, Arrendatari, Fiança, Renda, IPC, LAU...
+                            </div>
+                            <div class="knowledge-usage">
+                                <span class="usage-label">Utilitzat en:</span>
+                                <span class="usage-count">2 instruccions</span>
+                            </div>
+                        </div>
+                        
+                        <div class="knowledge-item">
+                            <div class="knowledge-title">
+                                🔧 <span>validation_rules</span>
+                                <span class="knowledge-tag">Regles</span>
+                            </div>
+                            <div class="knowledge-description">
+                                DNI: 8 dígits + lletra. CIF: lletra + 7 dígits + dígit control. Telèfon: 9 dígits començant per 6, 7 o 9.
+                            </div>
+                            <div class="knowledge-usage">
+                                <span class="usage-label">Utilitzat en:</span>
+                                <span class="usage-count">4 instruccions</span>
+                            </div>
+                        </div>
+                        
+                        <div class="knowledge-item">
+                            <div class="knowledge-title">
+                                📖 <span>llei_arrendaments_2024</span>
+                                <span class="knowledge-tag">Legislació</span>
+                            </div>
+                            <div class="knowledge-description">
+                                LAU actualitzada 2024: Durada mínima 5 anys (7 si arrendador persona jurídica), pròrrogues, actualització renda...
+                            </div>
+                            <div class="knowledge-usage">
+                                <span class="usage-label">Utilitzat en:</span>
+                                <span class="usage-count">2 instruccions</span>
+                            </div>
+                        </div>
+                        
+                        <div class="knowledge-item">
+                            <div class="knowledge-title">
+                                📅 <span>calcul_dates</span>
+                                <span class="knowledge-tag">Funcions</span>
+                            </div>
+                            <div class="knowledge-description">
+                                Funcions per calcular dates: sumar anys/mesos, dies laborables, festius Catalunya...
+                            </div>
+                            <div class="knowledge-usage">
+                                <span class="usage-label">Utilitzat en:</span>
+                                <span class="usage-count">1 instrucció</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="add-instruction-btn" onclick="openKnowledgeModal()">
+                        + Afegir Nou Coneixement
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div class="document-title">
+                    <div class="document-icon">📄</div>
+                    Contracte_Lloguer_Template.docx
+                </div>
+                <div class="ai-status">
+                    <div class="ai-indicator">
+                        <span style="width: 6px; height: 6px; background: #22c55e; border-radius: 50%;"></span>
+                        IA Activa
+                    </div>
+                    <span class="ai-model">GPT-5 Vision</span>
+                </div>
+            </div>
+            
+            <!-- Document Viewer -->
+            <div class="document-viewer">
+                <div class="document-container">
+                    <div class="document-header">
+                        <h1>CONTRACTE D'ARRENDAMENT D'HABITATGE</h1>
+                        <p>Segons la Llei 29/1994, de 24 de novembre, d'Arrendaments Urbans</p>
+                    </div>
+                    
+                    <div class="document-section has-instruction">
+                        <div class="instruction-marker">
+                            IA
+                            <div class="instruction-tooltip">
+                                <strong>Instrucció IA:</strong><br>
+                                Si el llogater és una empresa, afegeix el CIF i el representant legal.
+                            </div>
+                        </div>
+                        <h2>REUNITS</h2>
+                        <p>
+                            D'una part, <span class="field-placeholder field-detected" id="field1" onclick="toggleDropdown('field1')" data-original="Joan Garcia Martínez">
+                                <span class="field-label">Propietari_Nom <span class="dropdown-icon">▼</span></span>
+                                <span class="field-original">Joan Garcia Martínez</span>
+                                <div class="field-dropdown" id="dropdown-field1">
+                                    <div class="dropdown-option selected">
+                                        <span>✓</span> Propietari_Nom
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field1', 'Propietari_Cognom')">
+                                        <span></span> Propietari_Cognom
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field1', 'Empresa_Nom')">
+                                        <span></span> Empresa_Nom
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field1', 'Representant_Legal')">
+                                        <span></span> Representant_Legal
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field1', 'Administrador')">
+                                        <span></span> Administrador
+                                    </div>
+                                    <div class="dropdown-divider"></div>
+                                    <div class="dropdown-option danger" onclick="removeField('field1')">
+                                        <span>×</span> Eliminar camp
+                                    </div>
+                                </div>
+                            </span> 
+                            amb DNI <span class="field-placeholder field-detected" id="field2" onclick="toggleDropdown('field2')" data-original="12345678A">
+                                <span class="field-label">Propietari_DNI <span class="dropdown-icon">▼</span></span>
+                                <span class="field-original">12345678A</span>
+                                <div class="field-dropdown" id="dropdown-field2">
+                                    <div class="dropdown-option selected">
+                                        <span>✓</span> Propietari_DNI
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field2', 'Propietari_NIE')">
+                                        <span></span> Propietari_NIE
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field2', 'Empresa_CIF')">
+                                        <span></span> Empresa_CIF
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field2', 'Passaport')">
+                                        <span></span> Passaport
+                                    </div>
+                                    <div class="dropdown-divider"></div>
+                                    <div class="dropdown-option danger" onclick="removeField('field2')">
+                                        <span>×</span> Eliminar camp
+                                    </div>
+                                </div>
+                            </span>, 
+                            actuant en qualitat d'ARRENDADOR, amb domicili a 
+                            <span class="field-placeholder field-detected" id="field3" onclick="toggleDropdown('field3')" data-original="Carrer Major 123, Barcelona">
+                                <span class="field-label">Propietari_Adreca <span class="dropdown-icon">▼</span></span>
+                                <span class="field-original">Carrer Major 123, Barcelona</span>
+                                <div class="field-dropdown" id="dropdown-field3">
+                                    <div class="dropdown-option selected">
+                                        <span>✓</span> Propietari_Adreca
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field3', 'Propietari_Adreca_Completa')">
+                                        <span></span> Propietari_Adreca_Completa
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field3', 'Oficina_Adreca')">
+                                        <span></span> Oficina_Adreca
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field3', 'Domicili_Fiscal')">
+                                        <span></span> Domicili_Fiscal
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field3', 'Adreca_Notificacions')">
+                                        <span></span> Adreca_Notificacions
+                                    </div>
+                                    <div class="dropdown-divider"></div>
+                                    <div class="dropdown-option danger" onclick="removeField('field3')">
+                                        <span>×</span> Eliminar camp
+                                    </div>
+                                </div>
+                            </span>.
+                        </p>
+                        <p style="margin-top: 15px;">
+                            I d'altra part, <span class="field-placeholder field-detected" id="field4" onclick="toggleDropdown('field4')" data-original="Maria López Sánchez">
+                                <span class="field-label">Llogater_Nom <span class="dropdown-icon">▼</span></span>
+                                <span class="field-original">Maria López Sánchez</span>
+                                <div class="field-dropdown" id="dropdown-field4">
+                                    <div class="dropdown-option selected">
+                                        <span>✓</span> Llogater_Nom
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field4', 'Llogater_Nom_Complet')">
+                                        <span></span> Llogater_Nom_Complet
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field4', 'Empresa_Client')">
+                                        <span></span> Empresa_Client
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field4', 'Representant_Client')">
+                                        <span></span> Representant_Client
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field4', 'Avalador_Nom')">
+                                        <span></span> Avalador_Nom
+                                    </div>
+                                    <div class="dropdown-divider"></div>
+                                    <div class="dropdown-option danger" onclick="removeField('field4')">
+                                        <span>×</span> Eliminar camp
+                                    </div>
+                                </div>
+                            </span> 
+                            amb DNI/NIE <span class="field-placeholder field-detected" id="field5" onclick="toggleDropdown('field5')" data-original="87654321B">
+                                <span class="field-label">Llogater_DNI <span class="dropdown-icon">▼</span></span>
+                                <span class="field-original">87654321B</span>
+                                <div class="field-dropdown" id="dropdown-field5">
+                                    <div class="dropdown-option selected">
+                                        <span>✓</span> Llogater_DNI
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field5', 'Llogater_NIE')">
+                                        <span></span> Llogater_NIE
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field5', 'Client_CIF')">
+                                        <span></span> Client_CIF
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field5', 'Passaport_Client')">
+                                        <span></span> Passaport_Client
+                                    </div>
+                                    <div class="dropdown-divider"></div>
+                                    <div class="dropdown-option danger" onclick="removeField('field5')">
+                                        <span>×</span> Eliminar camp
+                                    </div>
+                                </div>
+                            </span>, 
+                            actuant en qualitat d'ARRENDATARI.
+                        </p>
+                    </div>
+                    
+                    <div class="document-section">
+                        <h2>EXPOSEN</h2>
+                        <p>
+                            I. Que l'ARRENDADOR és propietari de l'habitatge situat a 
+                            <span class="field-placeholder field-detected" id="field8" onclick="toggleDropdown('field8')" data-original="Avinguda Diagonal 456, 3r 2a, 08001 Barcelona">
+                                <span class="field-label">Immoble_Adreca <span class="dropdown-icon">▼</span></span>
+                                <span class="field-original">Avinguda Diagonal 456, 3r 2a, 08001 Barcelona</span>
+                                <div class="field-dropdown" id="dropdown-field8">
+                                    <div class="dropdown-option selected">
+                                        <span>✓</span> Immoble_Adreca
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field8', 'Immoble_Adreca_Completa')">
+                                        <span></span> Immoble_Adreca_Completa
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field8', 'Finca_Ubicacio')">
+                                        <span></span> Finca_Ubicacio
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field8', 'Propietat_Direccio')">
+                                        <span></span> Propietat_Direccio
+                                    </div>
+                                    <div class="dropdown-divider"></div>
+                                    <div class="dropdown-option danger" onclick="removeField('field8')">
+                                        <span>×</span> Eliminar camp
+                                    </div>
+                                </div>
+                            </span>.
+                        </p>
+                    </div>
+                    
+                    <div class="document-section has-instruction">
+                        <div class="instruction-marker">
+                            IA
+                            <div class="instruction-tooltip">
+                                <strong>Instrucció IA:</strong><br>
+                                Calcula automàticament la data de finalització sumant els anys a la data d'inici.
+                            </div>
+                        </div>
+                        <h2>CLÀUSULES</h2>
+                        <p>
+                            <strong>PRIMERA.- DURADA</strong><br>
+                            La durada del contracte és de <span class="field-placeholder field-detected" id="field10" onclick="toggleDropdown('field10')" data-original="5">
+                                <span class="field-label">Durada_Anys <span class="dropdown-icon">▼</span></span>
+                                <span class="field-original">5</span>
+                                <div class="field-dropdown" id="dropdown-field10">
+                                    <div class="dropdown-option selected">
+                                        <span>✓</span> Durada_Anys
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field10', 'Periode_Contracte')">
+                                        <span></span> Periode_Contracte
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field10', 'Temps_Arrendament')">
+                                        <span></span> Temps_Arrendament
+                                    </div>
+                                    <div class="dropdown-divider"></div>
+                                    <div class="dropdown-option danger" onclick="removeField('field10')">
+                                        <span>×</span> Eliminar camp
+                                    </div>
+                                </div>
+                            </span> anys, 
+                            començant el dia <span class="field-placeholder field-detected" id="field11" onclick="toggleDropdown('field11')" data-original="1 de febrer de 2025">
+                                <span class="field-label">Data_Inici <span class="dropdown-icon">▼</span></span>
+                                <span class="field-original">1 de febrer de 2025</span>
+                                <div class="field-dropdown" id="dropdown-field11">
+                                    <div class="dropdown-option selected">
+                                        <span>✓</span> Data_Inici
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field11', 'Data_Contracte')">
+                                        <span></span> Data_Contracte
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field11', 'Inici_Arrendament')">
+                                        <span></span> Inici_Arrendament
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field11', 'Data_Entrada')">
+                                        <span></span> Data_Entrada
+                                    </div>
+                                    <div class="dropdown-divider"></div>
+                                    <div class="dropdown-option danger" onclick="removeField('field11')">
+                                        <span>×</span> Eliminar camp
+                                    </div>
+                                </div>
+                            </span>.
+                        </p>
+                        <p style="margin-top: 15px;">
+                            <strong>SEGONA.- RENDA</strong><br>
+                            La renda mensual és de <span class="field-placeholder field-detected" id="field14" onclick="toggleDropdown('field14')" data-original="850">
+                                <span class="field-label">Import_Mensual <span class="dropdown-icon">▼</span></span>
+                                <span class="field-original">850</span>
+                                <div class="field-dropdown" id="dropdown-field14">
+                                    <div class="dropdown-option selected">
+                                        <span>✓</span> Import_Mensual
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field14', 'Renda_Mes')">
+                                        <span></span> Renda_Mes
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field14', 'Preu_Lloguer')">
+                                        <span></span> Preu_Lloguer
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field14', 'Quota_Mensual')">
+                                        <span></span> Quota_Mensual
+                                    </div>
+                                    <div class="dropdown-option" onclick="changeMapping('field14', 'Import_Total')">
+                                        <span></span> Import_Total
+                                    </div>
+                                    <div class="dropdown-divider"></div>
+                                    <div class="dropdown-option danger" onclick="removeField('field14')">
+                                        <span>×</span> Eliminar camp
+                                    </div>
+                                </div>
+                            </span> EUROS.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar Right - Fields & Data -->
+        <div class="sidebar-right">
+            <div class="sidebar-header">
+                <div class="sidebar-title">
+                    🎯 Camps i Dades
+                </div>
+            </div>
+            
+            <div class="sidebar-content">
+                <div class="fields-section">
+                    <div class="section-header">
+                        Camps Detectats
+                        <span class="field-count">11</span>
+                    </div>
+                    
+                    <div class="field-item mapped" data-field="field1">
+                        <div class="field-item-header">
+                            <span class="field-name">Propietari_Nom</span>
+                            <span class="field-type">text</span>
+                        </div>
+                        <div class="field-meta">
+                            <span class="mapped-to">✓ Mapejat</span>
+                        </div>
+                    </div>
+                    
+                    <div class="field-item mapped" data-field="field2">
+                        <div class="field-item-header">
+                            <span class="field-name">Propietari_DNI</span>
+                            <span class="field-type">dni</span>
+                        </div>
+                        <div class="field-meta">
+                            <span class="mapped-to">✓ Mapejat</span>
+                        </div>
+                    </div>
+                    
+                    <div class="field-item mapped" data-field="field3">
+                        <div class="field-item-header">
+                            <span class="field-name">Propietari_Adreca</span>
+                            <span class="field-type">address</span>
+                        </div>
+                        <div class="field-meta">
+                            <span class="mapped-to">✓ Mapejat</span>
+                        </div>
+                    </div>
+                    
+                    <div class="field-item mapped" data-field="field4">
+                        <div class="field-item-header">
+                            <span class="field-name">Llogater_Nom</span>
+                            <span class="field-type">text</span>
+                        </div>
+                        <div class="field-meta">
+                            <span class="mapped-to">✓ Mapejat</span>
+                        </div>
+                    </div>
+                    
+                    <div class="field-item mapped" data-field="field5">
+                        <div class="field-item-header">
+                            <span class="field-name">Llogater_DNI</span>
+                            <span class="field-type">dni</span>
+                        </div>
+                        <div class="field-meta">
+                            <span class="mapped-to">✓ Mapejat</span>
+                        </div>
+                    </div>
+                    
+                    <div class="field-item mapped" data-field="field8">
+                        <div class="field-item-header">
+                            <span class="field-name">Immoble_Adreca</span>
+                            <span class="field-type">address</span>
+                        </div>
+                        <div class="field-meta">
+                            <span class="mapped-to">✓ Mapejat</span>
+                        </div>
+                    </div>
+                    
+                    <div class="field-item mapped" data-field="field10">
+                        <div class="field-item-header">
+                            <span class="field-name">Durada_Anys</span>
+                            <span class="field-type">number</span>
+                        </div>
+                        <div class="field-meta">
+                            <span class="mapped-to">✓ Mapejat</span>
+                        </div>
+                    </div>
+                    
+                    <div class="field-item mapped" data-field="field11">
+                        <div class="field-item-header">
+                            <span class="field-name">Data_Inici</span>
+                            <span class="field-type">date</span>
+                        </div>
+                        <div class="field-meta">
+                            <span class="mapped-to">✓ Mapejat</span>
+                        </div>
+                    </div>
+                    
+                    <div class="field-item mapped" data-field="field14">
+                        <div class="field-item-header">
+                            <span class="field-name">Import_Mensual</span>
+                            <span class="field-type">currency</span>
+                        </div>
+                        <div class="field-meta">
+                            <span class="mapped-to">✓ Mapejat</span>
+                        </div>
+                    </div>
+                    
+                    <div class="field-item" data-field="field15">
+                        <div class="field-item-header">
+                            <span class="field-name">Fianca_Import</span>
+                            <span class="field-type">currency</span>
+                        </div>
+                        <div class="field-meta">
+                            <span style="color: #ffc107;">⏳ Pendent mapejar</span>
+                        </div>
+                    </div>
+                    
+                    <div class="field-item" data-field="field16">
+                        <div class="field-item-header">
+                            <span class="field-name">Ciutat_Signatura</span>
+                            <span class="field-type">text</span>
+                        </div>
+                        <div class="field-meta">
+                            <span style="color: #ffc107;">⏳ Pendent mapejar</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="fields-section">
+                    <div class="section-header">
+                        Columnes de Dades Excel
+                        <span class="field-count">24</span>
+                    </div>
+                    <div style="background: #f8f9fa; border-radius: 8px; padding: 12px; font-size: 12px; color: #6c757d;">
+                        <div style="margin-bottom: 8px; font-weight: 600;">📁 Llogaters_2025.xlsx</div>
+                        <div style="margin-bottom: 4px;">• Propietari_Nom</div>
+                        <div style="margin-bottom: 4px;">• Propietari_DNI</div>
+                        <div style="margin-bottom: 4px;">• Propietari_Adreca</div>
+                        <div style="margin-bottom: 4px;">• Llogater_Nom</div>
+                        <div style="margin-bottom: 4px;">• Llogater_DNI</div>
+                        <div style="margin-bottom: 4px;">• Immoble_Adreca</div>
+                        <div style="margin-bottom: 4px;">• Durada_Anys</div>
+                        <div style="margin-bottom: 4px;">• Data_Inici</div>
+                        <div style="margin-bottom: 4px;">• Import_Mensual</div>
+                        <div style="margin-bottom: 4px;">• Fianca_Import</div>
+                        <div style="margin-bottom: 4px;">• Ciutat_Signatura</div>
+                        <div style="color: #6c757d; font-size: 11px; margin-top: 8px;">... i 13 més</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="action-bar">
+                <button class="btn">
+                    📊 Carregar Dades
+                </button>
+                <button class="btn btn-primary">
+                    ✨ Generar Documents
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for AI Instructions -->
+    <div class="modal" id="instructionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Nova Instrucció IA</h3>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Tipus d'Instrucció</label>
+                    <select class="form-select">
+                        <option>General - Tot el document</option>
+                        <option>Específica - Secció</option>
+                        <option>Específica - Paràgraf</option>
+                        <option>Específica - Camp</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Instrucció</label>
+                    <textarea class="form-textarea" placeholder="Escriu la instrucció per a la IA..."></textarea>
+                    <div class="form-hint">Pots referenciar coneixements amb {nom_coneixement}</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Aplicar a</label>
+                    <select class="form-select">
+                        <option>Tot el document</option>
+                        <option>Secció: REUNITS</option>
+                        <option>Secció: EXPOSEN</option>
+                        <option>Secció: CLÀUSULES</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Coneixements Relacionats</label>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <label style="display: flex; align-items: center; gap: 4px; font-size: 13px;">
+                            <input type="checkbox"> company_template
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 4px; font-size: 13px;">
+                            <input type="checkbox"> legal_terms
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 4px; font-size: 13px;">
+                            <input type="checkbox"> validation_rules
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal()">Cancel·lar</button>
+                <button class="btn btn-primary">Afegir Instrucció</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function openInstructionModal(type) {
+            document.getElementById('instructionModal').classList.add('show');
+        }
+        
+        function closeModal() {
+            document.getElementById('instructionModal').classList.remove('show');
+        }
+        
+        function toggleDropdown(fieldId) {
+            event.stopPropagation();
+            
+            // Close all other dropdowns
+            document.querySelectorAll('.field-dropdown').forEach(dropdown => {
+                if (dropdown.id !== 'dropdown-' + fieldId) {
+                    dropdown.classList.remove('show');
+                }
+            });
+            
+            // Toggle current dropdown
+            const dropdown = document.getElementById('dropdown-' + fieldId);
+            dropdown.classList.toggle('show');
+        }
+        
+        function closeDropdown(fieldId) {
+            event.stopPropagation();
+            document.getElementById('dropdown-' + fieldId).classList.remove('show');
+        }
+        
+        function changeMapping(fieldId, newColumn) {
+            event.stopPropagation();
+            
+            // Update the field label
+            const field = document.getElementById(fieldId);
+            const label = field.querySelector('.field-label');
+            
+            // Update with new column name
+            label.innerHTML = newColumn + ' <span class="dropdown-icon">▼</span>';
+            
+            // Visual feedback
+            field.style.background = '#e3f2fd';
+            setTimeout(() => {
+                field.style.background = '#fff3cd';
+            }, 500);
+            
+            // Update sidebar
+            const sidebarItem = document.querySelector(`[data-field="${fieldId}"]`);
+            if (sidebarItem) {
+                sidebarItem.querySelector('.field-name').textContent = newColumn;
+            }
+            
+            closeDropdown(fieldId);
+        }
+        
+        function removeField(fieldId) {
+            event.stopPropagation();
+            const field = document.getElementById(fieldId);
+            
+            // Get original text
+            const originalText = field.getAttribute('data-original');
+            
+            // Remove all field classes and styling
+            field.classList.remove('field-detected', 'field-placeholder');
+            field.style.background = 'none';
+            field.style.border = 'none';
+            
+            // Remove label, confidence and dropdown
+            const label = field.querySelector('.field-label');
+            const confidence = field.querySelector('.field-confidence');
+            const dropdown = field.querySelector('.field-dropdown');
+            const original = field.querySelector('.field-original');
+            
+            if (label) label.remove();
+            if (confidence) confidence.remove();
+            if (dropdown) dropdown.remove();
+            if (original) original.remove();
+            
+            // Restore original text
+            field.innerHTML = originalText;
+            field.onclick = null;
+            field.style.cursor = 'text';
+            
+            // Remove from sidebar
+            const sidebarItem = document.querySelector(`[data-field="${fieldId}"]`);
+            if (sidebarItem) {
+                sidebarItem.remove();
+            }
+            
+            // Update field count
+            const fieldCount = document.querySelector('.field-count');
+            if (fieldCount) {
+                const currentCount = parseInt(fieldCount.textContent);
+                fieldCount.textContent = currentCount - 1;
+            }
+            
+            closeDropdown(fieldId);
+        }
+        
+        function editFieldName(fieldId) {
+            event.stopPropagation();
+            const newName = prompt('Nou nom per al camp:');
+            if (newName) {
+                const field = document.getElementById(fieldId);
+                const label = field.querySelector('.field-label');
+                label.innerHTML = newName + ' <span class="dropdown-icon">▼</span>';
+            }
+            closeDropdown(fieldId);
+        }
+        
+        function addValidation(fieldId) {
+            event.stopPropagation();
+            alert('Afegir validació personalitzada per al camp');
+            closeDropdown(fieldId);
+        }
+        
+        function addAIInstruction(fieldId) {
+            event.stopPropagation();
+            alert('Afegir instrucció IA específica per aquest camp');
+            closeDropdown(fieldId);
+        }
+        
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function() {
+            document.querySelectorAll('.field-dropdown').forEach(dropdown => {
+                dropdown.classList.remove('show');
+            });
+        });
+        
+        // Simulate field detection on load
+        setTimeout(() => {
+            document.querySelectorAll('.workflow-step')[0].classList.add('completed');
+            document.querySelectorAll('.workflow-step')[1].classList.add('active');
+        }, 2000);
+    </script>
+</body>
+</html>

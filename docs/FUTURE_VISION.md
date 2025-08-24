@@ -1,37 +1,37 @@
-# Textami - Visió Futura
+# Textami AI-First - Visió Futura
 
-## Fase 2: Post-MVP (Mes 2-3)
+## Fase 2: Post-MVP AI Enhanced (Mes 2-3)
 
-### Funcionalitats Avançades
-- Variables IA simples amb OpenAI
-- Preview millorat amb edit en línia
-- Biblioteca de templates predefinides
-- Historial de generacions
-- Export múltiples formats
-- Validacions avançades
+### Funcionalitats AI Avançades
+- **AI Context Memory**: Recordar preferències usuari i estils
+- **Advanced AI Models**: Integració Claude, Gemini com fallbacks
+- **AI Template Library**: Templates generats per IA segons industry
+- **Smart Batch Processing**: IA optimitza generació massiva
+- **AI Quality Assurance**: Validació automàtica de documents
+- **Multi-format Export**: PDF, HTML, RTF amb preservació perfecta
 
-### Tecnologies a Afegir
-- OpenAI API per variables intel·ligents
-- React Query per cache
-- Zustand per state management
-- PDF-lib per manipulació PDF
-- JSZip per compressions
+### Stack Tecnològic Ampliat
+- **OpenAI GPT-5 Vision** (ja implementat) + models adicionals
+- **React Query** per cache intel·ligent AI responses
+- **Zustand** per state management optimitzat
+- **PDF-lib + AI** per manipulació PDF intel·ligent
+- **Background Jobs** per processos AI llargs
 
-## Fase 3: Sistema Complet (Mes 4-6)
+## Fase 3: AI Enterprise System (Mes 4-6)
 
-### Human-in-the-Loop Complet
-- Editor WYSIWYG integrat
-- Preview en temps real
-- Edició directa de documents
-- Aprovació manual
-- Sistema de revisions
+### AI Human-in-the-Loop Avançat
+- **AI-Powered WYSIWYG**: Editor amb suggestions intel·ligents
+- **Real-time AI Preview**: Vista prèvia amb AI corrections
+- **Intelligent Document Review**: AI detecta errors i inconsistències
+- **Collaborative AI**: Multiple usuaris amb AI facilitant coordinació
+- **Version Control AI**: AI tracking de canvis i suggestions merge
 
-### Knowledge Base & RAG
-- Upload PDFs de context
-- Sistema RAG amb embeddings
-- Variables intel·ligents basades en context
-- Memòria de conversacions
-- Aprenentatge del usuari
+### Enterprise AI Features
+- **Knowledge Base RAG**: Upload PDFs → AI context understanding
+- **Smart Document Templates**: AI genera templates segons context empresa
+- **Industry-Specific AI**: Models especialitzats per sector
+- **Compliance AI**: Verificació automàtica legal/regulatory
+- **AI Analytics**: Insights sobre patrons d'ús i optimitzacions
 
 ### Funcionalitats Empresarials
 - Signatura digital
@@ -71,38 +71,39 @@
 - SOC2 certification
 - Backup automàtic
 
-## Monetització
+## Monetització AI-Powered
 
-### Freemium Model
-- **Gratuït**: 10 documents/mes, 1 plantilla
-- **Pro (€29/mes)**: 500 documents/mes, plantilles il·limitades  
-- **Business (€99/mes)**: Documents il·limitats, API, priority
-- **Enterprise**: Custom pricing, on-premise, SLA
+### Model Freemium Basat en AI
+- **Gratuït**: 25 documents/mes AI-basic, templates simples
+- **Pro (€39/mes)**: 1000 documents/mes, AI avançat, confidence scoring
+- **Business (€129/mes)**: Documents il·limitats, AI models múltiples, API
+- **Enterprise AI**: Custom pricing, models propietat, fine-tuning
 
-### Add-ons
-- Templates premium: €5/plantilla
-- IA avançada: €0.10/document  
-- White label: €200/mes
-- API extra calls: €0.01/call
+### AI Add-ons Premium
+- **Advanced AI Models**: €0.15/document (Claude, Gemini)
+- **Custom AI Training**: €500 setup + €0.25/document trained
+- **AI Template Generation**: €15/template AI-generated
+- **White Label AI**: €300/mes amb branding personalitzat
+- **AI Analytics Dashboard**: €50/mes insights avançats
 
-## Roadmap Temporal
+## Roadmap AI-First Temporal
 
-### Q2 2025: MVP Live
-- Funcionalitats bàsiques operatives
-- 100 usuaris beta
-- Feedback recollit
+### Q3 2025: AI MVP Live
+- GPT-5 Vision operational
+- 200 usuaris beta AI-first
+- AI accuracy >90% feedback
 
-### Q3 2025: Post-MVP
-- IA integrada
-- 1,000 usuaris actius
-- $5k MRR
+### Q4 2025: AI Enhanced
+- Multi-model AI (Claude, Gemini fallbacks)
+- 2,000 usuaris actius
+- €15k MRR (AI-powered pricing)
 
-### Q4 2025: Scale
-- Human-in-the-loop complet
-- 10,000 usuaris
-- $50k MRR
+### Q1 2026: AI Enterprise
+- Custom AI models per industry
+- 15,000 usuaris Enterprise AI
+- €150k MRR
 
-### Q1 2026: Enterprise
-- API pública
-- White label
-- $200k MRR target
+### Q2 2026: AI Platform Leader
+- White label AI platform
+- API ecosystem amb AI partners
+- €500k+ MRR target

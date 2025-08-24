@@ -174,25 +174,25 @@ export default function Home() {
         )}
         <div className="text-center mb-16">
           <h1 className="text-5xl font-bold text-gray-900 mb-6">
-            📄 Textami
+            🧠 Textami AI-First
           </h1>
           <p className="text-xl text-gray-600 mb-4">
-            Generador professional de documents
+            Generador intel·ligent de documents powered by GPT-5
           </p>
           <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-            Transforma plantilles Word i dades Excel en documents personalitzats 
-            mantenint el format original amb qualitat professional
+            Upload DOCX → AI analitza → Upload Excel → AI mapeja → Genera documents.
+            <strong>Zero configuració manual</strong>, tot automàtic amb intel·ligència artificial.
           </p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto mb-16">
-          {/* Step 1: Upload Template */}
+          {/* Step 1: AI Document Analysis */}
           <div className="bg-white rounded-lg p-6 shadow-lg">
             <div className="text-center">
-              <div className="text-4xl mb-4">📄</div>
-              <h3 className="text-xl font-semibold mb-3">1. Plantilla Word</h3>
+              <div className="text-4xl mb-4">🧠</div>
+              <h3 className="text-xl font-semibold mb-3">1. AI Document Analysis</h3>
               <p className="text-gray-600 mb-4">
-                Puja el teu fitxer .docx original
+                GPT-5 Vision llegeix i analitza el teu DOCX automàticament
               </p>
               
               {!uploadState.template && (
@@ -202,7 +202,7 @@ export default function Home() {
                       ? 'bg-gray-400 text-white cursor-not-allowed' 
                       : 'bg-blue-600 text-white hover:bg-blue-700'
                   }`}>
-                    {uploadState.uploading ? 'Pujant...' : 'Pujar Template'}
+                    {uploadState.uploading ? 'AI Analitzant...' : 'Upload per AI Analysis'}
                     <input
                       type="file"
                       accept=".docx"
@@ -230,13 +230,13 @@ export default function Home() {
             </div>
           </div>
           
-          {/* Step 2: Upload Excel */}
+          {/* Step 2: AI Excel Intelligence */}
           <div className="bg-white rounded-lg p-6 shadow-lg">
             <div className="text-center">
-              <div className="text-4xl mb-4">📊</div>
-              <h3 className="text-xl font-semibold mb-3">2. Dades Excel</h3>
+              <div className="text-4xl mb-4">🎯</div>
+              <h3 className="text-xl font-semibold mb-3">2. AI Excel Intelligence</h3>
               <p className="text-gray-600 mb-4">
-                Puja el fitxer amb les dades
+                AI analitza columnes i proposa mappings intel·ligents
               </p>
               
               {!uploadState.excel && (
@@ -246,7 +246,7 @@ export default function Home() {
                       ? 'bg-blue-600 text-white hover:bg-blue-700' 
                       : 'bg-gray-400 text-white cursor-not-allowed'
                   }`}>
-                    {uploadState.uploading ? 'Pujant...' : 'Pujar Dades'}
+                    {uploadState.uploading ? 'AI Processant...' : 'Upload Excel per AI'}
                     <input
                       type="file"
                       accept=".xlsx,.xls"
@@ -277,24 +277,24 @@ export default function Home() {
             </div>
           </div>
           
-          {/* Step 3: Visual Editor */}
+          {/* Step 3: AI Generation */}
           <div className="bg-white rounded-lg p-6 shadow-lg">
             <div className="text-center">
-              <div className="text-4xl mb-4">🎨</div>
-              <h3 className="text-xl font-semibold mb-3">3. Editor Visual</h3>
+              <div className="text-4xl mb-4">✨</div>
+              <h3 className="text-xl font-semibold mb-3">3. AI Generation</h3>
               <p className="text-gray-600 mb-4">
-                Associa visualment les columnes amb el text
+                GPT-5 genera documents amb format preservation perfecte
               </p>
               <button 
                 disabled={!uploadState.template || !uploadState.excel}
-                onClick={() => window.location.href = '/editor'}
+                onClick={() => window.location.href = '/generator'}
                 className={`w-full py-2 px-4 rounded-md transition-colors ${
                   uploadState.template && uploadState.excel
                     ? 'bg-green-600 text-white hover:bg-green-700 cursor-pointer' 
                     : 'bg-gray-400 text-white cursor-not-allowed'
                 }`}
               >
-                Obrir Editor Visual
+                Generate amb AI
               </button>
             </div>
           </div>
@@ -322,13 +322,13 @@ export default function Home() {
           </div>
           
           <div className="inline-flex items-center gap-4 bg-white rounded-lg p-4 shadow-lg">
-            <span className="text-green-600 font-medium">✅ MVP 0.1.0 amb Docxtemplater Premium</span>
-            <span className="text-blue-600 font-medium">🚀 Next.js 15.4.6</span>
+            <span className="text-green-600 font-medium">🧠 AI-First MVP amb GPT-5 Vision</span>
+            <span className="text-blue-600 font-medium">⚡ Zero Configuration</span>
           </div>
         </div>
 
         <footer className="mt-16 text-center text-gray-500">
-          <p>© 2025 Aitor Gilabert Juan - Textami MVP</p>
+          <p>© 2025 Aitor Gilabert Juan - Textami AI-First</p>
         </footer>
       </div>
     </div>

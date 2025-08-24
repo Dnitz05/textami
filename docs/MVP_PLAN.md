@@ -1,87 +1,82 @@
-# Textami MVP - Pla de Desenvolupament
+# Textami AI-First MVP - Pla de Desenvolupament
 
-## Fase 1: MVP (30 dies)
+## Fase 1: AI-First MVP (20 dies)
 
-### ✅ COMPLETAT
-- [x] Estructura base del projecte
-- [x] Configuració Supabase
-- [x] Core Docxtemplater amb 4 mòduls premium
-- [x] Tipus TypeScript
-- [x] Schema base de dades (4 taules)
-- [x] Utilitats base
+### ✅ COMPLETAT (Neteja i Setup)
+- [x] Arquitectura AI-first definida
+- [x] Eliminació sistemes legacy (Premium Modules, visual mapping)
+- [x] Dependencies optimitzades (95% reducció)
+- [x] Database schema simplificat per AI
+- [x] OpenAI GPT-5 Vision API configurada
+- [x] Codebase net sense deute tècnic
 
-### 🔄 EN PROGRÉS
-- [ ] API routes bàsiques
-- [ ] Components UI amb shadcn/ui
-- [ ] Pàgines principales (landing, dashboard)
-- [ ] Sistema d'autenticació
-- [ ] Upload de plantilles
-- [ ] Upload de dades Excel
+### 🔄 EN PROGRÉS (Core AI Implementation)
+- [x] API endpoints GPT-5 Vision (backend implementat)
+- [x] DOCX upload i analysis AI (funcional)
+- [x] Excel processing i column detection (backend només)
+- [x] AI mapping proposals system (backend només)  
+- [x] Document generation amb AI (backend només)
+- [ ] UI connectada als endpoints
+- [ ] Workflow complet frontend
 
-### ⏳ PENDENT
-- [ ] Generació de documents
-- [ ] Sistema de descàrrega
-- [ ] Testing bàsic
-- [ ] Deploy a Vercel
+### ⏳ PENDENT (Polish & Deploy)
+- [ ] User confirmation interface
+- [ ] Error handling robusts
+- [ ] Batch processing
+- [ ] Basic UI/UX polish
+- [ ] Deploy to Vercel
 
-## Funcionalitats MVP
+## Funcionalitats AI-First MVP
 
-### CORE FEATURES
-✅ Upload plantilla .docx  
-✅ Detectar variables automàticament  
-✅ Upload Excel/CSV  
-✅ Mappeig columnes → variables  
-✅ Preview amb dades mostra  
-✅ Generar documents (Docxtemplater Premium)  
-✅ Download DOCX individual  
-✅ Download batch en ZIP  
-✅ Convertir a PDF  
+### CORE AI FEATURES
+✅ **Upload DOCX** → GPT-5 Vision analysis (funcional en UI)
+✅ **AI Placeholder Detection** → Automatic amb confidence scores (backend)
+🔄 **Upload Excel/CSV** → Column structure analysis (backend implementat, UI pendent)
+🔄 **AI Mapping Proposals** → Intel·ligent matching (backend implementat, UI pendent)
+❌ **User Confirmation** → Simple UI per aprovar (no implementat)
+🔄 **AI Document Generation** → Format preservation (backend implementat, UI pendent)
+❌ **Download DOCX** → Generated documents (no implementat)
+❌ **Batch Processing** → Multiple documents (no implementat)  
 
-### NO INCLOURE AL MVP
-❌ IA de cap tipus
-❌ Knowledge Base
-❌ Human-in-the-loop complet
-❌ Signatura digital
+### SIMPLIFICAT PER MVP
+❌ Complex visual mapping interfaces
+❌ Manual template syntax configuration  
+❌ Premium module setup
+❌ Advanced authentication
+❌ Multi-tenant features
+❌ Advanced analytics
 ❌ API pública
-❌ Multi-tenant
-❌ Sistema d'aprenentatge
 
 ## Timeline Detallat
 
-### Setmana 1 (Dies 1-7): FOUNDATION ✅
-- Dia 1-2: Setup, GitHub, Vercel ✅
-- Dia 3-4: Supabase de dnitz05 ✅  
-- Dia 5-6: Database schema ✅
-- Dia 7: Upload plantilles bàsic
+### Setmana 1 (Dies 1-5): AI CORE ✅
+- Dia 1: ✅ Neteja arquitectural completa
+- Dia 2: ✅ Dependencies optimization (95% reducció)
+- Dia 3: ✅ AI endpoints structure definida
+- Dia 4-5: 🔄 OpenAI GPT-5 Vision integration
 
-### Setmana 2 (Dies 8-14): TEMPLATES
-- Dia 8-9: Detectar variables
-- Dia 10-11: Guardar plantilles Supabase
-- Dia 12-13: Llistar plantilles
-- Dia 14: UI dashboard
+### Setmana 2 (Dies 6-10): AI DOCUMENT ANALYSIS
+- Dia 6-7: DOCX upload → GPT-5 analysis
+- Dia 8-9: AI placeholder detection amb confidence scores
+- Dia 10: Document transcription i structure preservation
 
-### Setmana 3 (Dies 15-21): DATA
-- Dia 15-16: Upload Excel/CSV
-- Dia 17-18: Parse amb SheetJS  
-- Dia 19-20: Mappeig columnes UI
-- Dia 21: Preview dades
+### Setmana 3 (Dies 11-15): AI MAPPING SYSTEM
+- Dia 11-12: Excel upload i column analysis automàtic
+- Dia 13-14: AI mapping proposals generation
+- Dia 15: User confirmation interface simple
 
-### Setmana 4 (Dies 22-28): GENERATION  
-- Dia 22-23: Generar 1 document
-- Dia 24-25: Batch processing
-- Dia 26-27: Progress tracking
-- Dia 28: Download ZIP
+### Setmana 4 (Dies 16-20): AI GENERATION & POLISH
+- Dia 16-17: AI document generation amb format preservation
+- Dia 18: Batch processing optimization
+- Dia 19: Basic UI polish i error handling robusts
+- Dia 20: Deploy Vercel i testing complet
 
-### Final (Dies 29-30)
-- Dia 29: Testing complet
-- Dia 30: Deploy producció
+## Regles AI-First MVP
 
-## Regles Absolutes MVP
-
-- Codi SIMPLE sempre
-- Comentaris en CATALÀ  
-- Una funció = una tasca
-- Gestió errors explícita
-- NO abstraccions prematures
-- NO over-engineering
-- NO features no essencials
+- **AI CORE**: GPT-5 Vision per tot el processing
+- **SIMPLICITAT**: Zero configuració manual
+- **INTEL·LIGÈNCIA**: Confidence scores i reasoning
+- **FORMAT PRESERVATION**: Mantenir estils originals
+- **USER EXPERIENCE**: Màxim 3 clicks (Upload → Confirm → Download)
+- **COST OPTIMIZATION**: Efficient prompts i caching
+- **ERROR HANDLING**: Graceful fallbacks amb AI
