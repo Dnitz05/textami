@@ -199,15 +199,15 @@ export default function GeneratorPage() {
   // AUTO-TRIGGER MAPPINGS when both files are uploaded  
   useEffect(() => {
     const shouldFetchMappings = 
-      aiState.aiAnalysis?.placeholders?.length > 0 &&
-      excelState.analysis?.columns?.length > 0 &&
+      (aiState.aiAnalysis?.placeholders?.length ?? 0) > 0 &&
+      (excelState.analysis?.columns?.length ?? 0) > 0 &&
       !mappingState.loading &&
       mappingState.mappings.length === 0;
     
     if (shouldFetchMappings) {
       console.log('🤖 Both files ready, auto-fetching AI mappings...', {
-        placeholders: aiState.aiAnalysis.placeholders.length,
-        columns: excelState.analysis.columns.length,
+        placeholders: aiState.aiAnalysis?.placeholders?.length ?? 0,
+        columns: excelState.analysis?.columns?.length ?? 0,
         currentMappings: mappingState.mappings.length,
         loading: mappingState.loading
       });
@@ -387,7 +387,7 @@ export default function GeneratorPage() {
                       {Math.round(aiState.template.size / 1024)} KB
                     </div>
                     <div className="text-xs text-blue-600">
-                      🧠 {aiState.aiAnalysis.placeholders.length} placeholders detectats
+                      🧠 {aiState.aiAnalysis?.placeholders?.length ?? 0} placeholders detectats
                     </div>
                     <div className="text-xs text-green-600">
                       Llest per Excel mapping
@@ -458,7 +458,7 @@ export default function GeneratorPage() {
                       )}
                     </div>
                     <div className="text-xs text-blue-600">
-                      🧠 Ready per AI mapping amb {aiState.aiAnalysis?.placeholders.length} placeholders
+                      🧠 Ready per AI mapping amb {aiState.aiAnalysis?.placeholders?.length ?? 0} placeholders
                     </div>
                   </div>
                 )}
@@ -535,7 +535,7 @@ export default function GeneratorPage() {
                 {/* Debug info */}
                 <div className="mt-2 text-xs text-gray-500">
                   Template: {aiState.template?.templateId ? '✅' : '❌'} |
-                  Placeholders: {aiState.aiAnalysis?.placeholders?.length || 0} |
+                  Placeholders: {aiState.aiAnalysis?.placeholders?.length ?? 0} |
                   Mappings: {mappingState.mappings.length} |
                   Excel: {excelState.analysis ? '✅' : '❌'}
                 </div>
@@ -653,7 +653,7 @@ export default function GeneratorPage() {
                       <strong>Content:</strong> {aiState.aiAnalysis.transcription?.substring(0, 200)}...
                     </div>
                     <div className="mt-2 text-sm">
-                      <strong>Placeholders found:</strong> {aiState.aiAnalysis.placeholders.map(p => p.text).join(', ')}
+                      <strong>Placeholders found:</strong> {aiState.aiAnalysis?.placeholders?.map(p => p.text).join(', ') ?? 'None'}
                     </div>
                   </div>
                 )}
@@ -661,7 +661,7 @@ export default function GeneratorPage() {
               
               <div className="mt-4 flex flex-wrap gap-2">
                 <span className="text-sm text-gray-600">Detected placeholders:</span>
-                {aiState.aiAnalysis.placeholders.map((placeholder, idx) => (
+                {(aiState.aiAnalysis?.placeholders ?? []).map((placeholder, idx) => (
                   <span key={idx} className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">
                     <span className="w-2 h-2 bg-yellow-400 rounded-full"></span>
                     {placeholder.text} ({placeholder.type})
