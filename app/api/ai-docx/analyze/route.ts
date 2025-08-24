@@ -16,7 +16,13 @@ function inferPlaceholderType(text: string): string {
 }
 
 // Helper function to convert text to HTML with highlighted placeholders
-function convertToHtml(content: string, placeholders: any[]): string {
+function convertToHtml(content: string, placeholders: Array<{
+  text: string;
+  type: string;
+  confidence: number;
+  originalMatch: string;
+  position: number;
+}>): string {
   let htmlContent = content.replace(/\n/g, '<br>');
   
   // Highlight each placeholder
@@ -148,7 +154,13 @@ export async function POST(request: NextRequest) {
 
     // 7. Extract document content and analyze placeholders
     let documentContent = '';
-    let extractedPlaceholders = [];
+    let extractedPlaceholders: Array<{
+      text: string;
+      type: string;
+      confidence: number;
+      originalMatch: string;
+      position: number;
+    }> = [];
     
     try {
       // Basic DOCX text extraction (we'll enhance this)
