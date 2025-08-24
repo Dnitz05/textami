@@ -139,29 +139,9 @@ export async function POST(request: NextRequest) {
     // 5. Generar template ID únic
     const templateId = `template_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
-    // 6. Guardar a Supabase Storage (opcional però recomanat)
+    // 6. Storage is completely optional for MVP
     let storageUrl = null;
-    if (supabase) {
-      try {
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('templates')
-          .upload(`${templateId}/original.docx`, buffer, {
-            contentType: file.type,
-            upsert: true
-          });
-
-        if (uploadError) {
-          console.warn('⚠️ Storage upload failed (non-critical):', uploadError);
-        } else {
-          storageUrl = uploadData?.path;
-          console.log('✅ Document saved to storage:', storageUrl);
-        }
-      } catch (storageError) {
-        console.warn('⚠️ Storage error (continuing):', storageError);
-      }
-    } else {
-      console.log('⚠️ Skipping storage upload (Supabase not available)');
-    }
+    console.log('⚠️ Storage disabled for MVP - analysis continues without storage');
 
     // 7. Extract document content and analyze placeholders
     let documentContent = '';
@@ -183,6 +163,8 @@ export async function POST(request: NextRequest) {
       const documentXml = await zipContent.file('word/document.xml')?.async('string');
       
       if (documentXml) {
+        console.log('📄 Raw XML preview (first 500 chars):', documentXml.substring(0, 500));
+        
         // Better XML to text conversion preserving structure
         documentContent = documentXml
           .replace(/<w:p[^>]*>/g, '\n') // New paragraph
@@ -193,6 +175,12 @@ export async function POST(request: NextRequest) {
           .replace(/^\s+|\s+$/g, '') // Trim
           .trim();
           
+        console.log('🔄 After XML processing preview:', documentContent.substring(0, 500));
+          
+        // Debug extracted content first
+        console.log('📝 Extracted document content preview:', documentContent.substring(0, 500));
+        console.log('📝 Full document length:', documentContent.length);
+        
         // Detect potential placeholders in the text
         const placeholderPatterns = [
           /\{([^}]+)\}/g,  // {placeholder}
@@ -201,10 +189,14 @@ export async function POST(request: NextRequest) {
           /\{\{([^}]+)\}\}/g, // {{placeholder}}
         ];
         
-        placeholderPatterns.forEach(pattern => {
+        placeholderPatterns.forEach((pattern, index) => {
+          console.log(`🔍 Testing pattern ${index + 1}: ${pattern.source}`);
           let match;
+          let patternMatches = 0;
           while ((match = pattern.exec(documentContent)) !== null) {
+            patternMatches++;
             const text = match[1].trim();
+            console.log(`✅ Found match: "${match[0]}" -> extracted text: "${text}"`);
             if (text && !extractedPlaceholders.some(p => p.text === text)) {
               extractedPlaceholders.push({
                 text: text,
@@ -213,8 +205,11 @@ export async function POST(request: NextRequest) {
                 originalMatch: match[0],
                 position: match.index
               });
+            } else {
+              console.log(`⚠️ Skipped duplicate or empty: "${text}"`);
             }
           }
+          console.log(`📊 Pattern ${index + 1} found ${patternMatches} matches`);
         });
       }
     } catch (extractError) {
