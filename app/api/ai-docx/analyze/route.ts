@@ -23,22 +23,33 @@ function convertToHtml(content: string, placeholders: Array<{
   originalMatch: string;
   position: number;
 }>): string {
-  let htmlContent = content.replace(/\n/g, '<br>');
+  // Better paragraph handling
+  let htmlContent = content
+    .split('\n\n')
+    .map(paragraph => paragraph.trim())
+    .filter(paragraph => paragraph.length > 0)
+    .map(paragraph => `<p class="mb-4">${paragraph.replace(/\n/g, '<br>')}</p>`)
+    .join('');
   
   // Highlight each placeholder
   placeholders.forEach(placeholder => {
     const regex = new RegExp(escapeRegExp(placeholder.originalMatch), 'g');
     htmlContent = htmlContent.replace(regex, 
-      `<span class="placeholder-highlight bg-yellow-200 px-1 rounded cursor-pointer" 
+      `<span class="placeholder-highlight bg-yellow-200 px-1 rounded cursor-pointer border border-yellow-300 hover:bg-yellow-300 transition-colors" 
              data-placeholder="${placeholder.text}" 
              data-type="${placeholder.type}"
-             title="Placeholder: ${placeholder.text} (${placeholder.type})">
+             title="Placeholder: ${placeholder.text} (${placeholder.type}) - ${placeholder.confidence}% confidence">
         ${placeholder.originalMatch}
       </span>`
     );
   });
   
-  return `<div class="document-preview p-4 bg-white border rounded-lg font-serif leading-relaxed">
+  return `<div class="document-preview p-6 bg-white border rounded-lg font-serif leading-relaxed max-w-none">
+    <style>
+      .document-preview p { margin-bottom: 1rem; }
+      .document-preview p:last-child { margin-bottom: 0; }
+      .placeholder-highlight { font-weight: 600; }
+    </style>
     ${htmlContent}
   </div>`;
 }
@@ -172,10 +183,14 @@ export async function POST(request: NextRequest) {
       const documentXml = await zipContent.file('word/document.xml')?.async('string');
       
       if (documentXml) {
-        // Basic XML to text conversion
+        // Better XML to text conversion preserving structure
         documentContent = documentXml
-          .replace(/<[^>]*>/g, ' ')
-          .replace(/\s+/g, ' ')
+          .replace(/<w:p[^>]*>/g, '\n') // New paragraph
+          .replace(/<w:br[^>]*\/?>/g, '\n') // Line breaks
+          .replace(/<w:t[^>]*>([^<]*)<\/w:t>/g, '$1') // Extract text
+          .replace(/<[^>]*>/g, '') // Remove other tags
+          .replace(/\n\s*\n/g, '\n\n') // Clean multiple newlines
+          .replace(/^\s+|\s+$/g, '') // Trim
           .trim();
           
         // Detect potential placeholders in the text

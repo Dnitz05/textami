@@ -104,7 +104,17 @@ export default function GeneratorPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    console.log('📤 Uploading DOCX:', file.name);
+    const uploadId = Date.now();
+    console.log(`📤 UPLOAD #${uploadId} - Starting DOCX upload:`, {
+      fileName: file.name,
+      size: file.size,
+      currentState: {
+        hasTemplate: !!aiState.template,
+        hasAnalysis: !!aiState.aiAnalysis,
+        processing: aiState.processing
+      }
+    });
+
     setAiState({ processing: true, template: null, aiAnalysis: null, error: null });
 
     const formData = new FormData();
@@ -128,7 +138,15 @@ export default function GeneratorPage() {
       console.log('✅ Analysis result:', result);
       
       if (result.success && result.data) {
-        setAiState({
+        console.log(`✅ UPLOAD #${uploadId} - SUCCESS:`, {
+          templateId: result.data.templateId,
+          fileName: result.data.fileName,
+          placeholders: result.data.placeholders?.length || 0,
+          hasHtmlPreview: !!result.data.htmlPreview,
+          transcriptionLength: result.data.transcription?.length || 0
+        });
+
+        const newAiState = {
           processing: false,
           template: {
             success: true,
@@ -140,14 +158,20 @@ export default function GeneratorPage() {
           },
           aiAnalysis: {
             placeholders: result.data.placeholders || [],
-            transcription: result.data.transcription || ''
+            transcription: result.data.transcription || '',
+            htmlPreview: result.data.htmlPreview
           },
           error: null
-        });
+        };
+        
+        console.log(`🔄 UPLOAD #${uploadId} - Setting new state:`, newAiState);
+        setAiState(newAiState);
         
         // Guardar a localStorage per backup
         localStorage.setItem('currentTemplate', JSON.stringify(result.data));
+        console.log(`💾 UPLOAD #${uploadId} - Saved to localStorage`);
       } else {
+        console.error(`❌ UPLOAD #${uploadId} - Invalid response format:`, result);
         throw new Error('Invalid response format');
       }
     } catch (error) {
