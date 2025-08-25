@@ -120,9 +120,9 @@ Modifica només el paràgraf indicat i retorna el document complet:`;
         throw new Error('Invalid instruction type');
     }
 
-    // Call GPT-4 to execute the instruction
+    // Call GPT-5 to execute the instruction
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-5",
       messages: [
         {
           role: "system",

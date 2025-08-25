@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     // GPT-5 Intelligent Mapping
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o", // GPT-5 official model
+      model: "gpt-5", // GPT-5 official model
       messages: [
         {
           role: "system",
