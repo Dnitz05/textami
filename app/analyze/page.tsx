@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import AIAnalysisInterface from '../../components/AIAnalysisInterface';
+import TopNavBar from '../../components/TopNavBar';
 import { parseExcelHeaders, validateExcelFile } from '../../lib/excel-parser';
 import { 
   AnalysisData, 
@@ -372,7 +373,9 @@ export default function AnalyzePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      <TopNavBar />
+      
+      {/* Page Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           <div>

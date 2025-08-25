@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthForm from '@/components/AuthForm';
+import TopNavBar from '@/components/TopNavBar';
 
 interface UploadState {
   template: {
@@ -158,7 +159,8 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gray-50">
+      <TopNavBar />
       <div className="container mx-auto px-4 py-16">{/* Auth Modal */}
         {showAuth && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
