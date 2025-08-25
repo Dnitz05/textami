@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import AIAnalysisInterface from '../../components/AIAnalysisInterface';
 import { ParsedTag, ParsedSection, ParsedTable } from '../../lib/ai-parser';
+import { parseExcelHeaders, validateExcelFile } from '../../lib/excel-parser';
 
 interface AnalysisData {
   templateId: string;
@@ -95,8 +96,8 @@ S'informa favorablement la concessió de la llicència sol·licitada d'acord amb
     setAnalysisData(mockData);
     setPipelineStatus('analyzed');
     
-    // Mock Excel headers
-    setExcelHeaders(['Nom', 'Cognoms', 'Adreca', 'Municipi', 'Data', 'Import Total', 'Observacions']);
+    // Mock Excel headers - realistic municipal data
+    setExcelHeaders(['Nom Solicitant', 'Adreça Obra', 'Municipi', 'Data Informe', 'Import Pressupost', 'Import Total', 'Observacions']);
   }, []);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -148,10 +149,27 @@ S'informa favorablement la concessió de la llicència sol·licitada d'acord amb
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Mock Excel parsing (in production, parse with SheetJS)
-    const mockHeaders = ['Nom Complet', 'Direcció', 'Municipi', 'Data Solicitud', 'Import Pressupost', 'Observacions'];
-    setExcelHeaders(mockHeaders);
-    setPipelineStatus('mapped');
+    // Validate Excel file
+    const validation = validateExcelFile(file);
+    if (!validation.valid) {
+      setError(validation.error || 'Invalid Excel file');
+      return;
+    }
+
+    try {
+      console.log('📊 Processing Excel file:', file.name);
+      
+      // Parse Excel headers (mock for now)
+      const headers = await parseExcelHeaders(file);
+      setExcelHeaders(headers);
+      setPipelineStatus('mapped');
+      
+      console.log('✅ Excel headers extracted:', headers);
+      
+    } catch (err) {
+      setError('Failed to parse Excel file');
+      console.error('❌ Excel parsing error:', err);
+    }
   };
 
   const handleTagUpdate = (tags: ParsedTag[]) => {

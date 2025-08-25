@@ -36,6 +36,13 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
   const [editingTag, setEditingTag] = useState<string | null>(null);
   const [localTags, setLocalTags] = useState<ParsedTag[]>(analysisData?.tags || []);
   const [mappings, setMappings] = useState<Record<string, string>>({});
+  const [mappingSuggestions, setMappingSuggestions] = useState<Record<string, { 
+    header: string; 
+    score: number; 
+    confidence: 'high' | 'medium' | 'low';
+    reasoning: string;
+  }>>({});
+  const [isGeneratingMappings, setIsGeneratingMappings] = useState(false);
 
   if (!analysisData) {
     return (
@@ -59,6 +66,60 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
     const newMappings = { ...mappings, [tagSlug]: excelHeader };
     setMappings(newMappings);
     onMappingUpdate?.(newMappings);
+  };
+
+  const generateAutoMappings = async () => {
+    if (!analysisData || excelHeaders.length === 0) return;
+
+    setIsGeneratingMappings(true);
+    try {
+      const response = await fetch('/api/map', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tags: localTags,
+          excelHeaders: excelHeaders,
+          confidenceThreshold: 0.7
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Mapping generation failed');
+      }
+
+      const result = await response.json();
+      
+      // Process suggestions
+      const newSuggestions: Record<string, any> = {};
+      const newMappings: Record<string, string> = {};
+
+      result.suggestions.forEach((suggestion: any) => {
+        newSuggestions[suggestion.tagSlug] = {
+          header: suggestion.suggestedHeader,
+          score: suggestion.score,
+          confidence: suggestion.confidence,
+          reasoning: suggestion.reasoning
+        };
+        
+        // Auto-apply high confidence mappings
+        if (suggestion.confidence === 'high') {
+          newMappings[suggestion.tagSlug] = suggestion.suggestedHeader;
+        }
+      });
+
+      setMappingSuggestions(newSuggestions);
+      setMappings(prev => ({ ...prev, ...newMappings }));
+      onMappingUpdate?.({ ...mappings, ...newMappings });
+
+      console.log(`✅ Generated ${result.suggestions.length} mapping suggestions (${Math.round(result.mappingCoverage)}% coverage)`);
+      
+    } catch (error) {
+      console.error('❌ Failed to generate mappings:', error);
+    } finally {
+      setIsGeneratingMappings(false);
+    }
   };
 
   const getConfidenceColor = (confidence: number) => {
@@ -212,12 +273,32 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
         {/* Panel 3: Excel Mapping */}
         <div className="bg-white rounded-lg shadow-sm border">
           <div className="p-4 border-b bg-gray-50">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-              🔗 Excel Mapping
-              <span className="ml-2 text-sm font-normal text-gray-500">
-                ({Object.keys(mappings).length}/{localTags.length} mapped)
-              </span>
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+                🔗 Excel Mapping
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  ({Object.keys(mappings).length}/{localTags.length} mapped)
+                </span>
+              </h2>
+              {excelHeaders.length > 0 && (
+                <button
+                  onClick={generateAutoMappings}
+                  disabled={isGeneratingMappings}
+                  className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
+                >
+                  {isGeneratingMappings ? (
+                    <>
+                      <div className="animate-spin rounded-full h-3 w-3 border-b border-white mr-2"></div>
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      ✨ Auto-map
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
           </div>
           <div className="p-4 max-h-96 overflow-y-auto space-y-3">
             {excelHeaders.length === 0 ? (
@@ -226,33 +307,76 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                 <div className="text-xs text-gray-400 mt-1">Upload an Excel file to see mapping options</div>
               </div>
             ) : (
-              localTags.map((tag) => (
-                <div key={tag.slug} className="flex items-center space-x-3 p-2 border rounded">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900 truncate">
-                      {tag.name}
+              localTags.map((tag) => {
+                const suggestion = mappingSuggestions[tag.slug];
+                const currentMapping = mappings[tag.slug];
+                
+                return (
+                  <div key={tag.slug} className="p-3 border rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-gray-900 truncate">
+                          {tag.name}
+                        </div>
+                        <div className="text-xs text-gray-500 truncate">
+                          {tag.example}
+                        </div>
+                      </div>
+                      <div className="text-gray-400">→</div>
+                      <div className="flex-1">
+                        <select
+                          className={`w-full text-sm border rounded px-2 py-1 ${
+                            suggestion && !currentMapping ? 'border-blue-300 bg-blue-50' : ''
+                          }`}
+                          value={currentMapping || ''}
+                          onChange={(e) => handleMappingChange(tag.slug, e.target.value)}
+                        >
+                          <option value="">Select Excel column</option>
+                          {excelHeaders.map((header) => (
+                            <option 
+                              key={header} 
+                              value={header}
+                              className={suggestion?.header === header ? 'bg-blue-100 font-medium' : ''}
+                            >
+                              {header}
+                              {suggestion?.header === header && ` ⭐ ${Math.round(suggestion.score * 100)}%`}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500 truncate">
-                      {tag.example}
-                    </div>
+                    
+                    {/* Suggestion info */}
+                    {suggestion && (
+                      <div className="mt-2 text-xs">
+                        <div className="flex items-center space-x-2">
+                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                            suggestion.confidence === 'high' ? 'bg-green-100 text-green-800' :
+                            suggestion.confidence === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-orange-100 text-orange-800'
+                          }`}>
+                            {suggestion.confidence} confidence
+                          </span>
+                          <span className="text-gray-500">
+                            {Math.round(suggestion.score * 100)}% match
+                          </span>
+                          {!currentMapping && (
+                            <button
+                              onClick={() => handleMappingChange(tag.slug, suggestion.header)}
+                              className="text-blue-600 hover:text-blue-800 font-medium"
+                            >
+                              Apply suggestion
+                            </button>
+                          )}
+                        </div>
+                        <div className="text-gray-400 mt-1">
+                          {suggestion.reasoning}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="text-gray-400">→</div>
-                  <div className="flex-1">
-                    <select
-                      className="w-full text-sm border rounded px-2 py-1"
-                      value={mappings[tag.slug] || ''}
-                      onChange={(e) => handleMappingChange(tag.slug, e.target.value)}
-                    >
-                      <option value="">Select Excel column</option>
-                      {excelHeaders.map((header) => (
-                        <option key={header} value={header}>
-                          {header}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
