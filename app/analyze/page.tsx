@@ -364,6 +364,26 @@ export default function AnalyzePage() {
                 📄 New Analysis
               </button>
             )}
+            {/* Excel Upload Button - Always available after analysis */}
+            {analysisData && (
+              <div className="flex items-center gap-2">
+                <label className="px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors cursor-pointer">
+                  📊 {excelHeaders.length > 0 ? 'Replace Excel' : 'Upload Excel'}
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls,.csv"
+                    onChange={handleExcelUpload}
+                    className="hidden"
+                  />
+                </label>
+                {excelHeaders.length > 0 && (
+                  <span className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded">
+                    ✅ {excelHeaders.length} columns loaded
+                  </span>
+                )}
+              </div>
+            )}
+            
             <button
               onClick={() => {
                 localStorage.clear();
