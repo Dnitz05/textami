@@ -839,7 +839,7 @@ export default function GeneratorPage() {
                         const placeholder = target.dataset.placeholder;
                         const type = target.dataset.type;
                         console.log('🖱️ Placeholder clicked:', { placeholder, type });
-                        // TODO: Show mapping info or edit modal
+                        // Future enhancement: Show mapping info modal or inline editor
                       }
                     }}
                   />
