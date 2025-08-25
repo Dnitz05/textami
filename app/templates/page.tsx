@@ -34,6 +34,9 @@ const TemplatesPage: React.FC = () => {
   const [templates, setTemplates] = useState<SavedTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTemplate, setSelectedTemplate] = useState<SavedTemplate | null>(null);
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'alphabetic'>('newest');
+  const [folderFilter, setFolderFilter] = useState<string>('all');
+  const [folders, setFolders] = useState<string[]>(['Personal', 'Treball', 'Clients']);
   
   // For now, using a simple user identifier - would be replaced with proper auth
   const userId = 'user-001';
@@ -113,6 +116,29 @@ const TemplatesPage: React.FC = () => {
     return Math.round((template.mappedCount / template.tagsCount) * 100);
   };
 
+  const getSortedAndFilteredTemplates = () => {
+    let filteredTemplates = [...templates];
+
+    // Filter by folder (for now just return all since we don't have folder data)
+    // In a real app, templates would have a folder property
+
+    // Sort templates
+    filteredTemplates.sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime();
+        case 'oldest':
+          return new Date(a.createdDate).getTime() - new Date(b.createdDate).getTime();
+        case 'alphabetic':
+          return a.name.localeCompare(b.name);
+        default:
+          return 0;
+      }
+    });
+
+    return filteredTemplates;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <TopNavBar />
@@ -142,67 +168,54 @@ const TemplatesPage: React.FC = () => {
             </button>
           </div>
 
-          {/* Stats */}
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-4 gap-4">
-            <div className="bg-white rounded-lg border p-4">
-              <div className="flex items-center">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-2xl font-bold text-gray-900">{templates.length}</p>
-                  <p className="text-sm text-gray-600">Plantilles</p>
-                </div>
+          {/* Filters and Folders */}
+          <div className="mt-6 flex flex-wrap gap-4 items-center justify-between bg-white rounded-lg border p-4">
+            <div className="flex flex-wrap gap-4 items-center">
+              {/* Sort Filter */}
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-gray-700">Ordenar:</label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                >
+                  <option value="newest">Més recents</option>
+                  <option value="oldest">Més antigues</option>
+                  <option value="alphabetic">Alfabètic</option>
+                </select>
+              </div>
+
+              {/* Folder Filter */}
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-gray-700">Carpeta:</label>
+                <select
+                  value={folderFilter}
+                  onChange={(e) => setFolderFilter(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                >
+                  <option value="all">Totes les carpetes</option>
+                  {folders.map((folder) => (
+                    <option key={folder} value={folder}>{folder}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border p-4">
-              <div className="flex items-center">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-2xl font-bold text-gray-900">
-                    {templates.reduce((total, t) => total + t.tagsCount, 0)}
-                  </p>
-                  <p className="text-sm text-gray-600">Tags Totals</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg border p-4">
-              <div className="flex items-center">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-2xl font-bold text-gray-900">
-                    {templates.reduce((total, t) => total + t.mappedCount, 0)}
-                  </p>
-                  <p className="text-sm text-gray-600">Mappings</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg border p-4">
-              <div className="flex items-center">
-                <div className="p-2 bg-orange-100 rounded-lg">
-                  <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-2xl font-bold text-gray-900">Ready</p>
-                  <p className="text-sm text-gray-600">Per Usar</p>
-                </div>
-              </div>
-            </div>
+            {/* Add Folder Button */}
+            <button
+              onClick={() => {
+                const newFolder = prompt('Nom de la nova carpeta:');
+                if (newFolder && !folders.includes(newFolder)) {
+                  setFolders([...folders, newFolder]);
+                }
+              }}
+              className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm flex items-center space-x-2 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              <span>Nova Carpeta</span>
+            </button>
           </div>
         </div>
 
@@ -235,7 +248,7 @@ const TemplatesPage: React.FC = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {templates.map((template) => (
+                {getSortedAndFilteredTemplates().map((template) => (
                   <div key={template.id} className="border rounded-lg p-6 hover:shadow-lg transition-shadow bg-white">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-3 flex-1 min-w-0">

@@ -32,7 +32,8 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
   fileName = 'Document.pdf',
   onSave,
   onSaveAs,
-  onClose
+  onClose,
+  onExcelUpload
 }) => {
   const [mappings, setMappings] = useState<Record<string, string>>({});
   const [showLeftSidebar, setShowLeftSidebar] = useState(true);
