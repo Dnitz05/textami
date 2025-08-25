@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 import { parseAIAnalysis, type ParsedAnalysis } from '../../../lib/ai-parser';
+import { ApiResponse, ExtractionResponse } from '../../../lib/types';
 
 // Initialize OpenAI with GPT-5
 const openai = new OpenAI({
@@ -12,7 +13,9 @@ const openai = new OpenAI({
 
 interface ExtractRequest {
   pdfPath?: string;  // Path in Supabase Storage
+  pdfUrl?: string;   // Signed URL for GPT-5
   templateId: string;
+  fileName?: string;
 }
 
 interface AIAnalysisResponse {
@@ -46,7 +49,7 @@ interface AIAnalysisResponse {
   };
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<ExtractionResponse>>> {
   console.log('🚀 AI-FIRST Extract Request Started');
   
   try {
@@ -57,7 +60,7 @@ export async function POST(request: NextRequest) {
     if (!supabaseUrl || !supabaseServiceKey) {
       console.error('❌ Supabase environment variables missing');
       return NextResponse.json(
-        { error: 'Storage configuration required' },
+        { success: false, error: 'Storage configuration required' },
         { status: 500 }
       );
     }
@@ -66,16 +69,18 @@ export async function POST(request: NextRequest) {
     console.log('✅ Supabase client initialized for AI analysis');
 
     // Parse request
-    const { pdfPath, templateId } = await request.json() as ExtractRequest;
+    const { pdfPath, pdfUrl, templateId, fileName } = await request.json() as ExtractRequest;
     
     console.log('📝 AI Extract request:', {
       templateId,
-      pdfPath: pdfPath || 'MOCK_MODE'
+      pdfPath: pdfPath || 'none',
+      pdfUrl: pdfUrl || 'none',
+      fileName: fileName || 'unknown'
     });
 
     if (!templateId) {
       return NextResponse.json(
-        { error: 'Missing templateId' },
+        { success: false, error: 'Missing templateId' },
         { status: 400 }
       );
     }
@@ -92,7 +97,7 @@ export async function POST(request: NextRequest) {
       if (urlError || !signedUrlData) {
         console.error('❌ Failed to create signed URL:', urlError);
         return NextResponse.json(
-          { error: 'Failed to access PDF file', details: urlError?.message },
+          { success: false, error: 'Failed to access PDF file', details: urlError?.message },
           { status: 500 }
         );
       }

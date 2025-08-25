@@ -2,38 +2,25 @@
 
 import React, { useState, useEffect } from 'react';
 import AIAnalysisInterface from '../../components/AIAnalysisInterface';
-import { ParsedTag, ParsedSection, ParsedTable } from '../../lib/ai-parser';
 import { parseExcelHeaders, validateExcelFile } from '../../lib/excel-parser';
-
-interface AnalysisData {
-  templateId: string;
-  markdown: string;
-  sections: ParsedSection[];
-  tables: ParsedTable[];
-  tags: ParsedTag[];
-  signatura?: {
-    nom: string;
-    carrec: string;
-    data_lloc: string;
-  };
-}
+import { 
+  AnalysisData, 
+  PipelineStatus, 
+  GenerationResult,
+  ApiResponse,
+  UploadResponse,
+  ExtractionResponse,
+  ParsedTag 
+} from '../../lib/types';
 
 export default function AnalyzePage() {
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [excelHeaders, setExcelHeaders] = useState<string[]>([]);
-  const [pipelineStatus, setPipelineStatus] = useState<'uploaded' | 'analyzed' | 'mapped' | 'frozen' | 'production'>('uploaded');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [pipelineStatus, setPipelineStatus] = useState<PipelineStatus>('uploaded');
+  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generationResult, setGenerationResult] = useState<{
-    batchId: string;
-    totalGenerated: number;
-    documents: Array<{
-      fileName: string;
-      downloadUrl: string;
-      rowIndex: number;
-    }>;
-  } | null>(null);
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [generationResult, setGenerationResult] = useState<GenerationResult | null>(null);
 
   // Mock data disabled - enable real PDF upload
   // useEffect(() => {
@@ -68,12 +55,16 @@ export default function AnalyzePage() {
       });
       
       if (!uploadResponse.ok) {
-        const uploadError = await uploadResponse.json();
+        const uploadError = await uploadResponse.json() as ApiResponse;
         throw new Error(uploadError.error || 'Failed to upload PDF');
       }
       
-      const uploadResult = await uploadResponse.json();
+      const uploadResult = await uploadResponse.json() as ApiResponse<UploadResponse>;
       console.log('✅ PDF uploaded successfully:', uploadResult);
+      
+      if (!uploadResult.success || !uploadResult.data) {
+        throw new Error('Upload response invalid');
+      }
       
       // 2. Call GPT-5 analysis API
       const analysisResponse = await fetch('/api/extract', {
@@ -83,21 +74,25 @@ export default function AnalyzePage() {
         },
         body: JSON.stringify({
           templateId: templateId,
-          pdfUrl: uploadResult.pdfUrl,
+          pdfUrl: uploadResult.data.pdfUrl,
           fileName: file.name
         })
       });
       
       if (!analysisResponse.ok) {
-        const analysisError = await analysisResponse.json();
+        const analysisError = await analysisResponse.json() as ApiResponse;
         throw new Error(analysisError.error || 'GPT-5 analysis failed');
       }
       
-      const analysisResult = await analysisResponse.json();
+      const analysisResult = await analysisResponse.json() as ApiResponse<ExtractionResponse>;
       console.log('✅ GPT-5 analysis completed:', analysisResult);
       
-      // 3. Process and display results - data is inside the 'data' property
-      const result = analysisResult.data || analysisResult;
+      if (!analysisResult.success || !analysisResult.data) {
+        throw new Error('Analysis response invalid');
+      }
+      
+      // 3. Process and display results
+      const result = analysisResult.data;
       const analysisData: AnalysisData = {
         templateId,
         markdown: result.markdown || `# ${file.name}\n\nDocument processed successfully.`,
@@ -144,13 +139,13 @@ export default function AnalyzePage() {
     }
   };
 
-  const handleTagUpdate = (tags: ParsedTag[]) => {
+  const handleTagUpdate = (tags: ParsedTag[]): void => {
     if (analysisData) {
       setAnalysisData({ ...analysisData, tags });
     }
   };
 
-  const handleMappingUpdate = (mappings: Record<string, string>) => {
+  const handleMappingUpdate = (mappings: Record<string, string>): void => {
     console.log('📋 Mapping updated:', mappings);
     // Save mappings to localStorage or database
     if (analysisData) {

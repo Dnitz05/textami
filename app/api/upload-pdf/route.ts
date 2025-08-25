@@ -2,8 +2,9 @@
 // Upload PDF to Supabase Storage for GPT-5 analysis
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { ApiResponse, UploadResponse } from '../../../lib/types';
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<UploadResponse>>> {
   console.log('📤 PDF Upload Started');
   
   try {
