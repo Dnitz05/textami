@@ -35,32 +35,12 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
       </div>
 
       <div className="p-4 max-h-96 overflow-y-auto">
-        {/* Markdown Content */}
+        {/* Markdown Content - Main Document */}
         <div className="prose prose-sm max-w-none">
           <div className="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed">
             {markdown}
           </div>
         </div>
-
-        {/* Sections Summary */}
-        {sections.length > 0 && (
-          <div className="mt-6 pt-6 border-t">
-            <h4 className="text-md font-medium text-gray-900 mb-3">Document Sections</h4>
-            <div className="grid gap-3">
-              {sections.map((section, index) => (
-                <div key={section.id || index} className="bg-gray-50 rounded p-3">
-                  <div className="font-medium text-gray-900 text-sm mb-1">
-                    {section.title}
-                  </div>
-                  <div className="text-xs text-gray-600 leading-relaxed">
-                    {section.markdown.substring(0, 120)}
-                    {section.markdown.length > 120 && '...'}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Tables Summary */}
         {tables.length > 0 && (
@@ -122,6 +102,27 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
               </div>
             </div>
           </div>
+        )}
+
+        {/* Debug: Sections breakdown - only show if needed for troubleshooting */}
+        {sections.length > 0 && process.env.NODE_ENV === 'development' && (
+          <details className="mt-6 pt-6 border-t">
+            <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700">
+              Debug: Sections breakdown ({sections.length} sections)
+            </summary>
+            <div className="mt-3 space-y-2">
+              {sections.map((section, index) => (
+                <div key={section.id || index} className="bg-yellow-50 border border-yellow-200 rounded p-2">
+                  <div className="text-xs font-medium text-yellow-800 mb-1">
+                    Section: {section.title}
+                  </div>
+                  <div className="text-xs text-yellow-700 leading-relaxed max-h-20 overflow-y-auto">
+                    {section.markdown}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </details>
         )}
       </div>
     </div>
