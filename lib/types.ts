@@ -72,8 +72,8 @@ export interface ExtractionResponse {
   tags: ParsedTag[];
   signatura?: DocumentSignature;
   metadata: {
-    fileName: string;
-    fileSize: number;
+    fileName?: string;
+    fileSize?: number;
     sectionsCount: number;
     tablesCount: number;
     tagsCount: number;

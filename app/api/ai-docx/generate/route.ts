@@ -4,45 +4,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Docxtemplater from 'docxtemplater';
 import PizZip from 'pizzip';
+import { ApiResponse, GenerationResponse, ExcelRowData, GeneratedDocument, GenerationError } from '../../../../lib/types';
 
 interface GenerationRequest {
   templateId: string;
   frozenTemplateUrl: string; // Path to frozen template with {{placeholders}}
-  excelData: Array<Record<string, any>>; // Array of row data
+  excelData: ExcelRowData[]; // Array of row data
   mappings: Record<string, string>; // tagSlug -> excelHeader  
   batchSize?: number; // How many documents to generate (default: all)
   outputFormat?: 'docx' | 'pdf' | 'both'; // Future: PDF conversion
 }
 
-interface GeneratedDocument {
-  documentId: string;
-  fileName: string;
-  downloadUrl: string;
-  rowIndex: number;
-  rowData: Record<string, any>;
-  fileSize: number;
-  generatedAt: string;
-}
+// GeneratedDocument, GenerationError, and GenerationResponse are now imported from types.ts
 
-interface GenerationResponse {
-  success: boolean;
-  data: {
-    templateId: string;
-    totalRequested: number;
-    totalGenerated: number;
-    totalErrors: number;
-    documents: GeneratedDocument[];
-    errors: Array<{
-      rowIndex: number;
-      error: string;
-      rowData: Record<string, any>;
-    }>;
-    processingTime: number;
-    batchId: string;
-  };
-}
-
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<GenerationResponse>>> {
   const startTime = Date.now();
   console.log('🚀 MASS PRODUCTION Started');
   
@@ -123,7 +98,7 @@ export async function POST(request: NextRequest) {
     const totalRows = Math.min(excelData.length, batchSize || excelData.length);
     const batchId = `batch_${templateId}_${Date.now()}`;
     const documents: GeneratedDocument[] = [];
-    const errors: Array<{ rowIndex: number; error: string; rowData: Record<string, any> }> = [];
+    const errors: GenerationError[] = [];
 
     console.log(`🔄 Processing ${totalRows} documents in batch ${batchId}...`);
 
@@ -135,7 +110,7 @@ export async function POST(request: NextRequest) {
         console.log(`📄 Processing document ${i + 1}/${totalRows}:`, rowData);
         
         // 2.1. Create data object for this row based on mappings
-        const docData: Record<string, any> = {};
+        const docData: Record<string, string | number> = {};
         
         for (const [tagSlug, excelHeader] of Object.entries(mappings)) {
           const value = rowData[excelHeader];
@@ -206,18 +181,20 @@ export async function POST(request: NextRequest) {
 
     // 3. Generate batch summary
     const processingTime = Date.now() - startTime;
-    const response: GenerationResponse = {
+    const generationData: GenerationResponse = {
+      templateId,
+      totalRequested: totalRows,
+      totalGenerated: documents.length,
+      totalErrors: errors.length,
+      documents,
+      errors,
+      processingTime,
+      batchId
+    };
+
+    const response: ApiResponse<GenerationResponse> = {
       success: documents.length > 0,
-      data: {
-        templateId,
-        totalRequested: totalRows,
-        totalGenerated: documents.length,
-        totalErrors: errors.length,
-        documents,
-        errors,
-        processingTime,
-        batchId
-      }
+      data: generationData
     };
 
     console.log('✅ Mass production complete:', {

@@ -2,35 +2,16 @@
 // Excel Mapping with Fuzzy Matching for AI-extracted tags
 import { NextRequest, NextResponse } from 'next/server';
 import { distance } from 'fastest-levenshtein';
+import { ApiResponse, MappingResponse, TagMapping, ParsedTag } from '../../../lib/types';
 
 interface MappingRequest {
-  tags: Array<{
-    name: string;
-    slug: string;
-    example: string;
-    type: string;
-    confidence: number;
-  }>;
+  tags: ParsedTag[];
   excelHeaders: string[];
   confidenceThreshold?: number; // Default 0.7
 }
 
-interface MappingSuggestion {
-  tagSlug: string;
-  tagName: string;
-  suggestedHeader: string;
-  score: number;
-  confidence: 'high' | 'medium' | 'low';
-  reasoning: string;
-}
-
-interface MappingResponse {
-  success: boolean;
-  suggestions: MappingSuggestion[];
-  totalTags: number;
-  mappedTags: number;
-  mappingCoverage: number;
-}
+// MappingSuggestion is now TagMapping in types.ts
+// MappingResponse structure updated in types.ts
 
 /**
  * Calculate fuzzy matching score between tag and header

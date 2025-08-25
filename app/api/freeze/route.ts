@@ -3,44 +3,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import PizZip from 'pizzip';
+import { ApiResponse, FreezeResponse, ParsedTag, PlaceholderReplacement } from '../../../lib/types';
 
 interface FreezeRequest {
   templateId: string;
   storageUrl: string; // Path to original DOCX in Supabase Storage
-  tags: Array<{
-    name: string;
-    slug: string;
-    example: string;
-    type: string;
-    anchor?: string;
-    page?: number;
-  }>;
+  tags: ParsedTag[];
   mappings: Record<string, string>; // tagSlug -> excelHeader
 }
 
-interface PlaceholderReplacement {
-  original: string;
-  placeholder: string;
-  confidence: number;
-  method: 'exact_match' | 'anchor_based' | 'pattern_match' | 'manual_required';
-  applied: boolean;
-  reason?: string;
-}
+// PlaceholderReplacement and FreezeResponse are now imported from types.ts
 
-interface FreezeResponse {
-  success: boolean;
-  data: {
-    templateId: string;
-    frozenTemplateUrl: string;
-    replacements: PlaceholderReplacement[];
-    totalReplacements: number;
-    successfulReplacements: number;
-    manualReviewRequired: string[];
-    frozenAt: string;
-  };
-}
-
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<FreezeResponse>>> {
   console.log('🧊 Template Freeze Request Started');
   
   try {
@@ -51,7 +25,7 @@ export async function POST(request: NextRequest) {
     if (!supabaseUrl || !supabaseServiceKey) {
       console.error('❌ Supabase environment variables missing');
       return NextResponse.json(
-        { error: 'Storage configuration required' },
+        { success: false, error: 'Storage configuration required' },
         { status: 500 }
       );
     }
@@ -71,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     if (!templateId || !storageUrl || !tags || !mappings) {
       return NextResponse.json(
-        { error: 'Missing required fields: templateId, storageUrl, tags, mappings' },
+        { success: false, error: 'Missing required fields: templateId, storageUrl, tags, mappings' },
         { status: 400 }
       );
     }
@@ -269,17 +243,19 @@ export async function POST(request: NextRequest) {
       .filter(r => !r.applied)
       .map(r => r.original);
 
-    const response: FreezeResponse = {
+    const freezeData: FreezeResponse = {
+      templateId,
+      frozenTemplateUrl: uploadData.path,
+      replacements,
+      totalReplacements: replacements.length,
+      successfulReplacements: replacements.filter(r => r.applied).length,
+      manualReviewRequired,
+      frozenAt: new Date().toISOString()
+    };
+
+    const response: ApiResponse<FreezeResponse> = {
       success: true,
-      data: {
-        templateId,
-        frozenTemplateUrl: uploadData.path,
-        replacements,
-        totalReplacements: replacements.length,
-        successfulReplacements: replacements.filter(r => r.applied).length,
-        manualReviewRequired,
-        frozenAt: new Date().toISOString()
-      }
+      data: freezeData
     };
 
     console.log('✅ Template freeze complete:', {
@@ -294,6 +270,7 @@ export async function POST(request: NextRequest) {
     console.error('❌ Unexpected error in template freeze:', error);
     return NextResponse.json(
       { 
+        success: false,
         error: 'Template freeze failed',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
