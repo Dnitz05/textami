@@ -115,7 +115,11 @@ export default function GeneratorPage() {
       }
     });
 
-    setAiState({ processing: true, template: null, aiAnalysis: null, error: null });
+    setAiState(prevState => ({ 
+      ...prevState, 
+      processing: true, 
+      error: null 
+    }));
 
     const formData = new FormData();
     formData.append('docx', file);
@@ -175,13 +179,12 @@ export default function GeneratorPage() {
         throw new Error('Invalid response format');
       }
     } catch (error) {
-      console.error('❌ Upload failed:', error);
-      setAiState({
+      console.error(`❌ UPLOAD #${uploadId} - Upload failed:`, error);
+      setAiState(prevState => ({
+        ...prevState,
         processing: false,
-        template: null,
-        aiAnalysis: null,
         error: error instanceof Error ? error.message : 'Upload failed'
-      });
+      }));
     }
   };
 

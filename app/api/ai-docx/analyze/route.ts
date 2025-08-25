@@ -23,8 +23,12 @@ function convertToHtml(content: string, placeholders: Array<{
   originalMatch: string;
   position: number;
 }>): string {
-  // Better paragraph handling
+  // Better paragraph and formatting handling
   let htmlContent = content
+    // Convert markdown-style formatting to HTML
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+    .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italic
+    // Split into paragraphs and process
     .split('\n\n')
     .map(paragraph => paragraph.trim())
     .filter(paragraph => paragraph.length > 0)
@@ -46,8 +50,10 @@ function convertToHtml(content: string, placeholders: Array<{
   
   return `<div class="document-preview p-6 bg-white border rounded-lg font-serif leading-relaxed max-w-none">
     <style>
-      .document-preview p { margin-bottom: 1rem; }
+      .document-preview p { margin-bottom: 1rem; line-height: 1.6; }
       .document-preview p:last-child { margin-bottom: 0; }
+      .document-preview strong { font-weight: 700; }
+      .document-preview em { font-style: italic; }
       .placeholder-highlight { font-weight: 600; }
     </style>
     ${htmlContent}
@@ -165,13 +171,17 @@ export async function POST(request: NextRequest) {
       if (documentXml) {
         console.log('📄 Raw XML preview (first 500 chars):', documentXml.substring(0, 500));
         
-        // Better XML to text conversion preserving structure
+        // Better XML to text conversion preserving structure and formatting
         documentContent = documentXml
-          .replace(/<w:p[^>]*>/g, '\n') // New paragraph
+          .replace(/<w:p[^>]*>/g, '\n\n') // New paragraph with double break
           .replace(/<w:br[^>]*\/?>/g, '\n') // Line breaks
           .replace(/<w:t[^>]*>([^<]*)<\/w:t>/g, '$1') // Extract text
+          .replace(/<w:b[^>]*>/g, '**') // Bold start
+          .replace(/<\/w:b>/g, '**') // Bold end  
+          .replace(/<w:i[^>]*>/g, '*') // Italic start
+          .replace(/<\/w:i>/g, '*') // Italic end
           .replace(/<[^>]*>/g, '') // Remove other tags
-          .replace(/\n\s*\n/g, '\n\n') // Clean multiple newlines
+          .replace(/\n\n\n+/g, '\n\n') // Clean triple+ newlines to double
           .replace(/^\s+|\s+$/g, '') // Trim
           .trim();
           
