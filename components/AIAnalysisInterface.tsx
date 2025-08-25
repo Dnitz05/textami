@@ -208,42 +208,22 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
               </div>
               
               {/* Fixed custom instruction input area */}
-              <div className="border-t bg-white p-4">
-                <div className="space-y-3">
-                  <label className="text-sm font-medium text-gray-700">
-                    Instrucció personalitzada:
-                  </label>
-                  <textarea
-                    value={customInstruction}
-                    onChange={(e) => setCustomInstruction(e.target.value)}
-                    placeholder="Escriu aquí la teva instrucció per modificar el document..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    rows={3}
-                    disabled={isExecutingCustom}
-                  />
-                  <button
-                    onClick={handleCustomInstructionExecute}
-                    disabled={isExecutingCustom || !customInstruction.trim()}
-                    className="w-full px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-                  >
-                    {isExecutingCustom ? (
-                      <>
-                        <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                        </svg>
-                        <span>Executant...</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                        </svg>
-                        <span>Executar</span>
-                      </>
-                    )}
-                  </button>
-                </div>
+              <div className="border-t p-3">
+                <textarea
+                  value={customInstruction}
+                  onChange={(e) => setCustomInstruction(e.target.value)}
+                  placeholder="Instrucció personalitzada..."
+                  className="w-full px-3 py-2 border rounded text-sm resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  rows={3}
+                  disabled={isExecutingCustom}
+                />
+                <button
+                  onClick={handleCustomInstructionExecute}
+                  disabled={isExecutingCustom || !customInstruction.trim()}
+                  className="w-full mt-2 px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:bg-gray-400"
+                >
+                  {isExecutingCustom ? 'Executant...' : 'Executar'}
+                </button>
               </div>
             </div>
           )}
@@ -269,8 +249,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
 
           {/* Right Sidebar - Tags & Excel */}
           {showRightSidebar && (
-            <div className="w-72 flex-none bg-gray-50 border-l overflow-y-auto">
-              <div className="p-4 space-y-4">
+            <div className="w-72 flex-none bg-gray-50 border-l overflow-y-auto p-3 space-y-3">
               <DetectedTagsPanel 
                 tags={analysisData.tags}
                 onTagUpdate={onTagUpdate}
@@ -291,7 +270,6 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                 totalTags={analysisData.tags.length}
               />
             </div>
-          </div>
         )}
       </div>
     </div>
