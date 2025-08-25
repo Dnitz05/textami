@@ -547,9 +547,21 @@ export default function GeneratorPage() {
                       : 'bg-gray-400 text-white cursor-not-allowed'
                   }`}
                 >
-                  {excelState.processing ? '🔄 Analyzing Excel...' : 
-                   excelState.analysis ? '🔄 Replace Excel/CSV' : 
-                   aiState.template ? '📊 Upload Excel Now!' : 'Upload Excel/CSV'}
+                  {(() => {
+                    const buttonText = excelState.processing ? '🔄 Analyzing Excel...' : 
+                                      excelState.analysis ? '🔄 Replace Excel/CSV' : 
+                                      aiState.template ? '📊 Upload Excel Now!' : 'Upload Excel/CSV';
+                    
+                    console.log('🔍 Excel Button Debug:', {
+                      processing: excelState.processing,
+                      hasAnalysis: !!excelState.analysis,
+                      hasTemplate: !!aiState.template,
+                      templateId: aiState.template?.templateId,
+                      buttonText
+                    });
+                    
+                    return buttonText;
+                  })()}
                   <input
                     type="file"
                     accept=".xlsx,.xls,.csv"
@@ -567,6 +579,10 @@ export default function GeneratorPage() {
                 {!excelState.analysis && (
                   <p className="text-xs text-gray-500 mt-2">
                     Independent upload - works with or without document
+                    <br />
+                    <span className="text-xs text-blue-600">
+                      Debug: Template={!!aiState.template ? 'YES' : 'NO'}, TemplateId={aiState.template?.templateId || 'NONE'}
+                    </span>
                   </p>
                 )}
 
