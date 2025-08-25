@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import AuthForm from '@/components/AuthForm';
 
 interface UploadState {
@@ -17,6 +18,7 @@ interface UploadState {
 }
 
 export default function Home() {
+  const router = useRouter();
   const [showAuth, setShowAuth] = useState(false);
   const [uploadState, setUploadState] = useState<UploadState>({
     template: null,
@@ -176,6 +178,22 @@ export default function Home() {
           <h1 className="text-5xl font-bold text-gray-900 mb-6">
             🧠 Textami AI-First
           </h1>
+          
+          {/* New AI Analysis Button */}
+          <div className="mb-8">
+            <button
+              onClick={() => router.push('/analyze')}
+              className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+            >
+              <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              🚀 New: AI Document Analysis (GPT-5)
+            </button>
+            <p className="text-gray-600 mt-2 text-sm">
+              Upload PDF → AI extracts variables → Generate documents automatically
+            </p>
+          </div>
           <p className="text-xl text-gray-600 mb-4">
             Generador intel·ligent de documents powered by GPT-5
           </p>
