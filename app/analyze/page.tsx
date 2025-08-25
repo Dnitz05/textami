@@ -263,7 +263,7 @@ S'informa favorablement la concessió de la llicència sol·licitada d'acord amb
         
         if (manualReviewRequired.length > 0) {
           message += `• ${manualReviewRequired.length} items need manual review:\n`;
-          message += manualReviewRequired.map(item => `  - ${item}`).join('\n');
+          message += manualReviewRequired.map((item: string) => `  - ${item}`).join('\n');
         } else {
           message += `• All placeholders inserted successfully!`;
         }
