@@ -53,29 +53,60 @@ export default function AnalyzePage() {
     setError(null);
 
     try {
-      // For now, mock the analysis (in production, upload to Supabase and call /api/extract)
       const templateId = `template_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      // Mock API call to /api/extract
-      console.log('🚀 Mock: Uploading PDF and calling /api/extract with GPT-5...');
+      console.log('🚀 Real GPT-5 Analysis: Uploading PDF to Supabase and calling /api/extract...');
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // 1. Upload PDF to Supabase Storage
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('templateId', templateId);
       
-      // Mock successful analysis (replace with real API call)
-      const mockResponse: AnalysisData = {
+      const uploadResponse = await fetch('/api/upload-pdf', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!uploadResponse.ok) {
+        const uploadError = await uploadResponse.json();
+        throw new Error(uploadError.error || 'Failed to upload PDF');
+      }
+      
+      const uploadResult = await uploadResponse.json();
+      console.log('✅ PDF uploaded successfully:', uploadResult);
+      
+      // 2. Call GPT-5 analysis API
+      const analysisResponse = await fetch('/api/extract', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          templateId: templateId,
+          pdfUrl: uploadResult.pdfUrl,
+          fileName: file.name
+        })
+      });
+      
+      if (!analysisResponse.ok) {
+        const analysisError = await analysisResponse.json();
+        throw new Error(analysisError.error || 'GPT-5 analysis failed');
+      }
+      
+      const analysisResult = await analysisResponse.json();
+      console.log('✅ GPT-5 analysis completed:', analysisResult);
+      
+      // 3. Process and display results
+      const analysisData: AnalysisData = {
         templateId,
-        markdown: `# ${file.name.replace('.pdf', '').toUpperCase()}\n\nDocument analyzed with GPT-5...`,
-        sections: [
-          { id: 'content', title: 'Document Content', markdown: 'Analyzed content from uploaded PDF...' }
-        ],
-        tables: [],
-        tags: [
-          { name: 'document_title', slug: 'document_title', example: file.name, type: 'string', confidence: 0.9, page: 1 }
-        ]
+        markdown: analysisResult.markdown,
+        sections: analysisResult.sections || [],
+        tables: analysisResult.tables || [],
+        tags: analysisResult.tags || [],
+        signatura: analysisResult.signatura
       };
 
-      setAnalysisData(mockResponse);
+      setAnalysisData(analysisData);
       setPipelineStatus('analyzed');
       
     } catch (err) {
