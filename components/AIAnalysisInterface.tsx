@@ -425,7 +425,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                 </button>
 
                 <div className="text-xs text-gray-500 text-center">
-                  Freezing will modify the original DOCX file by inserting {{`placeholders`}} based on your mappings.
+                  Freezing will modify the original DOCX file by inserting {`{{placeholders}}`} based on your mappings.
                 </div>
               </div>
             )}
