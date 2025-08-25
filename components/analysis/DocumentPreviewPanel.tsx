@@ -15,6 +15,7 @@ interface DocumentPreviewPanelProps {
   tables: ParsedTable[];
   signatura?: DocumentSignature;
   isProcessing?: boolean;
+  fileName?: string;
 }
 
 const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
@@ -22,7 +23,8 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
   sections,
   tables,
   signatura,
-  isProcessing = false
+  isProcessing = false,
+  fileName = 'Document.pdf'
 }) => {
   return (
     <div className="bg-white rounded-lg shadow border">
@@ -37,11 +39,8 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           )}
-          Document Preview
+          {fileName}
         </h3>
-        <p className="text-sm text-gray-600 mt-1">
-          {isProcessing ? 'Aplicant instrucció IA...' : 'GPT-5 analyzed document content'}
-        </p>
       </div>
 
       <div className={`p-6 relative ${isProcessing ? 'opacity-60' : ''}`}>

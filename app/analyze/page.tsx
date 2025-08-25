@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import AIAnalysisInterface from '../../components/AIAnalysisInterface';
 import TopNavBar from '../../components/TopNavBar';
 import { parseExcelHeaders, validateExcelFile } from '../../lib/excel-parser';
@@ -15,6 +16,7 @@ import {
 } from '../../lib/types';
 
 export default function AnalyzePage() {
+  const router = useRouter();
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [excelHeaders, setExcelHeaders] = useState<string[]>([]);
   const [pipelineStatus, setPipelineStatus] = useState<PipelineStatus>('uploaded');
@@ -26,6 +28,7 @@ export default function AnalyzePage() {
   const [showSaveTemplateDialog, setShowSaveTemplateDialog] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [templateDescription, setTemplateDescription] = useState('');
+  const [originalFileName, setOriginalFileName] = useState('');
 
   // Mock data disabled - enable real PDF upload
   // useEffect(() => {
@@ -166,6 +169,7 @@ export default function AnalyzePage() {
   };
 
   const performAnalysis = async (file: File, templateId: string) => {
+    setOriginalFileName(file.name);
     console.log('🚀 Real GPT-5 Analysis: Uploading PDF to Supabase and calling /api/extract...');
     
     // 1. Upload PDF to Supabase Storage
@@ -492,85 +496,38 @@ export default function AnalyzePage() {
       <TopNavBar />
       
       {/* Page Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">AI Document Analysis</h1>
-            <p className="text-gray-600 mt-1">Upload documents, extract variables, and generate personalized content</p>
-          </div>
-          <div className="flex gap-3">
-            {analysisData && (
-              <>
-                <button
-                  onClick={handleSaveAsTemplate}
-                  className="px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors flex items-center space-x-2"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
-                  <span>Guardar Plantilla</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setAnalysisData(null);
-                    setExcelHeaders([]);
-                    setPipelineStatus('uploaded');
-                    setGenerationResult(null);
-                    setError(null);
-                  }}
-                  className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
-                >
-                  📄 New Analysis
-                </button>
-              </>
-            )}
-            {/* Excel Upload Button - Always available after analysis */}
-            {analysisData && (
-              <div className="flex items-center gap-2">
-                <label className={`px-4 py-2 text-white text-sm rounded transition-colors ${
-                  isProcessingExcel 
-                    ? 'bg-gray-400 cursor-not-allowed' 
-                    : 'bg-green-600 hover:bg-green-700 cursor-pointer'
-                }`}>
-                  {isProcessingExcel ? (
-                    <span className="flex items-center gap-2">
-                      <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                      </svg>
-                      Analyzing Excel...
-                    </span>
-                  ) : (
-                    `📊 ${excelHeaders.length > 0 ? 'Replace Excel' : 'Upload Excel'}`
-                  )}
-                  <input
-                    type="file"
-                    accept=".xlsx,.xls,.csv"
-                    onChange={handleExcelUpload}
-                    disabled={isProcessingExcel}
-                    className="hidden"
-                  />
-                </label>
-                {excelHeaders.length > 0 && !isProcessingExcel && (
-                  <span className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded">
-                    ✅ {excelHeaders.length} columns loaded
-                  </span>
-                )}
-              </div>
-            )}
-            
-            <button
-              onClick={() => {
-                localStorage.clear();
-                window.location.reload();
-              }}
-              className="px-4 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
-            >
-              🗑️ Clear All Data
-            </button>
+      {analysisData && (
+        <div className="bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-500">Plantilla</span>
+              <h1 className="text-xl font-bold text-gray-900">
+                {originalFileName || 'Document.pdf'}
+              </h1>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleSaveAsTemplate}
+                className="px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+              >
+                💾 Desar
+              </button>
+              <button
+                onClick={handleSaveAsTemplate}
+                className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+              >
+                💾 Desar com...
+              </button>
+              <button
+                onClick={() => router.push('/templates')}
+                className="px-4 py-2 bg-gray-600 text-white text-sm rounded hover:bg-gray-700 transition-colors"
+              >
+                ✕ Tancar
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Upload Section */}
       {!analysisData && (
@@ -629,6 +586,7 @@ export default function AnalyzePage() {
           onMappingUpdate={handleMappingUpdate}
           onFreeze={handleFreeze}
           pipelineStatus={pipelineStatus}
+          fileName={originalFileName}
         />
       )}
 
