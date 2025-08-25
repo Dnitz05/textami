@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import TopNavBar from '../../components/TopNavBar';
 
 interface TemplateUploadResponse {
   success: boolean;
@@ -426,6 +427,7 @@ export default function GeneratorPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <TopNavBar />
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-16">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
