@@ -189,16 +189,85 @@ S'informa favorablement la concessió de la llicència sol·licitada d'acord amb
   const handleFreeze = async () => {
     if (!analysisData) return;
 
+    // Get current mappings from localStorage
+    const savedMappings = localStorage.getItem(`mappings_${analysisData.templateId}`);
+    const mappings = savedMappings ? JSON.parse(savedMappings) : {};
+    
+    const mappedTags = Object.keys(mappings).length;
+    if (mappedTags === 0) {
+      setError('Please map at least one tag before freezing the template.');
+      return;
+    }
+
+    const shouldProceed = confirm(
+      `This will permanently modify the DOCX template by inserting ${mappedTags} placeholders. This action cannot be undone. Continue?`
+    );
+    
+    if (!shouldProceed) return;
+
     try {
-      console.log('🧊 Freezing template:', analysisData.templateId);
-      // Mock freeze process (in production, call /api/freeze)
-      setPipelineStatus('frozen');
+      console.log('🧊 Starting template freeze process...');
+      setError(null);
       
-      // Save frozen status
-      localStorage.setItem(`frozen_${analysisData.templateId}`, 'true');
+      // Call freeze API
+      const response = await fetch('/api/freeze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          templateId: analysisData.templateId,
+          storageUrl: `${analysisData.templateId}/original.docx`,
+          tags: analysisData.tags,
+          mappings: mappings
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Freeze operation failed');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        const { successfulReplacements, totalReplacements, manualReviewRequired } = result.data;
+        
+        console.log('✅ Template freeze successful:', result.data);
+        
+        // Update pipeline status
+        setPipelineStatus('frozen');
+        
+        // Save frozen status and results
+        localStorage.setItem(`frozen_${analysisData.templateId}`, JSON.stringify({
+          frozenAt: result.data.frozenAt,
+          frozenTemplateUrl: result.data.frozenTemplateUrl,
+          successfulReplacements,
+          totalReplacements,
+          manualReviewRequired
+        }));
+        
+        // Show results to user
+        let message = `✅ Template frozen successfully!\n\n`;
+        message += `• ${successfulReplacements}/${totalReplacements} placeholders inserted automatically\n`;
+        
+        if (manualReviewRequired.length > 0) {
+          message += `• ${manualReviewRequired.length} items need manual review:\n`;
+          message += manualReviewRequired.map(item => `  - ${item}`).join('\n');
+        } else {
+          message += `• All placeholders inserted successfully!`;
+        }
+        
+        alert(message);
+        
+      } else {
+        throw new Error('Freeze operation returned unsuccessful status');
+      }
       
     } catch (err) {
-      setError('Failed to freeze template');
+      console.error('❌ Template freeze failed:', err);
+      const errorMsg = `Failed to freeze template: ${err instanceof Error ? err.message : 'Unknown error'}`;
+      setError(errorMsg);
     }
   };
 
