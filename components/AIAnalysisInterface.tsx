@@ -6,6 +6,8 @@ import DocumentPreviewPanel from './analysis/DocumentPreviewPanel';
 import DetectedTagsPanel from './analysis/DetectedTagsPanel';
 import ExcelMappingPanel from './analysis/ExcelMappingPanel';
 import TemplateFreezePanel from './analysis/TemplateFreezePanel';
+import AIPromptsPanel from './analysis/AIPromptsPanel';
+import KnowledgePanel from './analysis/KnowledgePanel';
 
 interface AIAnalysisInterfaceProps {
   analysisData: AnalysisData | null;
@@ -46,10 +48,10 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-6">
+    <div className="h-screen flex flex-col">
       {/* Header */}
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Document Analysis Results</h2>
+      <div className="flex-none px-6 py-4 bg-white border-b">
+        <h2 className="text-xl font-bold text-gray-900 mb-2">Document Analysis Interface</h2>
         <div className="flex items-center space-x-4 text-sm text-gray-600">
           <div className="flex items-center">
             <div className={`w-3 h-3 rounded-full mr-2 ${
@@ -73,38 +75,56 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
         </div>
       </div>
 
-      {/* 4-Panel Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Panel 1: Document Preview */}
-        <DocumentPreviewPanel 
-          markdown={analysisData.markdown}
-          sections={analysisData.sections}
-          tables={analysisData.tables}
-          signatura={analysisData.signatura}
-        />
+      {/* 3-Column Layout */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Sidebar - AI Prompts & Knowledge */}
+        <div className="w-80 flex-none bg-gray-50 border-r overflow-y-auto">
+          <div className="p-4 space-y-4">
+            <AIPromptsPanel 
+              pipelineStatus={pipelineStatus}
+            />
+            <KnowledgePanel 
+              pipelineStatus={pipelineStatus}
+            />
+          </div>
+        </div>
 
-        {/* Panel 2: Detected Tags */}
-        <DetectedTagsPanel 
-          tags={analysisData.tags}
-          onTagUpdate={onTagUpdate}
-          editingEnabled={pipelineStatus !== 'frozen'}
-        />
+        {/* Center - Document Preview */}
+        <div className="flex-1 bg-white overflow-y-auto">
+          <div className="p-6">
+            <DocumentPreviewPanel 
+              markdown={analysisData.markdown}
+              sections={analysisData.sections}
+              tables={analysisData.tables}
+              signatura={analysisData.signatura}
+            />
+          </div>
+        </div>
 
-        {/* Panel 3: Excel Mapping */}
-        <ExcelMappingPanel 
-          tags={analysisData.tags}
-          excelHeaders={excelHeaders}
-          onMappingUpdate={handleMappingUpdate}
-          pipelineStatus={pipelineStatus}
-        />
-
-        {/* Panel 4: Template Freeze */}
-        <TemplateFreezePanel 
-          pipelineStatus={pipelineStatus}
-          onFreeze={onFreeze}
-          mappingsCount={getMappedCount()}
-          totalTags={analysisData.tags.length}
-        />
+        {/* Right Sidebar - Tags & Excel */}
+        <div className="w-80 flex-none bg-gray-50 border-l overflow-y-auto">
+          <div className="p-4 space-y-4">
+            <DetectedTagsPanel 
+              tags={analysisData.tags}
+              onTagUpdate={onTagUpdate}
+              editingEnabled={pipelineStatus !== 'frozen'}
+            />
+            
+            <ExcelMappingPanel 
+              tags={analysisData.tags}
+              excelHeaders={excelHeaders}
+              onMappingUpdate={handleMappingUpdate}
+              pipelineStatus={pipelineStatus}
+            />
+            
+            <TemplateFreezePanel 
+              pipelineStatus={pipelineStatus}
+              onFreeze={onFreeze}
+              mappingsCount={getMappedCount()}
+              totalTags={analysisData.tags.length}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
