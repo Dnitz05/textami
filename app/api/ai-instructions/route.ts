@@ -144,7 +144,7 @@ Modifica només el paràgraf indicat i retorna el document complet:`;
           content: userPrompt
         }
       ],
-      max_tokens: 8000,
+      max_tokens: 4096,
       temperature: 0.2 // Low temperature for consistent document processing
     });
     
