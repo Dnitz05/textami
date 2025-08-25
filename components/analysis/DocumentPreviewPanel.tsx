@@ -16,6 +16,9 @@ interface DocumentPreviewPanelProps {
   signatura?: DocumentSignature;
   isProcessing?: boolean;
   fileName?: string;
+  onSave?: () => void;
+  onSaveAs?: () => void;
+  onClose?: () => void;
 }
 
 const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
@@ -24,11 +27,14 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
   tables,
   signatura,
   isProcessing = false,
-  fileName = 'Document.pdf'
+  fileName = 'Document.pdf',
+  onSave,
+  onSaveAs,
+  onClose
 }) => {
   return (
     <div className="bg-white rounded-lg shadow border">
-      <div className="p-4 border-b bg-gray-50">
+      <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
         <h3 className="text-lg font-semibold text-gray-900 flex items-center">
           {isProcessing ? (
             <svg className="animate-spin w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -41,6 +47,33 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           )}
           {fileName}
         </h3>
+        
+        <div className="flex gap-2">
+          {onSave && (
+            <button
+              onClick={onSave}
+              className="px-3 py-1.5 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+            >
+              💾 Desar
+            </button>
+          )}
+          {onSaveAs && (
+            <button
+              onClick={onSaveAs}
+              className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+            >
+              💾 Desar com...
+            </button>
+          )}
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="px-3 py-1.5 bg-gray-600 text-white text-sm rounded hover:bg-gray-700 transition-colors"
+            >
+              ✕ Tancar
+            </button>
+          )}
+        </div>
       </div>
 
       <div className={`p-6 relative ${isProcessing ? 'opacity-60' : ''}`}>

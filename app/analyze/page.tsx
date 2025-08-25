@@ -93,6 +93,18 @@ export default function AnalyzePage() {
     setTemplateDescription('');
   };
 
+  const handleSave = () => {
+    handleSaveAsTemplate();
+  };
+
+  const handleSaveAs = () => {
+    handleSaveAsTemplate();
+  };
+
+  const handleClose = () => {
+    router.push('/templates');
+  };
+
   const saveTemplate = async () => {
     if (!templateName.trim() || !analysisData) {
       alert('Si us plau, introdueix un nom per la plantilla.');
@@ -495,35 +507,15 @@ export default function AnalyzePage() {
     <div className="min-h-screen bg-gray-50">
       <TopNavBar />
       
-      {/* Page Header */}
+      {/* Simple header with Plantilla label */}
       {analysisData && (
         <div className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+          <div className="max-w-7xl mx-auto px-6 py-3">
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-500">Plantilla</span>
               <h1 className="text-xl font-bold text-gray-900">
                 {originalFileName || 'Document.pdf'}
               </h1>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={handleSaveAsTemplate}
-                className="px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
-              >
-                💾 Desar
-              </button>
-              <button
-                onClick={handleSaveAsTemplate}
-                className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
-              >
-                💾 Desar com...
-              </button>
-              <button
-                onClick={() => router.push('/templates')}
-                className="px-4 py-2 bg-gray-600 text-white text-sm rounded hover:bg-gray-700 transition-colors"
-              >
-                ✕ Tancar
-              </button>
             </div>
           </div>
         </div>
@@ -587,6 +579,9 @@ export default function AnalyzePage() {
           onFreeze={handleFreeze}
           pipelineStatus={pipelineStatus}
           fileName={originalFileName}
+          onSave={handleSave}
+          onSaveAs={handleSaveAs}
+          onClose={handleClose}
         />
       )}
 

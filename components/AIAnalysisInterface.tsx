@@ -17,6 +17,9 @@ interface AIAnalysisInterfaceProps {
   onFreeze?: () => void;
   pipelineStatus?: PipelineStatus;
   fileName?: string;
+  onSave?: () => void;
+  onSaveAs?: () => void;
+  onClose?: () => void;
 }
 
 const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
@@ -26,7 +29,10 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
   onMappingUpdate,
   onFreeze,
   pipelineStatus = 'uploaded',
-  fileName = 'Document.pdf'
+  fileName = 'Document.pdf',
+  onSave,
+  onSaveAs,
+  onClose
 }) => {
   const [mappings, setMappings] = useState<Record<string, string>>({});
   const [showLeftSidebar, setShowLeftSidebar] = useState(true);
@@ -156,6 +162,9 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                   signatura={analysisData.signatura}
                   isProcessing={isExecutingInstruction}
                   fileName={fileName}
+                  onSave={onSave}
+                  onSaveAs={onSaveAs}
+                  onClose={onClose}
                 />
               </div>
             </div>
