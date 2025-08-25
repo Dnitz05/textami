@@ -528,43 +528,57 @@ export default function GeneratorPage() {
                 <h3 className="text-xl font-semibold mb-3">Upload Data</h3>
                 <p className="text-gray-600 mb-4">
                   Upload Excel/CSV for intelligent column mapping
+                  <br />
+                  <span className="text-xs text-gray-500">
+                    💡 Best after document upload for smart suggestions
+                  </span>
                 </p>
 
+                {/* Always show upload button, but change text if Excel exists */}
+                <label 
+                  onClick={() => console.log('🖱️ Excel Label clicked!')}
+                  className={`w-full py-2 px-4 rounded-md transition-colors block text-center ${
+                    !excelState.processing
+                      ? 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer' 
+                      : 'bg-gray-400 text-white cursor-not-allowed'
+                  }`}
+                >
+                  {excelState.processing ? 'Analyzing Excel...' : 
+                   excelState.analysis ? 'Replace Excel/CSV' : 'Upload Excel/CSV'}
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls,.csv"
+                    disabled={excelState.processing}
+                    className="hidden"
+                    onChange={(e) => {
+                      console.log('📊 Excel Input activated!', e.target.files?.[0]?.name);
+                      handleExcelAnalysis(e);
+                    }}
+                  />
+                </label>
+                {excelState.error && (
+                  <p className="text-xs text-red-600 mt-2">{excelState.error}</p>
+                )}
                 {!excelState.analysis && (
-                  <>
-                    <label 
-                      onClick={() => console.log('🖱️ Excel Label clicked!')}
-                      className={`w-full py-2 px-4 rounded-md transition-colors block text-center ${
-                        !excelState.processing
-                          ? 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer' 
-                          : 'bg-gray-400 text-white cursor-not-allowed'
-                      }`}
-                    >
-                      {excelState.processing ? 'Analyzing Excel...' : 'Upload Excel/CSV'}
-                      <input
-                        type="file"
-                        accept=".xlsx,.xls,.csv"
-                        disabled={excelState.processing}
-                        className="hidden"
-                        onChange={(e) => {
-                          console.log('📊 Excel Input activated!', e.target.files?.[0]?.name);
-                          handleExcelAnalysis(e);
-                        }}
-                      />
-                    </label>
-                    {excelState.error && (
-                      <p className="text-xs text-red-600 mt-2">{excelState.error}</p>
-                    )}
-                    <p className="text-xs text-gray-500 mt-2">
-                      Independent upload - works with or without document
-                    </p>
-                  </>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Independent upload - works with or without document
+                  </p>
                 )}
 
                 {excelState.analysis && (
                   <div className="space-y-3">
-                    <div className="text-green-600 text-sm">
-                      ✅ {excelState.analysis.fileName}
+                    <div className="flex items-center justify-center gap-2 text-green-600 text-sm">
+                      <span>✅ {excelState.analysis.fileName}</span>
+                      <button
+                        onClick={() => {
+                          console.log('🗑️ Clearing Excel data');
+                          setExcelState({ processing: false, analysis: null, error: null });
+                        }}
+                        className="text-red-500 hover:text-red-700 text-xs px-1"
+                        title="Remove Excel file"
+                      >
+                        ×
+                      </button>
                     </div>
                     <div className="text-xs text-gray-500">
                       📊 {excelState.analysis.totalRows} rows, {excelState.analysis.totalColumns} columns
