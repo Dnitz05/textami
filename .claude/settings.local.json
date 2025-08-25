@@ -2,30 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(npm run build:*)",
-      "Bash(npm install:*)",
-      "Bash(npm run dev:*)",
       "Bash(git add:*)",
-      "Bash(git push:*)",
-      "WebSearch",
-      "Bash(npx vercel:*)",
       "Bash(git commit:*)",
-      "Bash(npm run clean:*)",
-      "Bash(vercel env add:*)",
-      "Bash(vercel env:*)",
-      "Bash(mkdir:*)",
-      "Bash(rm:*)",
-      "Bash(mv:*)",
-      "Bash(npx tsc:*)",
-      "Bash(touch:*)",
-      "Bash(cat:*)",
-      "Bash(sed:*)",
-      "Bash(grep:*)",
-      "Bash(git checkout:*)",
-      "Bash(find:*)"
+      "Bash(git push:*)",
+      "Bash(npm install:*)"
     ],
     "additionalDirectories": [
-      "C:\\mnt\\c\\projects",
-      "C:\\c\\projects",
       "C:\\c\\projects\\textami"
     ]
   }
