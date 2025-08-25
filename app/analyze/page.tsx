@@ -32,7 +32,7 @@ export default function AnalyzePage() {
   //   // Mock data would load here for testing
   // }, []);
 
-  // Load template from session storage if available
+  // Load template from session storage if available or auto-upload file
   useEffect(() => {
     const loadedTemplate = sessionStorage.getItem('loadedTemplate');
     if (loadedTemplate) {
@@ -45,6 +45,41 @@ export default function AnalyzePage() {
         console.log('✅ Template loaded:', template.name);
       } catch (error) {
         console.error('❌ Error loading template:', error);
+      }
+    }
+
+    // Auto-upload file from Nova Plantilla button if available
+    const selectedFile = sessionStorage.getItem('selectedFile');
+    const selectedFileContent = sessionStorage.getItem('selectedFileContent');
+    
+    if (selectedFile && selectedFileContent) {
+      try {
+        const fileData = JSON.parse(selectedFile);
+        console.log('🔄 Auto-uploading file from Nova Plantilla:', fileData.file.name);
+        
+        // Convert base64 back to file
+        const binaryString = atob(selectedFileContent);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        
+        const file = new File([bytes], fileData.file.name, {
+          type: fileData.file.type,
+          lastModified: fileData.file.lastModified
+        });
+        
+        // Clear session storage
+        sessionStorage.removeItem('selectedFile');
+        sessionStorage.removeItem('selectedFileContent');
+        
+        // Auto-trigger upload
+        uploadFile(file);
+        
+      } catch (error) {
+        console.error('❌ Error auto-uploading file:', error);
+        sessionStorage.removeItem('selectedFile');
+        sessionStorage.removeItem('selectedFileContent');
       }
     }
   }, []);
@@ -97,10 +132,7 @@ export default function AnalyzePage() {
     }
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
+  const uploadFile = async (file: File) => {
     if (file.type !== 'application/pdf') {
       setError('Please upload a PDF file');
       return;
@@ -114,72 +146,88 @@ export default function AnalyzePage() {
       
       console.log('🚀 Real GPT-5 Analysis: Uploading PDF to Supabase and calling /api/extract...');
       
-      // 1. Upload PDF to Supabase Storage
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('templateId', templateId);
-      
-      const uploadResponse = await fetch('/api/upload-pdf', {
-        method: 'POST',
-        body: formData
-      });
-      
-      if (!uploadResponse.ok) {
-        const uploadError = await uploadResponse.json() as ApiResponse;
-        throw new Error(uploadError.error || 'Failed to upload PDF');
-      }
-      
-      const uploadResult = await uploadResponse.json() as ApiResponse<UploadResponse>;
-      console.log('✅ PDF uploaded successfully:', uploadResult);
-      
-      if (!uploadResult.success || !uploadResult.data) {
-        throw new Error('Upload response invalid');
-      }
-      
-      // 2. Call GPT-5 analysis API
-      const analysisResponse = await fetch('/api/extract', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          templateId: templateId,
-          pdfUrl: uploadResult.data.pdfUrl,
-          fileName: file.name
-        })
-      });
-      
-      if (!analysisResponse.ok) {
-        const analysisError = await analysisResponse.json() as ApiResponse;
-        throw new Error(analysisError.error || 'GPT-5 analysis failed');
-      }
-      
-      const analysisResult = await analysisResponse.json() as ApiResponse<ExtractionResponse>;
-      console.log('✅ GPT-5 analysis completed:', analysisResult);
-      
-      if (!analysisResult.success || !analysisResult.data) {
-        throw new Error('Analysis response invalid');
-      }
-      
-      // 3. Process and display results
-      const result = analysisResult.data;
-      const analysisData: AnalysisData = {
-        templateId,
-        markdown: result.markdown || `# ${file.name}\n\nDocument processed successfully.`,
-        sections: result.sections || [],
-        tables: result.tables || [],
-        tags: result.tags || [],
-        signatura: result.signatura
-      };
-
-      setAnalysisData(analysisData);
-      setPipelineStatus('analyzed');
+      // Rest of the upload logic will continue...
+      await performAnalysis(file, templateId);
       
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Analysis failed');
+      console.error('❌ Analysis failed:', err);
+      const errorMsg = `Analysis failed: ${err instanceof Error ? err.message : 'Unknown error'}`;
+      setError(errorMsg);
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    await uploadFile(file);
+  };
+
+  const performAnalysis = async (file: File, templateId: string) => {
+    console.log('🚀 Real GPT-5 Analysis: Uploading PDF to Supabase and calling /api/extract...');
+    
+    // 1. Upload PDF to Supabase Storage
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('templateId', templateId);
+    
+    const uploadResponse = await fetch('/api/upload-pdf', {
+      method: 'POST',
+      body: formData
+    });
+    
+    if (!uploadResponse.ok) {
+      const uploadError = await uploadResponse.json() as ApiResponse;
+      throw new Error(uploadError.error || 'Failed to upload PDF');
+    }
+    
+    const uploadResult = await uploadResponse.json() as ApiResponse<UploadResponse>;
+    console.log('✅ PDF uploaded successfully:', uploadResult);
+    
+    if (!uploadResult.success || !uploadResult.data) {
+      throw new Error('Upload response invalid');
+    }
+    
+    // 2. Call GPT-5 analysis API
+    const analysisResponse = await fetch('/api/extract', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        templateId: templateId,
+        pdfUrl: uploadResult.data.pdfUrl,
+        fileName: file.name
+      })
+    });
+    
+    if (!analysisResponse.ok) {
+      const analysisError = await analysisResponse.json() as ApiResponse;
+      throw new Error(analysisError.error || 'GPT-5 analysis failed');
+    }
+    
+    const analysisResult = await analysisResponse.json() as ApiResponse<ExtractionResponse>;
+    console.log('✅ GPT-5 analysis completed:', analysisResult);
+    
+    if (!analysisResult.success || !analysisResult.data) {
+      throw new Error('Analysis response invalid');
+    }
+    
+    // 3. Process and display results
+    const result = analysisResult.data;
+    const analysisData: AnalysisData = {
+      templateId,
+      markdown: result.markdown || `# ${file.name}\n\nDocument processed successfully.`,
+      sections: result.sections || [],
+      tables: result.tables || [],
+      tags: result.tags || [],
+      signatura: result.signatura
+    };
+
+    setAnalysisData(analysisData);
+    setPipelineStatus('analyzed');
   };
 
   const handleExcelUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {

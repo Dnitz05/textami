@@ -2,9 +2,9 @@
 // Top navigation bar with logo, new template, and knowledge base
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 interface TopNavBarProps {
   className?: string;
@@ -12,12 +12,48 @@ interface TopNavBarProps {
 
 const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
   const pathname = usePathname();
+  const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isActive = (path: string) => {
     if (path === '/') {
       return pathname === '/';
     }
     return pathname.startsWith(path);
+  };
+
+  const handleNovaPlantillaClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Store the selected file in sessionStorage to pass to analyze page
+      const fileData = {
+        file: {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          lastModified: file.lastModified
+        }
+      };
+      sessionStorage.setItem('selectedFile', JSON.stringify(fileData));
+      
+      // Create FileReader to store file content
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const arrayBuffer = e.target?.result as ArrayBuffer;
+        const uint8Array = new Uint8Array(arrayBuffer);
+        const base64String = btoa(String.fromCharCode(...uint8Array));
+        
+        sessionStorage.setItem('selectedFileContent', base64String);
+        
+        // Navigate to analyze page
+        router.push('/analyze');
+      };
+      reader.readAsArrayBuffer(file);
+    }
   };
 
   return (
@@ -38,8 +74,8 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
 
           {/* Navigation Links */}
           <div className="flex items-center space-x-6">
-            <Link
-              href="/analyze"
+            <button
+              onClick={handleNovaPlantillaClick}
               className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 isActive('/analyze')
                   ? 'bg-blue-100 text-blue-700'
@@ -50,7 +86,16 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
               <span>Nova Plantilla</span>
-            </Link>
+            </button>
+            
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.docx"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
 
             <Link
               href="/templates"
