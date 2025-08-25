@@ -1,12 +1,50 @@
 // app/api/ai-docx/generate/route.ts
-// BINARY DOCX GENERATION with docxtemplater - Professional format preservation
+// MASS PRODUCTION: Generate multiple documents from frozen template + Excel data
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Docxtemplater from 'docxtemplater';
 import PizZip from 'pizzip';
 
+interface GenerationRequest {
+  templateId: string;
+  frozenTemplateUrl: string; // Path to frozen template with {{placeholders}}
+  excelData: Array<Record<string, any>>; // Array of row data
+  mappings: Record<string, string>; // tagSlug -> excelHeader  
+  batchSize?: number; // How many documents to generate (default: all)
+  outputFormat?: 'docx' | 'pdf' | 'both'; // Future: PDF conversion
+}
+
+interface GeneratedDocument {
+  documentId: string;
+  fileName: string;
+  downloadUrl: string;
+  rowIndex: number;
+  rowData: Record<string, any>;
+  fileSize: number;
+  generatedAt: string;
+}
+
+interface GenerationResponse {
+  success: boolean;
+  data: {
+    templateId: string;
+    totalRequested: number;
+    totalGenerated: number;
+    totalErrors: number;
+    documents: GeneratedDocument[];
+    errors: Array<{
+      rowIndex: number;
+      error: string;
+      rowData: Record<string, any>;
+    }>;
+    processingTime: number;
+    batchId: string;
+  };
+}
+
 export async function POST(request: NextRequest) {
-  console.log('🚀 DOCX Generate Request Started - Binary Processing');
+  const startTime = Date.now();
+  console.log('🚀 MASS PRODUCTION Started');
   
   try {
     // Initialize Supabase client
@@ -22,145 +60,182 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    console.log('✅ Supabase client initialized for binary generation');
+    console.log('✅ Supabase client initialized for mass production');
 
     // Parse request data
-    const { templateId, storageUrl, mappings } = await request.json();
+    const { 
+      templateId, 
+      frozenTemplateUrl, 
+      excelData, 
+      mappings, 
+      batchSize,
+      outputFormat = 'docx'
+    }: GenerationRequest = await request.json();
     
-    console.log('📝 Binary generation request:', {
+    console.log('📊 Mass production request:', {
       templateId,
-      storageUrl,
+      frozenTemplateUrl,
+      dataRows: excelData?.length || 0,
       mappingCount: Object.keys(mappings || {}).length,
-      mappings: mappings
+      batchSize: batchSize || 'all',
+      outputFormat
     });
 
-    if (!templateId || !storageUrl || !mappings) {
+    // Validation
+    if (!templateId || !frozenTemplateUrl || !excelData || !mappings) {
       return NextResponse.json(
-        { error: 'Missing required fields: templateId, storageUrl, mappings' },
+        { error: 'Missing required fields: templateId, frozenTemplateUrl, excelData, mappings' },
         { status: 400 }
       );
     }
 
-    // 1. Retrieve original DOCX binary from Supabase Storage
-    console.log('📥 Retrieving original DOCX binary from storage:', storageUrl);
-    const { data: fileData, error: downloadError } = await supabase.storage
-      .from('templates')
-      .download(storageUrl);
-
-    if (downloadError || !fileData) {
-      console.error('❌ Failed to retrieve DOCX binary from storage:', downloadError);
+    if (!Array.isArray(excelData) || excelData.length === 0) {
       return NextResponse.json(
-        { error: 'Failed to retrieve template binary', details: downloadError?.message },
+        { error: 'Excel data must be a non-empty array' },
+        { status: 400 }
+      );
+    }
+
+    // 1. Retrieve frozen DOCX template from Supabase Storage
+    console.log('📥 Retrieving frozen DOCX template:', frozenTemplateUrl);
+    const { data: templateData, error: downloadError } = await supabase.storage
+      .from('templates')
+      .download(frozenTemplateUrl);
+
+    if (downloadError || !templateData) {
+      console.error('❌ Failed to retrieve frozen template:', downloadError);
+      return NextResponse.json(
+        { error: 'Failed to retrieve frozen template', details: downloadError?.message },
         { status: 500 }
       );
     }
 
     // Convert Blob to ArrayBuffer then Buffer
-    const arrayBuffer = await fileData.arrayBuffer();
-    const originalBuffer = Buffer.from(arrayBuffer);
+    const arrayBuffer = await templateData.arrayBuffer();
+    const templateBuffer = Buffer.from(arrayBuffer);
     
-    console.log('✅ Original DOCX binary retrieved:', {
-      size: originalBuffer.length,
-      type: fileData.type
+    console.log('✅ Frozen DOCX template retrieved:', {
+      size: templateBuffer.length,
+      type: templateData.type
     });
 
-    // 2. Process DOCX with docxtemplater (PRESERVES ALL FORMATTING)
-    console.log('🔄 Processing DOCX binary with docxtemplater...');
-    console.log('📋 Replacing placeholders with data:', mappings);
+    // 2. Process data in batches and generate documents
+    const totalRows = Math.min(excelData.length, batchSize || excelData.length);
+    const batchId = `batch_${templateId}_${Date.now()}`;
+    const documents: GeneratedDocument[] = [];
+    const errors: Array<{ rowIndex: number; error: string; rowData: Record<string, any> }> = [];
 
-    let generatedBuffer: Buffer;
-    
-    try {
-      // Load the original DOCX binary
-      const zip = new PizZip(originalBuffer);
+    console.log(`🔄 Processing ${totalRows} documents in batch ${batchId}...`);
+
+    for (let i = 0; i < totalRows; i++) {
+      const rowData = excelData[i];
+      const documentId = `${templateId}_doc_${i + 1}_${Date.now()}`;
       
-      // Create docxtemplater instance
-      const doc = new Docxtemplater(zip, {
-        paragraphLoop: true,
-        linebreaks: true,
-        errorLogging: true,
-      });
-
-      // Set the template variables (this replaces {{placeholder}} with actual data)
-      doc.setData(mappings);
-
-      // Render the document - this is where the magic happens!
-      // All formatting, styles, fonts, colors, etc. are preserved
-      doc.render();
-
-      // Generate the final binary DOCX with all formatting intact
-      generatedBuffer = doc.getZip().generate({ 
-        type: 'nodebuffer',
-        compression: 'DEFLATE',
-        compressionOptions: {
-          level: 4
+      try {
+        console.log(`📄 Processing document ${i + 1}/${totalRows}:`, rowData);
+        
+        // 2.1. Create data object for this row based on mappings
+        const docData: Record<string, any> = {};
+        
+        for (const [tagSlug, excelHeader] of Object.entries(mappings)) {
+          const value = rowData[excelHeader];
+          docData[tagSlug] = value || ''; // Use empty string if value is missing
         }
-      });
+        
+        console.log(`📋 Mapped data for document ${i + 1}:`, docData);
 
-      console.log('✅ DOCX binary generated successfully with full formatting preservation:', {
-        originalSize: originalBuffer.length,
-        generatedSize: generatedBuffer.length,
-        sizeChange: ((generatedBuffer.length - originalBuffer.length) / originalBuffer.length * 100).toFixed(2) + '%'
-      });
+        // 2.2. Generate DOCX with docxtemplater
+        const zip = new PizZip(templateBuffer);
+        const doc = new Docxtemplater(zip, {
+          paragraphLoop: true,
+          linebreaks: true,
+          errorLogging: true,
+        });
 
-    } catch (docxError) {
-      console.error('❌ Docxtemplater binary processing failed:', docxError);
-      return NextResponse.json(
-        { 
-          error: 'Failed to process DOCX template binary',
-          details: docxError instanceof Error ? docxError.message : 'Unknown docxtemplater error'
-        },
-        { status: 500 }
-      );
+        // Set the data for this specific document
+        doc.setData(docData);
+        doc.render();
+
+        // Generate the binary DOCX
+        const generatedBuffer = doc.getZip().generate({ 
+          type: 'nodebuffer',
+          compression: 'DEFLATE',
+          compressionOptions: { level: 4 }
+        });
+
+        // 2.3. Save generated document to outputs bucket
+        const fileName = `${documentId}.docx`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('outputs')
+          .upload(fileName, generatedBuffer, {
+            contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            upsert: true
+          });
+
+        if (uploadError) {
+          throw new Error(`Failed to save document: ${uploadError.message}`);
+        }
+
+        // 2.4. Get public URL for download
+        const { data: publicUrlData } = supabase.storage
+          .from('outputs')
+          .getPublicUrl(uploadData.path);
+
+        // Add to successful documents list
+        documents.push({
+          documentId,
+          fileName,
+          downloadUrl: publicUrlData.publicUrl,
+          rowIndex: i,
+          rowData,
+          fileSize: generatedBuffer.length,
+          generatedAt: new Date().toISOString()
+        });
+
+        console.log(`✅ Document ${i + 1} generated successfully: ${fileName}`);
+
+      } catch (docError) {
+        console.error(`❌ Failed to generate document ${i + 1}:`, docError);
+        errors.push({
+          rowIndex: i,
+          error: docError instanceof Error ? docError.message : 'Unknown error',
+          rowData
+        });
+      }
     }
 
-    // 3. Save generated DOCX binary to outputs bucket
-    const outputFileName = `generated_${templateId}_${Date.now()}.docx`;
-    console.log('💾 Saving generated DOCX binary to storage:', outputFileName);
-
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('outputs')
-      .upload(outputFileName, generatedBuffer, {
-        contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        upsert: true
-      });
-
-    if (uploadError) {
-      console.error('❌ Failed to save generated DOCX binary:', uploadError);
-      return NextResponse.json(
-        { error: 'Failed to save generated document', details: uploadError.message },
-        { status: 500 }
-      );
-    }
-
-    // 4. Get public URL for download
-    const { data: publicUrlData } = supabase.storage
-      .from('outputs')
-      .getPublicUrl(uploadData.path);
-
-    console.log('✅ Generated DOCX binary saved and accessible:', publicUrlData.publicUrl);
-
-    // 5. Return success response
-    return NextResponse.json({
-      success: true,
+    // 3. Generate batch summary
+    const processingTime = Date.now() - startTime;
+    const response: GenerationResponse = {
+      success: documents.length > 0,
       data: {
         templateId,
-        outputFileName,
-        downloadUrl: publicUrlData.publicUrl,
-        storagePath: uploadData.path,
-        fileSize: generatedBuffer.length,
-        processedMappings: Object.keys(mappings).length,
-        generatedAt: new Date().toISOString(),
-        processingMethod: 'docxtemplater-binary',
-        formatPreserved: true
+        totalRequested: totalRows,
+        totalGenerated: documents.length,
+        totalErrors: errors.length,
+        documents,
+        errors,
+        processingTime,
+        batchId
       }
+    };
+
+    console.log('✅ Mass production complete:', {
+      batchId,
+      requested: totalRows,
+      generated: documents.length,
+      errors: errors.length,
+      processingTime: `${processingTime}ms`,
+      avgPerDoc: documents.length > 0 ? `${Math.round(processingTime / documents.length)}ms` : 'N/A'
     });
 
+    return NextResponse.json(response);
+
   } catch (error) {
-    console.error('❌ Unexpected error in binary DOCX generation:', error);
+    console.error('❌ Unexpected error in mass production:', error);
     return NextResponse.json(
       { 
-        error: 'Internal server error during binary processing',
+        error: 'Mass production failed',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }

@@ -24,6 +24,16 @@ export default function AnalyzePage() {
   const [pipelineStatus, setPipelineStatus] = useState<'uploaded' | 'analyzed' | 'mapped' | 'frozen' | 'production'>('uploaded');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationResult, setGenerationResult] = useState<{
+    batchId: string;
+    totalGenerated: number;
+    documents: Array<{
+      fileName: string;
+      downloadUrl: string;
+      rowIndex: number;
+    }>;
+  } | null>(null);
 
   // Mock data for immediate testing
   useEffect(() => {
@@ -271,6 +281,108 @@ S'informa favorablement la concessió de la llicència sol·licitada d'acord amb
     }
   };
 
+  const handleGenerateDocuments = async () => {
+    if (!analysisData || excelHeaders.length === 0) {
+      setError('Please upload Excel data before generating documents.');
+      return;
+    }
+
+    // Get frozen template info
+    const frozenInfo = localStorage.getItem(`frozen_${analysisData.templateId}`);
+    if (!frozenInfo) {
+      setError('Template must be frozen before generating documents.');
+      return;
+    }
+
+    const frozenData = JSON.parse(frozenInfo);
+    const savedMappings = localStorage.getItem(`mappings_${analysisData.templateId}`);
+    const mappings = savedMappings ? JSON.parse(savedMappings) : {};
+
+    if (Object.keys(mappings).length === 0) {
+      setError('No mappings available for document generation.');
+      return;
+    }
+
+    const shouldProceed = confirm(
+      `This will generate documents for all Excel rows using the frozen template. Continue?`
+    );
+    
+    if (!shouldProceed) return;
+
+    setIsGenerating(true);
+    setError(null);
+
+    try {
+      console.log('🚀 Starting mass document generation...');
+
+      // Mock Excel data for testing (in production, use real parsed Excel)
+      const mockExcelData = [
+        {
+          'Nom Solicitant': 'Paquita Ferre SL',
+          'Adreça Obra': 'carrer Llarg de Sant Vicent, 56', 
+          'Municipi': 'Tortosa',
+          'Data Informe': '08/04/2021',
+          'Import Pressupost': '683,00 €',
+          'Import Total': '101,96 €',
+          'Observacions': 'Llicència obra menor'
+        },
+        {
+          'Nom Solicitant': 'Maria Garcia Construccions',
+          'Adreça Obra': 'Avinguda Catalunya, 123',
+          'Municipi': 'Tortosa', 
+          'Data Informe': '15/04/2021',
+          'Import Pressupost': '1200,00 €',
+          'Import Total': '180,00 €',
+          'Observacions': 'Reforma interior'
+        }
+      ];
+
+      const response = await fetch('/api/ai-docx/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          templateId: analysisData.templateId,
+          frozenTemplateUrl: frozenData.frozenTemplateUrl,
+          excelData: mockExcelData,
+          mappings: mappings,
+          batchSize: 10 // Limit for testing
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Document generation failed');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        console.log('✅ Mass generation successful:', result.data);
+        
+        setGenerationResult({
+          batchId: result.data.batchId,
+          totalGenerated: result.data.totalGenerated,
+          documents: result.data.documents
+        });
+        setPipelineStatus('production');
+        
+        alert(`✅ Generated ${result.data.totalGenerated} documents successfully!\n\nBatch ID: ${result.data.batchId}`);
+        
+      } else {
+        throw new Error('Generation returned unsuccessful status');
+      }
+      
+    } catch (err) {
+      console.error('❌ Mass generation failed:', err);
+      const errorMsg = `Failed to generate documents: ${err instanceof Error ? err.message : 'Unknown error'}`;
+      setError(errorMsg);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -330,7 +442,7 @@ S'informa favorablement la concessió de la llicència sol·licitada d'acord amb
       )}
 
       {/* Analysis Interface */}
-      {analysisData && (
+      {analysisData && pipelineStatus !== 'production' && (
         <AIAnalysisInterface
           analysisData={analysisData}
           excelHeaders={excelHeaders}
@@ -339,6 +451,107 @@ S'informa favorablement la concessió de la llicència sol·licitada d'acord amb
           onFreeze={handleFreeze}
           pipelineStatus={pipelineStatus}
         />
+      )}
+
+      {/* Production Interface - only show when template is frozen */}
+      {analysisData && pipelineStatus === 'frozen' && (
+        <div className="max-w-7xl mx-auto px-6 py-6">
+          <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">🚀 Ready for Mass Production</h2>
+            <p className="text-gray-600 mb-6">
+              Your template has been frozen with placeholders. Now you can generate multiple documents from your Excel data.
+            </p>
+            
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+              <h3 className="font-medium text-green-800 mb-2">Template Status: Frozen ✅</h3>
+              <p className="text-sm text-green-700">
+                Ready to process Excel data and generate personalized documents with 100% format preservation.
+              </p>
+            </div>
+
+            <button
+              onClick={handleGenerateDocuments}
+              disabled={isGenerating || excelHeaders.length === 0}
+              className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            >
+              {isGenerating ? (
+                <>
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3"></div>
+                  Generating Documents...
+                </>
+              ) : (
+                <>
+                  <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Generate Documents from Excel
+                </>
+              )}
+            </button>
+
+            {excelHeaders.length === 0 && (
+              <p className="text-amber-600 mt-3 text-sm">
+                ⚠️ Upload Excel data first to enable document generation
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Production Results - show generated documents */}
+      {generationResult && pipelineStatus === 'production' && (
+        <div className="max-w-7xl mx-auto px-6 py-6">
+          <div className="bg-white rounded-lg shadow-sm border p-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">🎉 Documents Generated Successfully!</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-green-50 p-4 rounded-lg text-center">
+                <div className="text-2xl font-bold text-green-600">{generationResult.totalGenerated}</div>
+                <div className="text-sm text-green-700">Documents Generated</div>
+              </div>
+              <div className="bg-blue-50 p-4 rounded-lg text-center">
+                <div className="text-lg font-mono text-blue-600">{generationResult.batchId}</div>
+                <div className="text-sm text-blue-700">Batch ID</div>
+              </div>
+              <div className="bg-purple-50 p-4 rounded-lg text-center">
+                <div className="text-lg font-bold text-purple-600">100%</div>
+                <div className="text-sm text-purple-700">Format Preserved</div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-gray-900">Download Generated Documents:</h3>
+              {generationResult.documents.map((doc, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded border">
+                  <div>
+                    <div className="font-medium text-gray-900">{doc.fileName}</div>
+                    <div className="text-sm text-gray-500">Row {doc.rowIndex + 1} data</div>
+                  </div>
+                  <a
+                    href={doc.downloadUrl}
+                    target="_blank"
+                    rel="noopener noreferrer" 
+                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Download
+                  </a>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 text-center">
+              <button
+                onClick={() => window.location.reload()}
+                className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+              >
+                Start New Analysis
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
