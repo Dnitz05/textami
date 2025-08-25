@@ -18,6 +18,7 @@ export default function AnalyzePage() {
   const [excelHeaders, setExcelHeaders] = useState<string[]>([]);
   const [pipelineStatus, setPipelineStatus] = useState<PipelineStatus>('uploaded');
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
+  const [isProcessingExcel, setIsProcessingExcel] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [generationResult, setGenerationResult] = useState<GenerationResult | null>(null);
@@ -123,19 +124,48 @@ export default function AnalyzePage() {
       return;
     }
 
+    setIsProcessingExcel(true);
+    setError(null);
+
     try {
-      console.log('📊 Processing Excel file:', file.name);
+      console.log('📊 Processing Excel file with real AI analysis:', file.name);
       
-      // Parse Excel headers (mock for now)
-      const headers = await parseExcelHeaders(file);
-      setExcelHeaders(headers);
-      setPipelineStatus('mapped');
-      
-      console.log('✅ Excel headers extracted:', headers);
+      // Use real Excel API instead of mock
+      const formData = new FormData();
+      formData.append('excel', file);
+
+      const response = await fetch('/api/ai-docx/excel', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+      console.log('📥 Excel API response:', result);
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to analyze Excel file');
+      }
+
+      if (result.success && result.columns) {
+        // Extract just the headers from the API response
+        const headers = result.columns.map((col: any) => col.header);
+        setExcelHeaders(headers);
+        setPipelineStatus('mapped');
+        
+        console.log('✅ Real Excel headers extracted:', headers);
+        console.log('📊 Full column data:', result.columns);
+        
+        // Store full column data for future use
+        localStorage.setItem('textami_excel_columns', JSON.stringify(result.columns));
+      } else {
+        throw new Error('Invalid Excel analysis response');
+      }
       
     } catch (err) {
-      setError('Failed to parse Excel file');
-      console.error('❌ Excel parsing error:', err);
+      setError(`Failed to analyze Excel file: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      console.error('❌ Excel analysis error:', err);
+    } finally {
+      setIsProcessingExcel(false);
     }
   };
 
@@ -367,16 +397,31 @@ export default function AnalyzePage() {
             {/* Excel Upload Button - Always available after analysis */}
             {analysisData && (
               <div className="flex items-center gap-2">
-                <label className="px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors cursor-pointer">
-                  📊 {excelHeaders.length > 0 ? 'Replace Excel' : 'Upload Excel'}
+                <label className={`px-4 py-2 text-white text-sm rounded transition-colors ${
+                  isProcessingExcel 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-green-600 hover:bg-green-700 cursor-pointer'
+                }`}>
+                  {isProcessingExcel ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                      </svg>
+                      Analyzing Excel...
+                    </span>
+                  ) : (
+                    `📊 ${excelHeaders.length > 0 ? 'Replace Excel' : 'Upload Excel'}`
+                  )}
                   <input
                     type="file"
                     accept=".xlsx,.xls,.csv"
                     onChange={handleExcelUpload}
+                    disabled={isProcessingExcel}
                     className="hidden"
                   />
                 </label>
-                {excelHeaders.length > 0 && (
+                {excelHeaders.length > 0 && !isProcessingExcel && (
                   <span className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded">
                     ✅ {excelHeaders.length} columns loaded
                   </span>
