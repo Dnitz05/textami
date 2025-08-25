@@ -192,137 +192,95 @@ Tortosa, 8 d'abril de 2021`,
         }
       };
     } else {
-      // Real GPT-5 multimodal call with Structured Outputs
-      const completion = await openai.responses.create({
+      // Real GPT-5 multimodal call using standard chat completions API
+      const completion = await openai.chat.completions.create({
         model: "gpt-5",
-        input: [
+        messages: [
+          {
+            role: "system",
+            content: `You are an AI document analysis expert specialized in Catalan/Spanish municipal documents.
+
+Extract from the PDF:
+1. Complete Markdown transcription (H1-H3 headers, lists, tables)
+2. Structured JSON with sections, tables, and variable tags
+
+Return ONLY valid JSON in this exact format:
+{
+  "markdown": "complete markdown transcription",
+  "json": {
+    "sections": [{"id": "string", "title": "string", "markdown": "string"}],
+    "tables": [{"id": "string", "title": "string", "headers": ["string"], "rows": [["string"]]}],
+    "tags": [{"name": "string", "example": "string", "type": "string|date|currency|percent|number|id|address", "confidence": 0.9, "page": 1, "anchor": "string"}],
+    "signatura": {"nom": "string", "carrec": "string", "data_lloc": "string"}
+  }
+}
+
+Focus on municipal documents: names, addresses, dates, amounts, references, signatures.
+DO NOT invent data. Preserve original formats (€, %, Catalan dates).`
+          },
           {
             role: "user",
             content: [
               {
-                type: "input_text",
-                text: `Llegeix el PDF completament i retorna:
-1) MARKDOWN: transcripció completa amb títols H1-H3, llistes i taules
-2) JSON estructurat amb { sections[], tables[], tags[] }
+                type: "text",
+                text: `Analyze this PDF document and return the complete analysis in the JSON format specified above. Include:
 
-• sections: [{id, title, markdown}] - seccions del document
-• tables: [{id, title, headers[], rows[][]}] - taules amb capçaleres i files
-• tags: [{name, example, type, confidence, page, anchor}] - variables candidates
+1. Full markdown transcription with proper structure
+2. All sections, tables, and variable placeholders found
+3. Accurate confidence scores and page references
+4. Preserve original formatting and language
 
-TIPUS de tags: string|date|currency|percent|number|id|address
-NO inventis dades. Conserva literals i formats originals (€, %, dates catalanes).
-
-Focus en documents municipals: noms, adreces, dates, imports, referències, signatura.`
+Return ONLY the JSON response, no additional text.`
               },
               {
-                type: "input_image",
-                image_url: pdfSignedUrl
+                type: "image_url",
+                image_url: {
+                  url: pdfSignedUrl
+                }
               }
             ]
           }
         ],
         response_format: {
-          type: "json_schema",
-          json_schema: {
-            name: "DocumentAnalysis",
-            schema: {
-              type: "object",
-              required: ["markdown", "json"],
-              properties: {
-                markdown: { type: "string" },
-                json: {
-                  type: "object",
-                  required: ["sections", "tables", "tags"],
-                  properties: {
-                    sections: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        required: ["id", "title"],
-                        properties: {
-                          id: { type: "string" },
-                          title: { type: "string" },
-                          markdown: { type: "string" }
-                        }
-                      }
-                    },
-                    tables: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        required: ["id", "headers", "rows"],
-                        properties: {
-                          id: { type: "string" },
-                          title: { type: "string" },
-                          headers: { type: "array", items: { type: "string" } },
-                          rows: {
-                            type: "array",
-                            items: { type: "array", items: { type: "string" } }
-                          },
-                          normalized: { type: "object" }
-                        }
-                      }
-                    },
-                    tags: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        required: ["name", "example"],
-                        properties: {
-                          name: { type: "string" },
-                          example: { type: "string" },
-                          type: {
-                            type: "string",
-                            enum: ["string", "date", "currency", "percent", "number", "id", "address"]
-                          },
-                          confidence: { type: "number", minimum: 0, maximum: 1 },
-                          page: { type: "number" },
-                          anchor: { type: "string" }
-                        }
-                      }
-                    },
-                    signatura: {
-                      type: "object",
-                      properties: {
-                        nom: { type: "string" },
-                        carrec: { type: "string" },
-                        data_lloc: { type: "string" }
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            strict: true
-          }
-        }
+          type: "json_object"
+        },
+        max_tokens: 8000,
+        temperature: 0.1
       });
 
-      // GPT-5 with Structured Outputs returns parsed JSON directly
-      const parsedOutput = (completion as any).output_parsed || {};
-      
-      if (!parsedOutput.markdown && !parsedOutput.json) {
-        console.error('❌ Invalid structured output from GPT-5:', completion);
-        throw new Error('Invalid structured output from GPT-5');
+      const aiResponse = completion.choices[0].message.content;
+      if (!aiResponse) {
+        throw new Error('Empty response from GPT-5');
       }
 
-      analysisResult = {
-        markdown: parsedOutput.markdown || '',
-        json: {
-          sections: parsedOutput.json?.sections || [],
-          tables: parsedOutput.json?.tables || [],
-          tags: parsedOutput.json?.tags || [],
-          signatura: parsedOutput.json?.signatura
-        }
-      };
+      console.log('🤖 GPT-5 response length:', aiResponse.length);
 
-      console.log('✅ GPT-5 Structured Output parsed:', {
-        markdownLength: analysisResult.markdown.length,
-        sectionsFound: analysisResult.json.sections.length,
-        tablesFound: analysisResult.json.tables.length,
-        tagsFound: analysisResult.json.tags.length,
-        structuredOutput: true
-      });
+      try {
+        // Parse the JSON response
+        const parsedResponse = JSON.parse(aiResponse);
+        
+        analysisResult = {
+          markdown: parsedResponse.markdown || '',
+          json: {
+            sections: parsedResponse.json?.sections || [],
+            tables: parsedResponse.json?.tables || [],
+            tags: parsedResponse.json?.tags || [],
+            signatura: parsedResponse.json?.signatura
+          }
+        };
+
+        console.log('✅ GPT-5 JSON parsed successfully:', {
+          markdownLength: analysisResult.markdown.length,
+          sectionsFound: analysisResult.json.sections.length,
+          tablesFound: analysisResult.json.tables.length,
+          tagsFound: analysisResult.json.tags.length
+        });
+
+      } catch (parseError) {
+        console.error('❌ Failed to parse GPT-5 JSON response:', parseError);
+        console.error('Raw response:', aiResponse.substring(0, 1000));
+        throw new Error('Invalid JSON response from GPT-5');
+      }
     }
 
     // Parse and normalize the AI analysis
