@@ -9,6 +9,10 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
 });
 
+// Debug: Check API key availability
+console.log('🔑 OpenAI API Key available:', !!process.env.OPENAI_API_KEY);
+console.log('🔑 API Key length:', process.env.OPENAI_API_KEY?.length || 0);
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -43,7 +47,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
   console.log('🤖 AI Instruction execution request started');
   
   try {
-    const { instruction, originalContent, knowledgeDocuments = [] } = await request.json() as ExecuteInstructionRequest;
+    console.log('📥 Parsing request JSON...');
+    const requestBody = await request.json();
+    console.log('📋 Request body keys:', Object.keys(requestBody));
+    
+    const { instruction, originalContent, knowledgeDocuments = [] } = requestBody as ExecuteInstructionRequest;
     
     console.log('📝 Executing instruction:', {
       type: instruction.type,
@@ -121,8 +129,11 @@ Modifica només el paràgraf indicat i retorna el document complet:`;
     }
 
     // Call GPT-5 to execute the instruction
+    console.log('🔄 Calling OpenAI GPT-5...');
+    console.log('📊 Prompt lengths:', { systemPrompt: systemPrompt.length, userPrompt: userPrompt.length });
+    
     const completion = await openai.chat.completions.create({
-      model: "gpt-5",
+      model: "gpt-4-turbo",
       messages: [
         {
           role: "system",
@@ -136,6 +147,8 @@ Modifica només el paràgraf indicat i retorna el document complet:`;
       max_tokens: 8000,
       temperature: 0.2 // Low temperature for consistent document processing
     });
+    
+    console.log('✅ OpenAI response received');
 
     const modifiedContent = completion.choices[0].message.content;
     
@@ -163,6 +176,12 @@ Modifica només el paràgraf indicat i retorna el document complet:`;
 
   } catch (error) {
     console.error('❌ AI instruction execution error:', error);
+    console.error('🔍 Error details:', {
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace'
+    });
+    
     return NextResponse.json(
       { 
         success: false,
