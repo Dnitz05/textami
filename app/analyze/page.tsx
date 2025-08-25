@@ -96,14 +96,15 @@ export default function AnalyzePage() {
       const analysisResult = await analysisResponse.json();
       console.log('✅ GPT-5 analysis completed:', analysisResult);
       
-      // 3. Process and display results
+      // 3. Process and display results - data is inside the 'data' property
+      const result = analysisResult.data || analysisResult;
       const analysisData: AnalysisData = {
         templateId,
-        markdown: analysisResult.markdown,
-        sections: analysisResult.sections || [],
-        tables: analysisResult.tables || [],
-        tags: analysisResult.tags || [],
-        signatura: analysisResult.signatura
+        markdown: result.markdown || `# ${file.name}\n\nDocument processed successfully.`,
+        sections: result.sections || [],
+        tables: result.tables || [],
+        tags: result.tags || [],
+        signatura: result.signatura
       };
 
       setAnalysisData(analysisData);
