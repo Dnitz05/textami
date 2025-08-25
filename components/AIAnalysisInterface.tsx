@@ -169,30 +169,29 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
 
   return (
     <div className="h-screen flex flex-col">
-      {/* 3-Column Layout - Centered with sidebars closer to content */}
-      <div className="flex-1 flex justify-center overflow-hidden">
-        <div className="flex w-full max-w-7xl">
-          {/* Toggle buttons - positioned at top right */}
-          <div className="absolute top-4 right-4 flex items-center space-x-2 z-10">
-            <button
-              onClick={() => setShowLeftSidebar(!showLeftSidebar)}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded shadow-sm bg-white"
-              title="Toggle AI Prompts"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <button
-              onClick={() => setShowRightSidebar(!showRightSidebar)}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded shadow-sm bg-white"
-              title="Toggle Tags & Excel"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-          </div>
+      {/* 3-Column Layout - Sidebars sticky to screen edges */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Toggle buttons - positioned at top right */}
+        <div className="absolute top-4 right-4 flex items-center space-x-2 z-10">
+          <button
+            onClick={() => setShowLeftSidebar(!showLeftSidebar)}
+            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded shadow-sm bg-white"
+            title="Toggle AI Prompts"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <button
+            onClick={() => setShowRightSidebar(!showRightSidebar)}
+            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded shadow-sm bg-white"
+            title="Toggle Tags & Excel"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
           {/* Left Sidebar - AI Prompts */}
           {showLeftSidebar && (
             <div className="w-72 flex-none bg-gray-50 border-r flex flex-col">
@@ -294,7 +293,6 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
             </div>
           </div>
         )}
-        </div>
       </div>
     </div>
   );
