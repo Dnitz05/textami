@@ -51,7 +51,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     const documents: KnowledgeDocument[] = (files || [])
       .filter(file => file.name.endsWith('.pdf'))
       .map(file => ({
-        id: file.id || file.name,
+        id: file.id || file.name.replace(/[^a-zA-Z0-9]/g, '_'),
         filename: file.name,
         title: file.name.replace('.pdf', ''),
         uploadDate: new Date(file.created_at || Date.now()).toLocaleDateString(),
@@ -90,9 +90,28 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const documentType = formData.get('type') as KnowledgeDocument['type'] || 'referencia';
     const description = formData.get('description') as string || 'Document de referència per contexte IA';
 
-    if (!file || file.type !== 'application/pdf') {
+    console.log('📄 Form data received:', {
+      hasFile: !!file,
+      fileName: file?.name,
+      fileSize: file?.size,
+      fileType: file?.type,
+      userId,
+      documentType,
+      description
+    });
+
+    if (!file) {
+      console.error('❌ No file provided');
       return NextResponse.json(
-        { success: false, error: 'Valid PDF file required' },
+        { success: false, error: 'No file provided' },
+        { status: 400 }
+      );
+    }
+
+    if (file.type !== 'application/pdf') {
+      console.error('❌ Invalid file type:', file.type);
+      return NextResponse.json(
+        { success: false, error: `Invalid file type: ${file.type}. PDF required.` },
         { status: 400 }
       );
     }
