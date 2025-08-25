@@ -572,50 +572,6 @@ export default function AnalyzePage() {
         />
       )}
 
-      {/* Production Interface - only show when template is frozen */}
-      {analysisData && pipelineStatus === 'frozen' && (
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">🚀 Ready for Mass Production</h2>
-            <p className="text-gray-600 mb-6">
-              Your template has been frozen with placeholders. Now you can generate multiple documents from your Excel data.
-            </p>
-            
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-              <h3 className="font-medium text-green-800 mb-2">Template Status: Frozen ✅</h3>
-              <p className="text-sm text-green-700">
-                Ready to process Excel data and generate personalized documents with 100% format preservation.
-              </p>
-            </div>
-
-            <button
-              onClick={handleGenerateDocuments}
-              disabled={isGenerating || excelHeaders.length === 0}
-              className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-            >
-              {isGenerating ? (
-                <>
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3"></div>
-                  Generating Documents...
-                </>
-              ) : (
-                <>
-                  <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Generate Documents from Excel
-                </>
-              )}
-            </button>
-
-            {excelHeaders.length === 0 && (
-              <p className="text-amber-600 mt-3 text-sm">
-                ⚠️ Upload Excel data first to enable document generation
-              </p>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Production Results - show generated documents */}
       {generationResult && pipelineStatus === 'production' && (
