@@ -5,7 +5,6 @@ import { AnalysisData, ParsedTag, PipelineStatus } from '../lib/types';
 import DocumentPreviewPanel from './analysis/DocumentPreviewPanel';
 import DetectedTagsPanel from './analysis/DetectedTagsPanel';
 import ExcelMappingPanel from './analysis/ExcelMappingPanel';
-import TemplateFreezePanel from './analysis/TemplateFreezePanel';
 import AIPromptsPanel from './analysis/AIPromptsPanel';
 // Knowledge moved to its own page - /knowledge
 
@@ -263,12 +262,6 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                 pipelineStatus={pipelineStatus}
               />
               
-              <TemplateFreezePanel 
-                pipelineStatus={pipelineStatus}
-                onFreeze={onFreeze}
-                mappingsCount={getMappedCount()}
-                totalTags={analysisData.tags.length}
-              />
             </div>
         )}
       </div>
