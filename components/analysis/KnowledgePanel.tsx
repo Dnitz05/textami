@@ -1,6 +1,6 @@
 // components/analysis/KnowledgePanel.tsx
 // Left sidebar panel for knowledge base with uploaded PDFs for AI context
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface KnowledgeDocument {
   id: string;
@@ -11,6 +11,8 @@ interface KnowledgeDocument {
   type: 'normativa' | 'reglament' | 'guia' | 'referencia';
   description: string;
   url?: string; // PDF URL
+  userId: string;
+  storagePath: string;
 }
 
 interface KnowledgePanelProps {
@@ -24,6 +26,33 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({
 }) => {
   const [knowledgeDocuments, setKnowledgeDocuments] = useState<KnowledgeDocument[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  
+  // For now, using a simple user identifier - would be replaced with proper auth
+  const userId = 'user-001';
+
+  // Load user's knowledge base on component mount
+  useEffect(() => {
+    loadKnowledgeBase();
+  }, []);
+
+  const loadKnowledgeBase = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/knowledge?userId=${userId}`);
+      const result = await response.json();
+      
+      if (result.success) {
+        setKnowledgeDocuments(result.data);
+      } else {
+        console.error('Failed to load knowledge base:', result.error);
+      }
+    } catch (error) {
+      console.error('Error loading knowledge base:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -34,30 +63,55 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({
 
     setUploading(true);
     try {
-      // Here you would upload the PDF to your storage and add it to the knowledge base
-      const newDocument: KnowledgeDocument = {
-        id: Date.now().toString(),
-        filename: file.name,
-        title: file.name.replace('.pdf', ''),
-        uploadDate: new Date().toLocaleDateString(),
-        size: file.size,
-        type: 'referencia',
-        description: 'Document de referència per contexte IA'
-      };
+      // Upload to persistent knowledge base
+      const formData = new FormData();
+      formData.append('pdf', file);
+      formData.append('userId', userId);
+      formData.append('type', 'referencia');
+      formData.append('description', 'Document de referència per contexte IA');
+
+      const response = await fetch('/api/knowledge', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
       
-      setKnowledgeDocuments(prev => [...prev, newDocument]);
-      onDocumentUpload?.(file);
+      if (result.success) {
+        // Add to local state
+        setKnowledgeDocuments(prev => [result.data, ...prev]);
+        onDocumentUpload?.(file);
+        console.log('✅ PDF uploaded to knowledge base:', result.data.filename);
+      } else {
+        throw new Error(result.error || 'Failed to upload PDF');
+      }
     } catch (error) {
       console.error('Error uploading document:', error);
-      alert('Error al pujar el document.');
+      alert('Error al pujar el document: ' + (error instanceof Error ? error.message : 'Error desconegut'));
     } finally {
       setUploading(false);
       event.target.value = '';
     }
   };
 
-  const removeDocument = (id: string) => {
-    setKnowledgeDocuments(prev => prev.filter(doc => doc.id !== id));
+  const removeDocument = async (doc: KnowledgeDocument) => {
+    try {
+      const response = await fetch(`/api/knowledge?documentId=${doc.id}&storagePath=${encodeURIComponent(doc.storagePath)}&userId=${userId}`, {
+        method: 'DELETE',
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        setKnowledgeDocuments(prev => prev.filter(d => d.id !== doc.id));
+        console.log('✅ PDF removed from knowledge base:', doc.filename);
+      } else {
+        throw new Error(result.error || 'Failed to delete document');
+      }
+    } catch (error) {
+      console.error('Error removing document:', error);
+      alert('Error eliminant el document: ' + (error instanceof Error ? error.message : 'Error desconegut'));
+    }
   };
 
   const getTypeIcon = (type: KnowledgeDocument['type']) => {
@@ -124,7 +178,14 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({
       </div>
 
       <div className="p-4 max-h-80 overflow-y-auto">
-        {knowledgeDocuments.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-8">
+            <svg className="animate-spin w-8 h-8 mx-auto text-amber-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <p className="text-sm text-gray-500">Carregant base de coneixement...</p>
+          </div>
+        ) : knowledgeDocuments.length === 0 ? (
           <div className="text-center py-8">
             <svg className="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -146,8 +207,9 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({
                       {doc.type}
                     </span>
                     <button
-                      onClick={() => removeDocument(doc.id)}
+                      onClick={() => removeDocument(doc)}
                       className="text-red-600 hover:text-red-800 text-xs"
+                      title="Eliminar document"
                     >
                       ✕
                     </button>

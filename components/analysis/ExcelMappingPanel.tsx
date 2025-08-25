@@ -17,6 +17,7 @@ interface MappingSuggestion {
   score: number;
   confidence: 'high' | 'medium' | 'low';
   reasoning: string;
+  alternativeHeaders?: string[];
 }
 
 const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
@@ -29,15 +30,75 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
   const [suggestions, setSuggestions] = useState<MappingSuggestion[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
-  // Load fuzzy matching suggestions
+  // Load intelligent AI mapping suggestions
   useEffect(() => {
     if (tags.length > 0 && excelHeaders.length > 0) {
-      loadFuzzyMappings();
+      loadIntelligentMappings();
     }
   }, [tags, excelHeaders]);
 
-  const loadFuzzyMappings = async () => {
+  const loadIntelligentMappings = async () => {
     setIsLoadingSuggestions(true);
+    try {
+      console.log('🧠 Loading intelligent AI mappings...');
+      
+      const response = await fetch('/api/intelligent-mapping', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tags: tags,
+          excelHeaders: excelHeaders,
+          documentContent: '' // TODO: Pass document content for better context
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success && result.data.suggestions) {
+        // Convert AI suggestions to our MappingSuggestion format
+        const aiSuggestions: MappingSuggestion[] = result.data.suggestions.map((aiSugg: any) => ({
+          tagSlug: aiSugg.tagSlug,
+          tagName: aiSugg.tagName,
+          suggestedHeader: aiSugg.suggestedHeader,
+          score: aiSugg.confidence,
+          confidence: aiSugg.confidence >= 0.8 ? 'high' : aiSugg.confidence >= 0.6 ? 'medium' : 'low',
+          reasoning: aiSugg.reasoning,
+          alternativeHeaders: aiSugg.alternativeHeaders || []
+        }));
+        
+        setSuggestions(aiSuggestions);
+        
+        // Auto-apply high confidence mappings (>= 0.8)
+        const autoMappings: Record<string, string> = {};
+        aiSuggestions.forEach((suggestion) => {
+          if (suggestion.score >= 0.8) {
+            autoMappings[suggestion.tagSlug] = suggestion.suggestedHeader;
+          }
+        });
+        
+        setMappings(autoMappings);
+        onMappingUpdate?.(autoMappings);
+        
+        console.log('✅ AI mappings loaded:', {
+          total: aiSuggestions.length,
+          autoApplied: Object.keys(autoMappings).length
+        });
+      } else {
+        throw new Error(result.error || 'Failed to get AI suggestions');
+      }
+    } catch (error) {
+      console.error('❌ Failed to load intelligent mappings:', error);
+      // Fallback to fuzzy matching if AI fails
+      console.log('📊 Falling back to fuzzy matching...');
+      await loadFuzzyMappings();
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
+  };
+
+  const loadFuzzyMappings = async () => {
     try {
       const response = await fetch('/api/map', {
         method: 'POST',
@@ -53,12 +114,12 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
 
       if (response.ok) {
         const result = await response.json();
-        if (result.success && result.suggestions) {
-          setSuggestions(result.suggestions);
+        if (result.success && result.data?.suggestions) {
+          setSuggestions(result.data.suggestions);
           
           // Auto-apply high confidence mappings
           const autoMappings: Record<string, string> = {};
-          result.suggestions.forEach((suggestion: MappingSuggestion) => {
+          result.data.suggestions.forEach((suggestion: MappingSuggestion) => {
             if (suggestion.confidence === 'high') {
               autoMappings[suggestion.tagSlug] = suggestion.suggestedHeader;
             }
@@ -70,8 +131,6 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
       }
     } catch (error) {
       console.error('Failed to load fuzzy mappings:', error);
-    } finally {
-      setIsLoadingSuggestions(false);
     }
   };
 
@@ -118,15 +177,18 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
     <div className="bg-white rounded-lg shadow border">
       <div className="p-4 border-b bg-gray-50">
         <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-          <svg className="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
-          Excel Mapping
+          <div className="flex items-center mr-2">
+            <svg className="w-5 h-5 mr-1 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <span className="text-sm">🧠</span>
+          </div>
+          Smart Excel Mapping
           <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
             {getMappedCount()}/{tags.length}
           </span>
         </h3>
-        <p className="text-sm text-gray-600 mt-1">Map detected tags to Excel columns</p>
+        <p className="text-sm text-gray-600 mt-1">AI-powered mapping between detected tags and Excel columns</p>
       </div>
 
       <div className="p-4 max-h-96 overflow-y-auto">
@@ -143,10 +205,10 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
         ) : (
           <div className="space-y-4">
             {isLoadingSuggestions && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
                 <div className="flex items-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-3"></div>
-                  <span className="text-blue-800 text-sm">Loading fuzzy matching suggestions...</span>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600 mr-3"></div>
+                  <span className="text-purple-800 text-sm">🧠 Loading intelligent AI mapping suggestions...</span>
                 </div>
               </div>
             )}
@@ -183,18 +245,42 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
                     </select>
 
                     {suggestion && suggestion.suggestedHeader !== currentMapping && (
-                      <div className="bg-gray-50 rounded p-2">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="text-xs font-medium text-gray-700">AI Suggestion:</div>
-                            <div className="text-sm text-gray-800">{suggestion.suggestedHeader}</div>
-                            <div className="text-xs text-gray-500 mt-1">
-                              Score: {Math.round(suggestion.score * 100)}% • {suggestion.reasoning}
+                      <div className="bg-purple-50 border border-purple-100 rounded p-3">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <span className="text-xs font-medium text-purple-700">🧠 AI Suggestion:</span>
+                              <div className={`px-2 py-1 text-xs rounded border ${getConfidenceColor(suggestion.confidence)}`}>
+                                {Math.round(suggestion.score * 100)}%
+                              </div>
                             </div>
+                            <div className="text-sm font-medium text-purple-900 mb-1">{suggestion.suggestedHeader}</div>
+                            <div className="text-xs text-purple-700 mb-2">
+                              {suggestion.reasoning}
+                            </div>
+                            
+                            {/* Alternative suggestions */}
+                            {suggestion.alternativeHeaders && suggestion.alternativeHeaders.length > 0 && (
+                              <div className="mt-2 pt-2 border-t border-purple-200">
+                                <div className="text-xs font-medium text-purple-600 mb-1">Alternatives:</div>
+                                <div className="flex flex-wrap gap-1">
+                                  {suggestion.alternativeHeaders.map((altHeader) => (
+                                    <button
+                                      key={altHeader}
+                                      onClick={() => handleMappingChange(tag.slug, altHeader)}
+                                      className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors"
+                                      title={`Use ${altHeader} instead`}
+                                    >
+                                      {altHeader}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                           <button
                             onClick={() => applySuggestion(suggestion)}
-                            className="ml-3 px-2 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+                            className="ml-3 px-3 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors flex-shrink-0"
                           >
                             Apply
                           </button>

@@ -29,6 +29,18 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
   const [mappings, setMappings] = useState<Record<string, string>>({});
   const [showLeftSidebar, setShowLeftSidebar] = useState(true);
   const [showRightSidebar, setShowRightSidebar] = useState(true);
+  
+  // State for AI instruction execution
+  const [currentMarkdown, setCurrentMarkdown] = useState(analysisData?.markdown || '');
+  const [isExecutingInstruction, setIsExecutingInstruction] = useState(false);
+  const [executingInstructionId, setExecutingInstructionId] = useState<string | null>(null);
+  
+  // Update current markdown when analysis data changes
+  React.useEffect(() => {
+    if (analysisData?.markdown) {
+      setCurrentMarkdown(analysisData.markdown);
+    }
+  }, [analysisData?.markdown]);
 
   if (!analysisData) {
     return (
@@ -47,6 +59,48 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
 
   const getMappedCount = () => {
     return Object.keys(mappings).length;
+  };
+
+  const handleInstructionExecute = async (instruction: any) => {
+    try {
+      console.log('🤖 Executing instruction:', instruction.title);
+      setIsExecutingInstruction(true);
+      setExecutingInstructionId(instruction.id);
+
+      // Get current knowledge base documents (would need to be passed from KnowledgePanel)
+      const knowledgeDocuments: any[] = []; // TODO: Get from KnowledgePanel state
+
+      const response = await fetch('/api/ai-instructions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          instruction,
+          originalContent: currentMarkdown,
+          knowledgeDocuments
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Update the document preview with modified content
+        setCurrentMarkdown(result.data.modifiedContent);
+        console.log('✅ Instruction executed successfully:', {
+          instruction: instruction.title,
+          executionTime: result.data.executionTime + 'ms'
+        });
+      } else {
+        throw new Error(result.error || 'Failed to execute instruction');
+      }
+    } catch (error) {
+      console.error('❌ Error executing instruction:', error);
+      alert('Error executant la instrucció: ' + (error instanceof Error ? error.message : 'Error desconegut'));
+    } finally {
+      setIsExecutingInstruction(false);
+      setExecutingInstructionId(null);
+    }
   };
 
   return (
@@ -107,6 +161,9 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
             <div className="p-4 space-y-4">
               <AIPromptsPanel 
                 pipelineStatus={pipelineStatus}
+                onInstructionExecute={handleInstructionExecute}
+                isExecuting={isExecutingInstruction}
+                executingInstructionId={executingInstructionId}
               />
               <KnowledgePanel 
                 pipelineStatus={pipelineStatus}
@@ -120,10 +177,11 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
           <div className="flex justify-center p-4 md:p-8">
             <div className="w-full max-w-4xl bg-white rounded-lg shadow-lg mx-4 md:mx-0">
               <DocumentPreviewPanel 
-                markdown={analysisData.markdown}
+                markdown={currentMarkdown}
                 sections={analysisData.sections}
                 tables={analysisData.tables}
                 signatura={analysisData.signatura}
+                isProcessing={isExecutingInstruction}
               />
             </div>
           </div>

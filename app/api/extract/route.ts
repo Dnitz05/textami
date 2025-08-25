@@ -226,6 +226,7 @@ RULES:
 - Use ONLY text that appears literally in the PDF
 - DO NOT add explanatory text, summaries, or interpretations
 - DO NOT duplicate content between markdown and sections
+- Present as CONTINUOUS TEXT, not paginated (combine all pages into single flow)
 - Preserve original formatting, spelling, and language exactly
 - Focus on extracting: names, addresses, dates, amounts, references, signatures
 - If uncertain about text, mark confidence < 0.8`

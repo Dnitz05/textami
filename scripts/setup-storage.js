@@ -42,6 +42,14 @@ const requiredBuckets = [
     allowedMimeTypes: [
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ]
+  },
+  {
+    id: 'knowledge-base',
+    name: 'Knowledge Base PDFs',
+    public: false,
+    allowedMimeTypes: [
+      'application/pdf'
+    ]
   }
 ];
 
