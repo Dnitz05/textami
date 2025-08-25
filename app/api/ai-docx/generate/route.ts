@@ -29,7 +29,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     if (!supabaseUrl || !supabaseServiceKey) {
       console.error('❌ Supabase environment variables missing');
       return NextResponse.json(
-        { error: 'Storage configuration required' },
+        { success: false, error: 'Storage configuration required' },
         { status: 500 }
       );
     }
@@ -59,14 +59,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     // Validation
     if (!templateId || !frozenTemplateUrl || !excelData || !mappings) {
       return NextResponse.json(
-        { error: 'Missing required fields: templateId, frozenTemplateUrl, excelData, mappings' },
+        { success: false, error: 'Missing required fields: templateId, frozenTemplateUrl, excelData, mappings' },
         { status: 400 }
       );
     }
 
     if (!Array.isArray(excelData) || excelData.length === 0) {
       return NextResponse.json(
-        { error: 'Excel data must be a non-empty array' },
+        { success: false, error: 'Excel data must be a non-empty array' },
         { status: 400 }
       );
     }
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     if (downloadError || !templateData) {
       console.error('❌ Failed to retrieve frozen template:', downloadError);
       return NextResponse.json(
-        { error: 'Failed to retrieve frozen template', details: downloadError?.message },
+        { success: false, error: 'Failed to retrieve frozen template', details: downloadError?.message },
         { status: 500 }
       );
     }
@@ -114,7 +114,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         
         for (const [tagSlug, excelHeader] of Object.entries(mappings)) {
           const value = rowData[excelHeader];
-          docData[tagSlug] = value || ''; // Use empty string if value is missing
+          // Convert all values to strings or numbers for docxtemplater
+          if (typeof value === 'boolean') {
+            docData[tagSlug] = value.toString();
+          } else if (value !== null && value !== undefined) {
+            docData[tagSlug] = value;
+          } else {
+            docData[tagSlug] = ''; // Use empty string if value is missing
+          }
         }
         
         console.log(`📋 Mapped data for document ${i + 1}:`, docData);
@@ -212,6 +219,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     console.error('❌ Unexpected error in mass production:', error);
     return NextResponse.json(
       { 
+        success: false,
         error: 'Mass production failed',
         details: error instanceof Error ? error.message : 'Unknown error'
       },

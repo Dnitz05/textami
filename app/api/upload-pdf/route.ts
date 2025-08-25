@@ -15,7 +15,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     if (!supabaseUrl || !supabaseServiceKey) {
       console.error('❌ Supabase environment variables missing');
       return NextResponse.json(
-        { error: 'Storage configuration required' },
+        { success: false, error: 'Storage configuration required' },
         { status: 500 }
       );
     }
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     
     if (!file || !templateId) {
       return NextResponse.json(
-        { error: 'Missing required fields: file, templateId' },
+        { success: false, error: 'Missing required fields: file, templateId' },
         { status: 400 }
       );
     }
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     // Validate file type
     if (file.type !== 'application/pdf') {
       return NextResponse.json(
-        { error: 'Only PDF files are allowed' },
+        { success: false, error: 'Only PDF files are allowed' },
         { status: 400 }
       );
     }
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     if (uploadError) {
       console.error('❌ Failed to upload PDF:', uploadError);
       return NextResponse.json(
-        { error: 'Failed to upload PDF', details: uploadError.message },
+        { success: false, error: 'Failed to upload PDF', details: uploadError.message },
         { status: 500 }
       );
     }
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     if (signedUrlError) {
       console.error('❌ Failed to create signed URL:', signedUrlError);
       return NextResponse.json(
-        { error: 'Failed to create access URL', details: signedUrlError.message },
+        { success: false, error: 'Failed to create access URL', details: signedUrlError.message },
         { status: 500 }
       );
     }
@@ -105,6 +105,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     console.error('❌ Unexpected error in PDF upload:', error);
     return NextResponse.json(
       { 
+        success: false,
         error: 'PDF upload failed',
         details: error instanceof Error ? error.message : 'Unknown error'
       },

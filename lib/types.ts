@@ -97,11 +97,20 @@ export interface TagMapping extends FuzzyMatch {
   suggestedHeader: string;
 }
 
+export interface MappingSuggestion {
+  tagSlug: string;
+  tagName: string;
+  tagExample: string;
+  suggestedHeader: string;
+  confidence: number;
+  reasoning: string;
+}
+
 export interface MappingResponse {
-  mappings: TagMapping[];
+  suggestions: MappingSuggestion[];
   totalTags: number;
-  highConfidenceCount: number;
-  processingTime: number;
+  mappedTags: number;
+  mappingCoverage: number;
 }
 
 // ==================== FREEZE TYPES ====================

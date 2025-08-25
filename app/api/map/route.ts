@@ -2,7 +2,7 @@
 // Excel Mapping with Fuzzy Matching for AI-extracted tags
 import { NextRequest, NextResponse } from 'next/server';
 import { distance } from 'fastest-levenshtein';
-import { ApiResponse, MappingResponse, TagMapping, ParsedTag } from '../../../lib/types';
+import { ApiResponse, MappingResponse, TagMapping, ParsedTag, MappingSuggestion } from '../../../lib/types';
 
 interface MappingRequest {
   tags: ParsedTag[];
@@ -148,15 +148,13 @@ export async function POST(request: NextRequest) {
 
       // Only suggest if above threshold
       if (bestMatch.score >= confidenceThreshold) {
-        const confidence: 'high' | 'medium' | 'low' = 
-          bestMatch.score >= 0.85 ? 'high' :
-          bestMatch.score >= 0.75 ? 'medium' : 'low';
+        const confidence = bestMatch.score;
 
         suggestions.push({
           tagSlug: tag.slug,
           tagName: tag.name,
+          tagExample: tag.example,
           suggestedHeader: bestMatch.header,
-          score: bestMatch.score,
           confidence,
           reasoning: bestMatch.reasoning
         });
@@ -178,12 +176,16 @@ export async function POST(request: NextRequest) {
       suggestionsGenerated: suggestions.length
     });
 
-    const response: MappingResponse = {
-      success: true,
+    const mappingData: MappingResponse = {
       suggestions,
       totalTags: tags.length,
       mappedTags: mappedCount,
       mappingCoverage
+    };
+
+    const response: ApiResponse<MappingResponse> = {
+      success: true,
+      data: mappingData
     };
 
     return NextResponse.json(response);

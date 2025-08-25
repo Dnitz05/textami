@@ -59,7 +59,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     if (downloadError || !fileData) {
       console.error('❌ Failed to retrieve DOCX for freezing:', downloadError);
       return NextResponse.json(
-        { error: 'Failed to retrieve template for freezing', details: downloadError?.message },
+        { success: false, error: 'Failed to retrieve template for freezing', details: downloadError?.message },
         { status: 500 }
       );
     }
@@ -205,6 +205,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       console.error('❌ DOCX processing failed:', processingError);
       return NextResponse.json(
         { 
+          success: false,
           error: 'Failed to process DOCX for placeholder insertion',
           details: processingError instanceof Error ? processingError.message : 'Unknown processing error'
         },
@@ -226,7 +227,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     if (uploadError) {
       console.error('❌ Failed to save frozen template:', uploadError);
       return NextResponse.json(
-        { error: 'Failed to save frozen template', details: uploadError.message },
+        { success: false, error: 'Failed to save frozen template', details: uploadError.message },
         { status: 500 }
       );
     }
@@ -260,7 +261,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
     console.log('✅ Template freeze complete:', {
       templateId,
-      successRate: `${response.data.successfulReplacements}/${response.data.totalReplacements}`,
+      successRate: `${response.data?.successfulReplacements}/${response.data?.totalReplacements}`,
       manualReviewCount: manualReviewRequired.length
     });
 

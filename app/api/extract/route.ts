@@ -350,6 +350,7 @@ Return ONLY the JSON response, no additional text.`
     console.error('❌ AI analysis error:', error);
     return NextResponse.json(
       { 
+        success: false,
         error: 'AI analysis failed',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
