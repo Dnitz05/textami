@@ -23,11 +23,79 @@ export default function AnalyzePage() {
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [generationResult, setGenerationResult] = useState<GenerationResult | null>(null);
+  const [showSaveTemplateDialog, setShowSaveTemplateDialog] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const [templateDescription, setTemplateDescription] = useState('');
 
   // Mock data disabled - enable real PDF upload
   // useEffect(() => {
   //   // Mock data would load here for testing
   // }, []);
+
+  // Load template from session storage if available
+  useEffect(() => {
+    const loadedTemplate = sessionStorage.getItem('loadedTemplate');
+    if (loadedTemplate) {
+      try {
+        const template = JSON.parse(loadedTemplate);
+        setAnalysisData(template.analysisData);
+        setExcelHeaders(template.excelHeaders);
+        setPipelineStatus('frozen');
+        sessionStorage.removeItem('loadedTemplate');
+        console.log('✅ Template loaded:', template.name);
+      } catch (error) {
+        console.error('❌ Error loading template:', error);
+      }
+    }
+  }, []);
+
+  const handleSaveAsTemplate = () => {
+    setShowSaveTemplateDialog(true);
+    setTemplateName('');
+    setTemplateDescription('');
+  };
+
+  const saveTemplate = async () => {
+    if (!templateName.trim() || !analysisData) {
+      alert('Si us plau, introdueix un nom per la plantilla.');
+      return;
+    }
+
+    try {
+      const templateData = {
+        name: templateName.trim(),
+        description: templateDescription.trim(),
+        userId: 'user-001', // Would be from auth
+        originalDocument: '', // Would be the storage path of original document
+        analysisData,
+        excelHeaders,
+        mappings: {}, // Would get current mappings from the interface
+        documentType: 'pdf', // Could be detected from original upload
+        documentSize: 0 // Would be from original file
+      };
+
+      const response = await fetch('/api/templates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(templateData),
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        alert('✅ Plantilla guardada correctament!');
+        setShowSaveTemplateDialog(false);
+        console.log('✅ Template saved:', result.data.name);
+      } else {
+        throw new Error(result.error || 'Failed to save template');
+      }
+    } catch (error) {
+      console.error('❌ Error saving template:', error);
+      alert('Error guardant la plantilla: ' + (error instanceof Error ? error.message : 'Error desconegut'));
+    }
+  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -384,18 +452,29 @@ export default function AnalyzePage() {
           </div>
           <div className="flex gap-3">
             {analysisData && (
-              <button
-                onClick={() => {
-                  setAnalysisData(null);
-                  setExcelHeaders([]);
-                  setPipelineStatus('uploaded');
-                  setGenerationResult(null);
-                  setError(null);
-                }}
-                className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
-              >
-                📄 New Analysis
-              </button>
+              <>
+                <button
+                  onClick={handleSaveAsTemplate}
+                  className="px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors flex items-center space-x-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  <span>Guardar Plantilla</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setAnalysisData(null);
+                    setExcelHeaders([]);
+                    setPipelineStatus('uploaded');
+                    setGenerationResult(null);
+                    setError(null);
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                >
+                  📄 New Analysis
+                </button>
+              </>
             )}
             {/* Excel Upload Button - Always available after analysis */}
             {analysisData && (
@@ -601,6 +680,77 @@ export default function AnalyzePage() {
               >
                 Start New Analysis
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save Template Dialog */}
+      {showSaveTemplateDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Guardar Plantilla</h3>
+                <button
+                  onClick={() => setShowSaveTemplateDialog(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <form onSubmit={(e) => { e.preventDefault(); saveTemplate(); }} className="space-y-4">
+                <div>
+                  <label htmlFor="templateName" className="block text-sm font-medium text-gray-700 mb-1">
+                    Nom de la Plantilla *
+                  </label>
+                  <input
+                    id="templateName"
+                    type="text"
+                    value={templateName}
+                    onChange={(e) => setTemplateName(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    placeholder="Ex: Contracte de treball estàndard"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="templateDescription" className="block text-sm font-medium text-gray-700 mb-1">
+                    Descripció
+                  </label>
+                  <textarea
+                    id="templateDescription"
+                    value={templateDescription}
+                    onChange={(e) => setTemplateDescription(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    placeholder="Descripció opcional de la plantilla..."
+                    rows={3}
+                  />
+                </div>
+
+                <div className="flex space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowSaveTemplateDialog(false)}
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel·lar
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <span>Guardar</span>
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

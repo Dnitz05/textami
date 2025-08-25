@@ -50,6 +50,14 @@ const requiredBuckets = [
     allowedMimeTypes: [
       'application/pdf'
     ]
+  },
+  {
+    id: 'templates',
+    name: 'Saved Templates',
+    public: false,
+    allowedMimeTypes: [
+      'application/json'
+    ]
   }
 ];
 
