@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     // 1. Retrieve original DOCX from Supabase Storage
     console.log('📥 Retrieving original DOCX for freezing:', storageUrl);
     const { data: fileData, error: downloadError } = await supabase.storage
-      .from('templates')
+      .from('template-docx')
       .download(storageUrl);
 
     if (downloadError || !fileData) {
@@ -243,7 +243,7 @@ export async function POST(request: NextRequest) {
     console.log('💾 Saving frozen template:', frozenFileName);
 
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('templates')
+      .from('template-docx')
       .upload(frozenFileName, modifiedBuffer, {
         contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         upsert: true
@@ -259,7 +259,7 @@ export async function POST(request: NextRequest) {
 
     // 4. Get public URL for frozen template
     const { data: publicUrlData } = supabase.storage
-      .from('templates')
+      .from('template-docx')
       .getPublicUrl(uploadData.path);
 
     console.log('✅ Frozen template saved:', publicUrlData.publicUrl);

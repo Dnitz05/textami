@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
     if (supabase) {
       try {
         const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('templates')
+          .from('template-docx')
           .upload(`${templateId}/original.docx`, buffer, {
             contentType: file.type,
             upsert: true

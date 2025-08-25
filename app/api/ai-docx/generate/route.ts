@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     // 1. Retrieve frozen DOCX template from Supabase Storage
     console.log('📥 Retrieving frozen DOCX template:', frozenTemplateUrl);
     const { data: templateData, error: downloadError } = await supabase.storage
-      .from('templates')
+      .from('template-docx')
       .download(frozenTemplateUrl);
 
     if (downloadError || !templateData) {

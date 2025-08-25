@@ -53,10 +53,10 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     
-    // Upload to Supabase Storage in templates bucket
+    // Upload to Supabase Storage in template-docx bucket
     const fileName = `${templateId}/${file.name}`;
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('templates')
+      .from('template-docx')
       .upload(fileName, buffer, {
         contentType: 'application/pdf',
         upsert: true
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
 
     // Get signed URL for GPT-5 access (no auth required)
     const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-      .from('templates')
+      .from('template-docx')
       .createSignedUrl(uploadData.path, 3600); // 1 hour expiry
 
     if (signedUrlError) {
