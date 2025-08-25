@@ -95,8 +95,8 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow border">
-      <div className="p-4 border-b bg-gradient-to-r from-purple-50 to-indigo-50">
+    <div className="bg-white rounded-lg shadow border h-full flex flex-col">
+      <div className="p-4 border-b bg-gradient-to-r from-purple-50 to-indigo-50 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
@@ -105,18 +105,16 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
               </svg>
               AI Instructions
             </h3>
-            <p className="text-sm text-gray-600 mt-1">Modifica el document amb IA</p>
           </div>
           <button
             onClick={() => setShowAddForm(!showAddForm)}
             className="text-purple-600 hover:text-purple-800 text-sm"
           >
-            + Afegir
           </button>
         </div>
       </div>
 
-      <div className="p-4 max-h-80 overflow-y-auto">
+      <div className="p-4 flex-1 overflow-y-auto">
         {/* Existing Instructions */}
         <div className="space-y-3 mb-4">
           {instructions.map((instruction) => (
@@ -194,7 +192,6 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
                   onClick={handleAddInstruction}
                   className="text-xs bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700"
                 >
-                  Afegir
                 </button>
                 <button
                   onClick={() => setShowAddForm(false)}
