@@ -192,77 +192,137 @@ Tortosa, 8 d'abril de 2021`,
         }
       };
     } else {
-      // Real GPT-5 multimodal call
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o", // Using GPT-4o until GPT-5 is available
-        messages: [
+      // Real GPT-5 multimodal call with Structured Outputs
+      const completion = await openai.responses.create({
+        model: "gpt-5",
+        input: [
           {
-            role: "system",
-            content: `You are an AI document analysis expert. Your task is to:
-
-1. Read the PDF document completely
-2. Extract structured content in Markdown format (H1-H3 headers, lists, tables)  
-3. Identify variable placeholders (names, dates, amounts, addresses, references)
-4. Return both Markdown transcription AND structured JSON
-
-Focus on municipal/administrative documents. Look for:
-- Personal names, company names
-- Addresses and locations  
-- Dates and amounts
-- Administrative references
-- Tables with financial data
-- Signature blocks
-
-Return format: 
-- "markdown": complete document in Markdown
-- "json": structured data with sections[], tables[], tags[]
-
-DO NOT invent data. Only extract what you can clearly see in the document.`
-          },
-          {
-            role: "user", 
+            role: "user",
             content: [
               {
-                type: "text",
-                text: `Analyze this PDF document. Extract:
-1. Complete Markdown transcription with proper headers and tables
-2. JSON structure with sections, tables, and variable tags
-3. Identify potential placeholders for mail merge (names, dates, amounts, etc.)
+                type: "input_text",
+                text: `Llegeix el PDF completament i retorna:
+1) MARKDOWN: transcripció completa amb títols H1-H3, llistes i taules
+2) JSON estructurat amb { sections[], tables[], tags[] }
 
-Return both markdown and json in your response.`
+• sections: [{id, title, markdown}] - seccions del document
+• tables: [{id, title, headers[], rows[][]}] - taules amb capçaleres i files
+• tags: [{name, example, type, confidence, page, anchor}] - variables candidates
+
+TIPUS de tags: string|date|currency|percent|number|id|address
+NO inventis dades. Conserva literals i formats originals (€, %, dates catalanes).
+
+Focus en documents municipals: noms, adreces, dates, imports, referències, signatura.`
               },
               {
-                type: "image_url",
-                image_url: {
-                  url: pdfSignedUrl
-                }
+                type: "input_image",
+                image_url: pdfSignedUrl
               }
             ]
           }
         ],
-        max_tokens: 8000,
-        temperature: 0.1
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "DocumentAnalysis",
+            schema: {
+              type: "object",
+              required: ["markdown", "json"],
+              properties: {
+                markdown: { type: "string" },
+                json: {
+                  type: "object",
+                  required: ["sections", "tables", "tags"],
+                  properties: {
+                    sections: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        required: ["id", "title"],
+                        properties: {
+                          id: { type: "string" },
+                          title: { type: "string" },
+                          markdown: { type: "string" }
+                        }
+                      }
+                    },
+                    tables: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        required: ["id", "headers", "rows"],
+                        properties: {
+                          id: { type: "string" },
+                          title: { type: "string" },
+                          headers: { type: "array", items: { type: "string" } },
+                          rows: {
+                            type: "array",
+                            items: { type: "array", items: { type: "string" } }
+                          },
+                          normalized: { type: "object" }
+                        }
+                      }
+                    },
+                    tags: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        required: ["name", "example"],
+                        properties: {
+                          name: { type: "string" },
+                          example: { type: "string" },
+                          type: {
+                            type: "string",
+                            enum: ["string", "date", "currency", "percent", "number", "id", "address"]
+                          },
+                          confidence: { type: "number", minimum: 0, maximum: 1 },
+                          page: { type: "number" },
+                          anchor: { type: "string" }
+                        }
+                      }
+                    },
+                    signatura: {
+                      type: "object",
+                      properties: {
+                        nom: { type: "string" },
+                        carrec: { type: "string" },
+                        data_lloc: { type: "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            strict: true
+          }
+        }
       });
 
-      const aiResponse = completion.choices[0].message.content;
-      if (!aiResponse) {
-        throw new Error('Empty response from GPT-5');
+      // GPT-5 with Structured Outputs returns parsed JSON directly
+      const parsedOutput = (completion as any).output_parsed || {};
+      
+      if (!parsedOutput.markdown && !parsedOutput.json) {
+        console.error('❌ Invalid structured output from GPT-5:', completion);
+        throw new Error('Invalid structured output from GPT-5');
       }
 
-      // Parse AI response (expecting markdown + json)
-      // For now, mock the parsing - in production, you'd extract markdown and json from the response
-      console.log('🤖 GPT-5 response length:', aiResponse.length);
-      
-      // TODO: Parse the actual AI response to extract markdown and json
-      // This is a simplified mock for now
       analysisResult = {
-        markdown: aiResponse.substring(0, 2000) + '...',
+        markdown: parsedOutput.markdown || '',
         json: {
-          sections: [],
-          tables: [],
-          tags: []
+          sections: parsedOutput.json?.sections || [],
+          tables: parsedOutput.json?.tables || [],
+          tags: parsedOutput.json?.tags || [],
+          signatura: parsedOutput.json?.signatura
         }
       };
+
+      console.log('✅ GPT-5 Structured Output parsed:', {
+        markdownLength: analysisResult.markdown.length,
+        sectionsFound: analysisResult.json.sections.length,
+        tablesFound: analysisResult.json.tables.length,
+        tagsFound: analysisResult.json.tags.length,
+        structuredOutput: true
+      });
     }
 
     // Parse and normalize the AI analysis
@@ -282,7 +342,7 @@ Return both markdown and json in your response.`
         sectionsCount: parsedAnalysis.sections.length,
         tablesCount: parsedAnalysis.tables.length,
         tagsCount: parsedAnalysis.tags.length,
-        processingMethod: 'gpt-4o-multimodal',
+        processingMethod: 'gpt-5-multimodal',
         timestamp: new Date().toISOString()
       }
     };
