@@ -238,7 +238,7 @@ export function isAnalysisData(obj: unknown): obj is AnalysisData {
 }
 
 export function isExcelRowData(obj: unknown): obj is ExcelRowData {
-  return typeof obj === 'object' && obj !== null;
+  return typeof obj === 'object' && obj !== null && !Array.isArray(obj);
 }
 
 // ==================== UTILITY TYPES ====================

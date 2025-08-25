@@ -18,12 +18,14 @@ const customJestConfig = {
     '**/*.(test|spec).(js|jsx|ts|tsx)'
   ],
   collectCoverageFrom: [
-    'lib/visual-mapping/**/*.{js,jsx,ts,tsx}',
-    'app/api/visual-mapping/**/*.{js,jsx,ts,tsx}',
+    'lib/**/*.{js,jsx,ts,tsx}',
+    'app/api/**/*.{js,jsx,ts,tsx}',
+    'components/**/*.{js,jsx,ts,tsx}',
     '!**/*.d.ts',
     '!**/node_modules/**',
+    '!**/.next/**',
   ],
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
   },
   testTimeout: 10000, // 10 seconds for async tests
