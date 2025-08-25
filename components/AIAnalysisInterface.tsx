@@ -105,14 +105,14 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
 
   return (
     <div className="h-screen flex flex-col">
-      {/* Header */}
-      <div className="flex-none px-6 py-4 bg-white border-b">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-xl font-bold text-gray-900">Document Analysis Interface</h2>
-          <div className="flex items-center space-x-2">
+      {/* 3-Column Layout - Centered with sidebars closer to content */}
+      <div className="flex-1 flex justify-center overflow-hidden">
+        <div className="flex w-full max-w-7xl">
+          {/* Toggle buttons - positioned at top right */}
+          <div className="absolute top-4 right-4 flex items-center space-x-2 z-10">
             <button
               onClick={() => setShowLeftSidebar(!showLeftSidebar)}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded"
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded shadow-sm bg-white"
               title="Toggle AI Prompts"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -121,7 +121,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
             </button>
             <button
               onClick={() => setShowRightSidebar(!showRightSidebar)}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded"
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded shadow-sm bg-white"
               title="Toggle Tags & Excel"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -129,33 +129,6 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
               </svg>
             </button>
           </div>
-        </div>
-        <div className="flex items-center space-x-4 text-sm text-gray-600">
-          <div className="flex items-center">
-            <div className={`w-3 h-3 rounded-full mr-2 ${
-              pipelineStatus === 'analyzed' ? 'bg-green-500' : 'bg-gray-300'
-            }`}></div>
-            Analysis
-          </div>
-          <div className="flex items-center">
-            <div className={`w-3 h-3 rounded-full mr-2 ${
-              pipelineStatus === 'mapped' || pipelineStatus === 'frozen' ? 'bg-green-500' : 
-              excelHeaders.length > 0 ? 'bg-yellow-500' : 'bg-gray-300'
-            }`}></div>
-            Mapping
-          </div>
-          <div className="flex items-center">
-            <div className={`w-3 h-3 rounded-full mr-2 ${
-              pipelineStatus === 'frozen' ? 'bg-green-500' : 'bg-gray-300'
-            }`}></div>
-            Freeze
-          </div>
-        </div>
-      </div>
-
-      {/* 3-Column Layout - Centered with sidebars closer to content */}
-      <div className="flex-1 flex justify-center overflow-hidden">
-        <div className="flex w-full max-w-7xl">
           {/* Left Sidebar - AI Prompts */}
           {showLeftSidebar && (
             <div className="w-72 flex-none bg-gray-50 border-r overflow-y-auto">
