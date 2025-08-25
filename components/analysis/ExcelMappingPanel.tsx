@@ -1,6 +1,6 @@
 // components/analysis/ExcelMappingPanel.tsx
 // Panel 3: Excel mapping with fuzzy matching
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ParsedTag } from '../../lib/types';
 
 interface ExcelMappingPanelProps {
@@ -8,6 +8,7 @@ interface ExcelMappingPanelProps {
   excelHeaders: string[];
   onMappingUpdate?: (mappings: Record<string, string>) => void;
   pipelineStatus?: string;
+  onExcelUpload?: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 interface MappingSuggestion {
@@ -24,11 +25,13 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
   tags,
   excelHeaders,
   onMappingUpdate,
-  pipelineStatus
+  pipelineStatus,
+  onExcelUpload
 }) => {
   const [mappings, setMappings] = useState<Record<string, string>>({});
   const [suggestions, setSuggestions] = useState<MappingSuggestion[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load intelligent AI mapping suggestions
   useEffect(() => {
@@ -193,14 +196,37 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
 
       <div className="p-4 max-h-96 overflow-y-auto">
         {excelHeaders.length === 0 ? (
-          <div className="text-center py-8">
-            <div className="text-gray-400 mb-2">
-              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
+          <div 
+            className="cursor-pointer bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-dashed border-green-300 rounded-lg p-6 hover:from-green-100 hover:to-emerald-100 hover:border-green-400 transition-all duration-200"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <div className="text-center">
+              <div className="text-green-500 mb-3">
+                <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <h4 className="text-lg font-semibold text-gray-900 mb-2">🚀 Automatitza la teva feina</h4>
+              <p className="text-sm text-gray-600 mb-3">
+                Puja un Excel per generar informes en sèrie automàticament
+              </p>
+              <div className="bg-white rounded-lg p-3 border border-green-200">
+                <div className="flex items-center justify-center space-x-2 text-green-700">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  <span className="font-medium">Clica per pujar Excel</span>
+                </div>
+              </div>
             </div>
-            <div className="text-gray-500 text-sm mb-1">No Excel data uploaded</div>
-            <div className="text-gray-400 text-xs">Upload Excel file to enable mapping</div>
+            
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              onChange={onExcelUpload}
+              className="hidden"
+            />
           </div>
         ) : (
           <div className="space-y-4">

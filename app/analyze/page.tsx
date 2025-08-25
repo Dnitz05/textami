@@ -569,6 +569,7 @@ export default function AnalyzePage() {
           onSave={handleSave}
           onSaveAs={handleSaveAs}
           onClose={handleClose}
+          onExcelUpload={handleExcelUpload}
         />
       )}
 

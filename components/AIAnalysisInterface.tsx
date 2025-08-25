@@ -19,6 +19,7 @@ interface AIAnalysisInterfaceProps {
   onSave?: () => void;
   onSaveAs?: () => void;
   onClose?: () => void;
+  onExcelUpload?: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
@@ -260,6 +261,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                 excelHeaders={excelHeaders}
                 onMappingUpdate={handleMappingUpdate}
                 pipelineStatus={pipelineStatus}
+                onExcelUpload={onExcelUpload}
               />
               
             </div>

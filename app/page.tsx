@@ -1,354 +1,135 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import AuthForm from '@/components/AuthForm';
 import TopNavBar from '@/components/TopNavBar';
-
-interface UploadState {
-  template: {
-    fileName: string
-    size: number
-  } | null
-  excel: {
-    fileName: string
-    size: number
-    rows: number
-  } | null
-  uploading: boolean
-  error: string | null
-}
 
 export default function Home() {
   const router = useRouter();
-  const [showAuth, setShowAuth] = useState(false);
-  const [uploadState, setUploadState] = useState<UploadState>({
-    template: null,
-    excel: null,
-    uploading: false,
-    error: null
-  });
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Recuperar dades del localStorage en carregar la pàgina
-  useEffect(() => {
-    const savedTemplate = localStorage.getItem('textami_template')
-    const savedExcel = localStorage.getItem('textami_excel')
-    
-    if (savedTemplate) {
-      try {
-        const templateData = JSON.parse(savedTemplate)
-        setUploadState(prev => ({ 
-          ...prev, 
-          template: { fileName: templateData.fileName, size: templateData.size }
-        }))
-      } catch (error) {
-        console.error('Error loading template from localStorage:', error)
-      }
-    }
-    
-    if (savedExcel) {
-      try {
-        const excelData = JSON.parse(savedExcel)
-        setUploadState(prev => ({ 
-          ...prev, 
-          excel: { 
-            fileName: excelData.fileName, 
-            size: excelData.size, 
-            rows: excelData.rows 
-          }
-        }))
-      } catch (error) {
-        console.error('Error loading excel from localStorage:', error)
-      }
-    }
-  }, [])
+  const handleNovaPlantillaClick = () => {
+    fileInputRef.current?.click();
+  };
 
-  const handleTemplateUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    setUploadState(prev => ({ ...prev, uploading: true, error: null }))
-
-    try {
-      // Validar tipus de fitxer
-      if (!file.name.match(/\.docx$/)) {
-        throw new Error('Només fitxers Word (.docx)')
-      }
-
-      // Simular upload
-      await new Promise(resolve => setTimeout(resolve, 1500))
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Store the selected file in sessionStorage to pass to analyze page
+      const fileData = {
+        file: {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          lastModified: file.lastModified
+        }
+      };
+      sessionStorage.setItem('selectedFile', JSON.stringify(fileData));
+      sessionStorage.setItem('templateName', file.name.replace('.pdf', ''));
       
-      setUploadState(prev => ({
-        ...prev,
-        template: {
-          fileName: file.name,
-          size: file.size
-        },
-        uploading: false
-      }))
-
-      // Convertir fitxer a base64 per guardar al localStorage
-      const reader = new FileReader()
+      // Create FileReader to store file content
+      const reader = new FileReader();
       reader.onload = (e) => {
-        const base64 = e.target?.result as string
-        localStorage.setItem('textami_template', JSON.stringify({
-          fileName: file.name,
-          size: file.size,
-          base64: base64
-        }))
-      }
-      reader.readAsDataURL(file)
-
-      console.log('Template carregat:', file.name)
-      
-    } catch (error) {
-      setUploadState(prev => ({
-        ...prev,
-        error: error instanceof Error ? error.message : 'Error pujant template',
-        uploading: false
-      }))
+        const arrayBuffer = e.target?.result as ArrayBuffer;
+        const uint8Array = new Uint8Array(arrayBuffer);
+        const base64String = btoa(String.fromCharCode(...uint8Array));
+        
+        sessionStorage.setItem('selectedFileContent', base64String);
+        
+        // Navigate to analyze page
+        router.push('/analyze');
+      };
+      reader.readAsArrayBuffer(file);
     }
-  }
-
-  const handleExcelUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    setUploadState(prev => ({ ...prev, uploading: true, error: null }))
-
-    try {
-      // Validar tipus de fitxer
-      if (!file.name.match(/\.(xlsx|xls)$/)) {
-        throw new Error('Només fitxers Excel (.xlsx, .xls)')
-      }
-
-      // Simular upload
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      setUploadState(prev => ({
-        ...prev,
-        excel: {
-          fileName: file.name,
-          size: file.size,
-          rows: Math.floor(Math.random() * 100) + 10 // Simular rows
-        },
-        uploading: false
-      }))
-
-      // Convertir fitxer Excel a base64 per guardar al localStorage
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const base64 = e.target?.result as string
-        localStorage.setItem('textami_excel', JSON.stringify({
-          fileName: file.name,
-          size: file.size,
-          rows: Math.floor(Math.random() * 100) + 10,
-          base64: base64
-        }))
-      }
-      reader.readAsDataURL(file)
-
-      console.log('Excel carregat:', file.name)
-      
-    } catch (error) {
-      setUploadState(prev => ({
-        ...prev,
-        error: error instanceof Error ? error.message : 'Error pujant Excel',
-        uploading: false
-      }))
-    }
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <TopNavBar />
-      <div className="container mx-auto px-4 py-16">{/* Auth Modal */}
-        {showAuth && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-white rounded shadow-lg p-6 relative w-full max-w-sm mx-auto">
-              <button
-                onClick={() => setShowAuth(false)}
-                className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl font-bold"
-                aria-label="Tanca"
-              >
-                ×
-              </button>
-              <AuthForm />
-            </div>
-          </div>
-        )}
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">
-            🧠 Textami AI-First
-          </h1>
+      
+      {/* Hero Section */}
+      <div className="container mx-auto px-4 py-16 text-center">
+        <h1 className="text-5xl font-bold text-gray-900 mb-6">
+          🧠 Textami
+        </h1>
+        <p className="text-xl text-gray-600 mb-16 max-w-2xl mx-auto">
+          Plataforma intel·ligent per a l'anàlisi i generació de documents amb IA
+        </p>
+
+        {/* Main Navigation Cards */}
+        <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
           
-          {/* New AI Analysis Button */}
-          <div className="mb-8">
-            <button
-              onClick={() => router.push('/analyze')}
-              className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
-            >
-              <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          {/* Nova Plantilla */}
+          <div 
+            onClick={handleNovaPlantillaClick}
+            className="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-105 border-2 border-transparent hover:border-blue-200"
+          >
+            <div className="text-6xl mb-6">📄</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Nova Plantilla</h2>
+            <p className="text-gray-600 mb-6">
+              Puja un document PDF i deixa que la IA analitzi automàticament les variables i l'estructura
+            </p>
+            <div className="flex items-center justify-center space-x-2 text-blue-600 font-medium">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
-              🚀 New: AI Document Analysis (GPT-5)
-            </button>
-            <p className="text-gray-600 mt-2 text-sm">
-              Upload PDF → AI extracts variables → Generate documents automatically
+              <span>Començar Anàlisi</span>
+            </div>
+          </div>
+
+          {/* Plantilles */}
+          <div 
+            onClick={() => router.push('/templates')}
+            className="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-105 border-2 border-transparent hover:border-green-200"
+          >
+            <div className="text-6xl mb-6">📋</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Plantilles</h2>
+            <p className="text-gray-600 mb-6">
+              Gestiona les teves plantilles desades, carrega plantilles anteriors i reutilitza configuracions
             </p>
-          </div>
-          <p className="text-xl text-gray-600 mb-4">
-            Generador intel·ligent de documents powered by GPT-5
-          </p>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-            Upload DOCX → AI analitza → Upload Excel → AI mapeja → Genera documents.
-            <strong>Zero configuració manual</strong>, tot automàtic amb intel·ligència artificial.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto mb-16">
-          {/* Step 1: AI Document Analysis */}
-          <div className="bg-white rounded-lg p-6 shadow-lg">
-            <div className="text-center">
-              <div className="text-4xl mb-4">🧠</div>
-              <h3 className="text-xl font-semibold mb-3">1. AI Document Analysis</h3>
-              <p className="text-gray-600 mb-4">
-                GPT-5 Vision llegeix i analitza el teu DOCX automàticament
-              </p>
-              
-              {!uploadState.template && (
-                <>
-                  <label className={`w-full py-2 px-4 rounded-md transition-colors cursor-pointer block text-center ${
-                    uploadState.uploading 
-                      ? 'bg-gray-400 text-white cursor-not-allowed' 
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
-                  }`}>
-                    {uploadState.uploading ? 'AI Analitzant...' : 'Upload per AI Analysis'}
-                    <input
-                      type="file"
-                      accept=".docx"
-                      onChange={handleTemplateUpload}
-                      disabled={uploadState.uploading}
-                      className="hidden"
-                    />
-                  </label>
-                  {uploadState.error && (
-                    <p className="text-xs text-red-600 mt-2">{uploadState.error}</p>
-                  )}
-                </>
-              )}
-
-              {uploadState.template && (
-                <div className="space-y-2">
-                  <div className="text-green-600 text-sm">
-                    ✅ {uploadState.template.fileName}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {Math.round(uploadState.template.size / 1024)} KB
-                  </div>
-                </div>
-              )}
+            <div className="flex items-center justify-center space-x-2 text-green-600 font-medium">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+              <span>Veure Plantilles</span>
             </div>
           </div>
-          
-          {/* Step 2: AI Excel Intelligence */}
-          <div className="bg-white rounded-lg p-6 shadow-lg">
-            <div className="text-center">
-              <div className="text-4xl mb-4">🎯</div>
-              <h3 className="text-xl font-semibold mb-3">2. AI Excel Intelligence</h3>
-              <p className="text-gray-600 mb-4">
-                AI analitza columnes i proposa mappings intel·ligents
-              </p>
-              
-              {!uploadState.excel && (
-                <>
-                  <label className={`w-full py-2 px-4 rounded-md transition-colors cursor-pointer block text-center ${
-                    uploadState.template 
-                      ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                      : 'bg-gray-400 text-white cursor-not-allowed'
-                  }`}>
-                    {uploadState.uploading ? 'AI Processant...' : 'Upload Excel per AI'}
-                    <input
-                      type="file"
-                      accept=".xlsx,.xls"
-                      onChange={handleExcelUpload}
-                      disabled={!uploadState.template || uploadState.uploading}
-                      className="hidden"
-                    />
-                  </label>
-                  {uploadState.error && (
-                    <p className="text-xs text-red-600 mt-2">{uploadState.error}</p>
-                  )}
-                </>
-              )}
 
-              {uploadState.excel && (
-                <div className="space-y-2">
-                  <div className="text-green-600 text-sm">
-                    ✅ {uploadState.excel.fileName}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {Math.round(uploadState.excel.size / 1024)} KB
-                  </div>
-                  <div className="text-xs text-blue-600">
-                    📊 {uploadState.excel.rows} files de dades
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          {/* Step 3: AI Generation */}
-          <div className="bg-white rounded-lg p-6 shadow-lg">
-            <div className="text-center">
-              <div className="text-4xl mb-4">✨</div>
-              <h3 className="text-xl font-semibold mb-3">3. AI Generation</h3>
-              <p className="text-gray-600 mb-4">
-                GPT-5 genera documents amb format preservation perfecte
-              </p>
-              <button 
-                disabled={!uploadState.template || !uploadState.excel}
-                onClick={() => window.location.href = '/generator'}
-                className={`w-full py-2 px-4 rounded-md transition-colors ${
-                  uploadState.template && uploadState.excel
-                    ? 'bg-green-600 text-white hover:bg-green-700 cursor-pointer' 
-                    : 'bg-gray-400 text-white cursor-not-allowed'
-                }`}
-              >
-                Generate amb AI
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="text-center space-y-6">
-          <div className="space-y-4">
-            <div className="flex gap-4 justify-center">
-              <a
-                href="/generator"
-                className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 font-semibold text-lg transition-colors"
-              >
-                Generar Documents →
-              </a>
-              <button
-                onClick={() => setShowAuth(true)}
-                className="inline-block bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 font-semibold text-lg transition-colors"
-              >
-                Inicia Sessió
-              </button>
-            </div>
-            <p className="text-sm text-gray-500">
-              Prova l'MVP i genera documents Word amb qualitat professional
+          {/* Knowledge */}
+          <div 
+            onClick={() => router.push('/knowledge')}
+            className="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-105 border-2 border-transparent hover:border-amber-200"
+          >
+            <div className="text-6xl mb-6">📚</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Knowledge</h2>
+            <p className="text-gray-600 mb-6">
+              Base de coneixement amb documents de referència per millorar l'anàlisi i les instruccions de la IA
             </p>
+            <div className="flex items-center justify-center space-x-2 text-amber-600 font-medium">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              <span>Gestionar Knowledge</span>
+            </div>
           </div>
-          
-          <div className="inline-flex items-center gap-4 bg-white rounded-lg p-4 shadow-lg">
-            <span className="text-green-600 font-medium">🧠 AI-First MVP amb GPT-5 Vision</span>
-            <span className="text-blue-600 font-medium">⚡ Zero Configuration</span>
-          </div>
+
         </div>
 
+        {/* Hidden file input for Nova Plantilla */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf,.docx"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+
+        {/* Footer */}
         <footer className="mt-16 text-center text-gray-500">
-          <p>© 2025 Aitor Gilabert Juan - Textami AI-First</p>
+          <div className="inline-flex items-center gap-4 bg-white rounded-lg p-4 shadow-sm">
+            <span className="text-blue-600 font-medium">🧠 Powered by GPT-5</span>
+            <span className="text-purple-600 font-medium">⚡ Zero Configuration</span>
+          </div>
+          <p className="mt-4">© 2025 Textami - Document Intelligence Platform</p>
         </footer>
       </div>
     </div>
