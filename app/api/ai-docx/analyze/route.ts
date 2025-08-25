@@ -1,6 +1,7 @@
 // app/api/ai-docx/analyze/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import PizZip from 'pizzip';
 
 // Helper function to infer placeholder type from name
 function inferPlaceholderType(text: string): string {
@@ -15,55 +16,7 @@ function inferPlaceholderType(text: string): string {
   return 'string';
 }
 
-// Helper function to convert text to HTML with highlighted placeholders
-function convertToHtml(content: string, placeholders: Array<{
-  text: string;
-  type: string;
-  confidence: number;
-  originalMatch: string;
-  position: number;
-}>): string {
-  // Better paragraph and formatting handling
-  let htmlContent = content
-    // Convert markdown-style formatting to HTML
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
-    .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italic
-    // Split into paragraphs and process
-    .split('\n\n')
-    .map(paragraph => paragraph.trim())
-    .filter(paragraph => paragraph.length > 0)
-    .map(paragraph => `<p class="mb-4">${paragraph.replace(/\n/g, '<br>')}</p>`)
-    .join('');
-  
-  // Highlight each placeholder
-  placeholders.forEach(placeholder => {
-    const regex = new RegExp(escapeRegExp(placeholder.originalMatch), 'g');
-    htmlContent = htmlContent.replace(regex, 
-      `<span class="placeholder-highlight bg-yellow-200 px-1 rounded cursor-pointer border border-yellow-300 hover:bg-yellow-300 transition-colors" 
-             data-placeholder="${placeholder.text}" 
-             data-type="${placeholder.type}"
-             title="Placeholder: ${placeholder.text} (${placeholder.type}) - ${placeholder.confidence}% confidence">
-        ${placeholder.originalMatch}
-      </span>`
-    );
-  });
-  
-  return `<div class="document-preview p-6 bg-white border rounded-lg font-serif leading-relaxed max-w-none">
-    <style>
-      .document-preview p { margin-bottom: 1rem; line-height: 1.6; }
-      .document-preview p:last-child { margin-bottom: 0; }
-      .document-preview strong { font-weight: 700; }
-      .document-preview em { font-style: italic; }
-      .placeholder-highlight { font-weight: 600; }
-    </style>
-    ${htmlContent}
-  </div>`;
-}
-
-// Helper function to escape regex special characters
-function escapeRegExp(string: string): string {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
+// NO MORE HTML CONVERSION - Working with binary DOCX only
 
 export async function POST(request: NextRequest) {
   console.log('📄 DOCX Analysis Request Started');
@@ -145,12 +98,43 @@ export async function POST(request: NextRequest) {
     // 5. Generar template ID únic
     const templateId = `template_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
-    // 6. Storage is completely optional for MVP
+    // 6. Save original DOCX to Supabase Storage (REQUIRED for binary preservation)
     let storageUrl = null;
-    console.log('⚠️ Storage disabled for MVP - analysis continues without storage');
+    if (supabase) {
+      try {
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('templates')
+          .upload(`${templateId}/original.docx`, buffer, {
+            contentType: file.type,
+            upsert: true
+          });
 
-    // 7. Extract document content and analyze placeholders
-    let documentContent = '';
+        if (uploadError) {
+          console.error('❌ Storage upload FAILED - Cannot proceed without binary storage:', uploadError);
+          return NextResponse.json(
+            { error: 'Storage required for DOCX processing', details: uploadError.message },
+            { status: 500 }
+          );
+        } else {
+          storageUrl = uploadData?.path;
+          console.log('✅ Original DOCX saved to storage:', storageUrl);
+        }
+      } catch (storageError) {
+        console.error('❌ Storage error - Cannot proceed:', storageError);
+        return NextResponse.json(
+          { error: 'Storage required for DOCX processing' },
+          { status: 500 }
+        );
+      }
+    } else {
+      console.error('❌ Supabase not available - Cannot proceed without storage');
+      return NextResponse.json(
+        { error: 'Storage configuration required' },
+        { status: 500 }
+      );
+    }
+
+    // 7. Extract ONLY placeholders from DOCX (NO text conversion)
     let extractedPlaceholders: Array<{
       text: string;
       type: string;
@@ -160,114 +144,83 @@ export async function POST(request: NextRequest) {
     }> = [];
     
     try {
-      // Basic DOCX text extraction (we'll enhance this)
-      const JSZip = require('jszip');
-      const zip = new JSZip();
-      const zipContent = await zip.loadAsync(buffer);
+      console.log('🔍 Analyzing DOCX for placeholders (preserving binary format)...');
       
-      // Extract main document content
-      const documentXml = await zipContent.file('word/document.xml')?.async('string');
+      // Use PizZip to read DOCX structure
+      const zip = new PizZip(buffer);
+      const documentXml = zip.file('word/document.xml')?.asText();
       
       if (documentXml) {
-        console.log('📄 Raw XML preview (first 500 chars):', documentXml.substring(0, 500));
+        console.log('📄 Scanning XML for placeholder patterns...');
         
-        // Better XML to text conversion preserving structure and formatting
-        documentContent = documentXml
-          .replace(/<w:p[^>]*>/g, '\n\n') // New paragraph with double break
-          .replace(/<w:br[^>]*\/?>/g, '\n') // Line breaks
-          .replace(/<w:t[^>]*>([^<]*)<\/w:t>/g, '$1') // Extract text
-          .replace(/<w:b[^>]*>/g, '**') // Bold start
-          .replace(/<\/w:b>/g, '**') // Bold end  
-          .replace(/<w:i[^>]*>/g, '*') // Italic start
-          .replace(/<\/w:i>/g, '*') // Italic end
-          .replace(/<[^>]*>/g, '') // Remove other tags
-          .replace(/\n\n\n+/g, '\n\n') // Clean triple+ newlines to double
-          .replace(/^\s+|\s+$/g, '') // Trim
+        // Extract only text content for placeholder detection (don't convert for display)
+        const textContent = documentXml
+          .replace(/<w:t[^>]*>([^<]*)<\/w:t>/g, '$1')
+          .replace(/<[^>]*>/g, '')
           .trim();
           
-        console.log('🔄 After XML processing preview:', documentContent.substring(0, 500));
-          
-        // Debug extracted content first
-        console.log('📝 Extracted document content preview:', documentContent.substring(0, 500));
-        console.log('📝 Full document length:', documentContent.length);
+        console.log('🔍 Text content length:', textContent.length);
         
-        // Detect potential placeholders in the text
+        // Detect placeholders - focus on {{placeholder}} format for docxtemplater
         const placeholderPatterns = [
-          /\{([^}]+)\}/g,  // {placeholder}
-          /\[([^\]]+)\]/g, // [placeholder]
-          /\$\{([^}]+)\}/g, // ${placeholder}
-          /\{\{([^}]+)\}\}/g, // {{placeholder}}
+          /\{\{([^}]+)\}\}/g, // {{placeholder}} - primary format for docxtemplater
+          /\{([^}]+)\}/g,     // {placeholder} - alternative format
         ];
         
         placeholderPatterns.forEach((pattern, index) => {
           console.log(`🔍 Testing pattern ${index + 1}: ${pattern.source}`);
           let match;
           let patternMatches = 0;
-          while ((match = pattern.exec(documentContent)) !== null) {
+          while ((match = pattern.exec(textContent)) !== null) {
             patternMatches++;
             const text = match[1].trim();
-            console.log(`✅ Found match: "${match[0]}" -> extracted text: "${text}"`);
+            console.log(`✅ Found placeholder: "${match[0]}" -> "${text}"`);
             if (text && !extractedPlaceholders.some(p => p.text === text)) {
               extractedPlaceholders.push({
                 text: text,
                 type: inferPlaceholderType(text),
-                confidence: 85,
+                confidence: 95,
                 originalMatch: match[0],
-                position: match.index
+                position: match.index || 0
               });
-            } else {
-              console.log(`⚠️ Skipped duplicate or empty: "${text}"`);
             }
           }
           console.log(`📊 Pattern ${index + 1} found ${patternMatches} matches`);
         });
       }
     } catch (extractError) {
-      console.warn('⚠️ Document extraction failed, using fallback:', extractError);
-      documentContent = `Mock document content for ${file.name}
-      
-      Dear {nom} {cognoms},
-      
-      We are pleased to inform you that on {data}, 
-      your request for {import}€ has been approved.
-      
-      Best regards,
-      The Team`;
-      
-      extractedPlaceholders = [
-        { text: "nom", type: "string", confidence: 95, originalMatch: "{nom}", position: 5 },
-        { text: "cognoms", type: "string", confidence: 92, originalMatch: "{cognoms}", position: 11 },
-        { text: "data", type: "date", confidence: 88, originalMatch: "{data}", position: 58 },
-        { text: "import", type: "number", confidence: 90, originalMatch: "{import}", position: 95 }
-      ];
+      console.error('❌ Placeholder extraction failed:', extractError);
+      return NextResponse.json(
+        { error: 'Failed to analyze DOCX structure', details: extractError instanceof Error ? extractError.message : 'Unknown error' },
+        { status: 500 }
+      );
     }
     
-    const mockAnalysis = {
+    // Return ONLY placeholder analysis - NO transcription or HTML
+    const analysisResult = {
       templateId,
       fileName: file.name,
-      transcription: documentContent,
-      htmlPreview: convertToHtml(documentContent, extractedPlaceholders),
+      storageUrl, // Essential for binary retrieval
       placeholders: extractedPlaceholders,
-      confidence: extractedPlaceholders.length > 0 ? 91.25 : 60,
-      storageUrl,
+      confidence: extractedPlaceholders.length > 0 ? 95 : 0,
       metadata: {
-        pageCount: 1,
-        wordCount: documentContent.split(' ').length,
-        hasImages: false,
-        hasTablesi: false,
-        extractionMethod: 'zip-xml'
+        placeholderCount: extractedPlaceholders.length,
+        storageSize: buffer.length,
+        extractionMethod: 'pizzip-binary',
+        requiresDocxtemplater: true
       }
     };
 
-    console.log('✅ Analysis complete:', {
+    console.log('✅ Binary analysis complete:', {
       templateId,
-      placeholders: mockAnalysis.placeholders.length
+      placeholders: analysisResult.placeholders.length,
+      storageUrl: analysisResult.storageUrl
     });
 
-    // 8. Retornar resposta exitosa
+    // 8. Return binary-first response
     return NextResponse.json({
       success: true,
-      data: mockAnalysis
+      data: analysisResult
     });
 
   } catch (error) {

@@ -1,141 +1,169 @@
 // app/api/ai-docx/generate/route.ts
-// AI-First Document Generation with GPT-5
+// BINARY DOCX GENERATION with docxtemplater - Professional format preservation
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
-
-interface GenerationRequest {
-  templateId: string;
-  mappings: Array<{
-    placeholder: string;
-    excelColumn: string;
-    excelHeader: string;
-  }>;
-  excelData: Array<Record<string, any>>;
-  batchSize?: number;
-}
-
-interface GenerationResult {
-  success: boolean;
-  generatedDocuments: Array<{
-    documentId: string;
-    fileName: string;
-    downloadUrl: string;
-    dataRow: number;
-  }>;
-  totalGenerated: number;
-  processingTime: number;
-  errors: string[];
-}
+import { createClient } from '@supabase/supabase-js';
+import Docxtemplater from 'docxtemplater';
+import PizZip from 'pizzip';
 
 export async function POST(request: NextRequest) {
-  const startTime = Date.now();
+  console.log('🚀 DOCX Generate Request Started - Binary Processing');
   
   try {
-    const body: GenerationRequest = await request.json();
-    const { templateId, mappings, excelData, batchSize = 10 } = body;
-
-    if (!templateId || !mappings || !excelData) {
-      return NextResponse.json({ 
-        error: 'Missing required data: templateId, mappings, or excelData' 
-      }, { status: 400 });
-    }
-
-    if (excelData.length === 0) {
-      return NextResponse.json({ 
-        error: 'No data rows provided for generation' 
-      }, { status: 400 });
-    }
-
-    const generatedDocuments = [];
-    const errors = [];
-
-    // Process in batches for efficiency
-    for (let i = 0; i < Math.min(excelData.length, batchSize); i++) {
-      try {
-        const dataRow = excelData[i];
-        const documentId = `doc_${templateId}_${i + 1}`;
-
-        // Create mapping data for this row
-        const mappingData = mappings.reduce((acc, mapping) => {
-          const value = dataRow[mapping.excelHeader] || dataRow[mapping.excelColumn];
-          acc[mapping.placeholder] = value;
-          return acc;
-        }, {} as Record<string, any>);
-
-        // GPT-5 Document Generation with Format Preservation
-        const completion = await openai.chat.completions.create({
-          model: "gpt-5", // GPT-5 official model
-          messages: [
-            {
-              role: "system",
-              content: `You are an AI document generation expert. Your task is to:
-
-1. Take a document template with placeholders
-2. Replace placeholders with provided data while preserving ALL formatting
-3. Maintain document structure, styles, fonts, colors, spacing
-4. Generate a professional document that looks identical to the original except for the filled data
-
-Return the generated document content in a format that preserves the original structure.`
-            },
-            {
-              role: "user",
-              content: `Generate a document using this data:
-
-Template ID: ${templateId}
-Data mappings: ${JSON.stringify(mappingData, null, 2)}
-
-Replace all placeholders with the corresponding data values while maintaining perfect formatting and structure.`
-            }
-          ],
-          max_completion_tokens: 8000
-        });
-
-        const generatedContent = completion.choices[0].message.content;
-
-        // For MVP, we simulate document storage
-        // In production, this would save to Supabase Storage and generate real download URLs
-        const mockDownloadUrl = `/api/download/${documentId}.docx`;
-
-        generatedDocuments.push({
-          documentId,
-          fileName: `generated_${i + 1}.docx`,
-          downloadUrl: mockDownloadUrl,
-          dataRow: i + 1
-        });
-
-        console.log(`[AI-GENERATE] Generated document ${i + 1}/${Math.min(excelData.length, batchSize)}`);
-
-      } catch (docError: any) {
-        console.error(`[AI-GENERATE] Error generating document ${i + 1}:`, docError);
-        errors.push(`Document ${i + 1}: ${docError.message}`);
-      }
-    }
-
-    const result: GenerationResult = {
-      success: generatedDocuments.length > 0,
-      generatedDocuments,
-      totalGenerated: generatedDocuments.length,
-      processingTime: Date.now() - startTime,
-      errors
-    };
-
-    console.log(`[AI-GENERATE] Batch complete: ${result.totalGenerated} documents generated in ${result.processingTime}ms`);
-
-    return NextResponse.json(result);
-
-  } catch (error: any) {
-    console.error('[AI-GENERATE] Error:', error);
+    // Initialize Supabase client
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('❌ Supabase environment variables missing');
+      return NextResponse.json(
+        { error: 'Storage configuration required' },
+        { status: 500 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    console.log('✅ Supabase client initialized for binary generation');
+
+    // Parse request data
+    const { templateId, storageUrl, mappings } = await request.json();
+    
+    console.log('📝 Binary generation request:', {
+      templateId,
+      storageUrl,
+      mappingCount: Object.keys(mappings || {}).length,
+      mappings: mappings
+    });
+
+    if (!templateId || !storageUrl || !mappings) {
+      return NextResponse.json(
+        { error: 'Missing required fields: templateId, storageUrl, mappings' },
+        { status: 400 }
+      );
+    }
+
+    // 1. Retrieve original DOCX binary from Supabase Storage
+    console.log('📥 Retrieving original DOCX binary from storage:', storageUrl);
+    const { data: fileData, error: downloadError } = await supabase.storage
+      .from('templates')
+      .download(storageUrl);
+
+    if (downloadError || !fileData) {
+      console.error('❌ Failed to retrieve DOCX binary from storage:', downloadError);
+      return NextResponse.json(
+        { error: 'Failed to retrieve template binary', details: downloadError?.message },
+        { status: 500 }
+      );
+    }
+
+    // Convert Blob to ArrayBuffer then Buffer
+    const arrayBuffer = await fileData.arrayBuffer();
+    const originalBuffer = Buffer.from(arrayBuffer);
+    
+    console.log('✅ Original DOCX binary retrieved:', {
+      size: originalBuffer.length,
+      type: fileData.type
+    });
+
+    // 2. Process DOCX with docxtemplater (PRESERVES ALL FORMATTING)
+    console.log('🔄 Processing DOCX binary with docxtemplater...');
+    console.log('📋 Replacing placeholders with data:', mappings);
+
+    let generatedBuffer: Buffer;
+    
+    try {
+      // Load the original DOCX binary
+      const zip = new PizZip(originalBuffer);
+      
+      // Create docxtemplater instance
+      const doc = new Docxtemplater(zip, {
+        paragraphLoop: true,
+        linebreaks: true,
+        errorLogging: true,
+      });
+
+      // Set the template variables (this replaces {{placeholder}} with actual data)
+      doc.setData(mappings);
+
+      // Render the document - this is where the magic happens!
+      // All formatting, styles, fonts, colors, etc. are preserved
+      doc.render();
+
+      // Generate the final binary DOCX with all formatting intact
+      generatedBuffer = doc.getZip().generate({ 
+        type: 'nodebuffer',
+        compression: 'DEFLATE',
+        compressionOptions: {
+          level: 4
+        }
+      });
+
+      console.log('✅ DOCX binary generated successfully with full formatting preservation:', {
+        originalSize: originalBuffer.length,
+        generatedSize: generatedBuffer.length,
+        sizeChange: ((generatedBuffer.length - originalBuffer.length) / originalBuffer.length * 100).toFixed(2) + '%'
+      });
+
+    } catch (docxError) {
+      console.error('❌ Docxtemplater binary processing failed:', docxError);
+      return NextResponse.json(
+        { 
+          error: 'Failed to process DOCX template binary',
+          details: docxError instanceof Error ? docxError.message : 'Unknown docxtemplater error'
+        },
+        { status: 500 }
+      );
+    }
+
+    // 3. Save generated DOCX binary to outputs bucket
+    const outputFileName = `generated_${templateId}_${Date.now()}.docx`;
+    console.log('💾 Saving generated DOCX binary to storage:', outputFileName);
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('outputs')
+      .upload(outputFileName, generatedBuffer, {
+        contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        upsert: true
+      });
+
+    if (uploadError) {
+      console.error('❌ Failed to save generated DOCX binary:', uploadError);
+      return NextResponse.json(
+        { error: 'Failed to save generated document', details: uploadError.message },
+        { status: 500 }
+      );
+    }
+
+    // 4. Get public URL for download
+    const { data: publicUrlData } = supabase.storage
+      .from('outputs')
+      .getPublicUrl(uploadData.path);
+
+    console.log('✅ Generated DOCX binary saved and accessible:', publicUrlData.publicUrl);
+
+    // 5. Return success response
     return NextResponse.json({
-      success: false,
-      generatedDocuments: [],
-      totalGenerated: 0,
-      processingTime: Date.now() - startTime,
-      errors: [error.message]
-    }, { status: 500 });
+      success: true,
+      data: {
+        templateId,
+        outputFileName,
+        downloadUrl: publicUrlData.publicUrl,
+        storagePath: uploadData.path,
+        fileSize: generatedBuffer.length,
+        processedMappings: Object.keys(mappings).length,
+        generatedAt: new Date().toISOString(),
+        processingMethod: 'docxtemplater-binary',
+        formatPreserved: true
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Unexpected error in binary DOCX generation:', error);
+    return NextResponse.json(
+      { 
+        error: 'Internal server error during binary processing',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    );
   }
 }
