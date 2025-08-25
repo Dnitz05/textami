@@ -507,19 +507,6 @@ export default function AnalyzePage() {
     <div className="min-h-screen bg-gray-50">
       <TopNavBar />
       
-      {/* Simple header with Plantilla label */}
-      {analysisData && (
-        <div className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-6 py-3">
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-500">Plantilla</span>
-              <h1 className="text-xl font-bold text-gray-900">
-                {originalFileName || 'Document.pdf'}
-              </h1>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Upload Section */}
       {!analysisData && (
