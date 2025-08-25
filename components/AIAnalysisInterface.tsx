@@ -153,41 +153,42 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
         </div>
       </div>
 
-      {/* 3-Column Layout */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar - AI Prompts */}
-        {showLeftSidebar && (
-          <div className="w-80 flex-none bg-gray-50 border-r overflow-y-auto">
-            <div className="p-4">
-              <AIPromptsPanel 
-                pipelineStatus={pipelineStatus}
-                onInstructionExecute={handleInstructionExecute}
-                isExecuting={isExecutingInstruction}
-                executingInstructionId={executingInstructionId}
-              />
+      {/* 3-Column Layout - Centered with sidebars closer to content */}
+      <div className="flex-1 flex justify-center overflow-hidden">
+        <div className="flex w-full max-w-7xl">
+          {/* Left Sidebar - AI Prompts */}
+          {showLeftSidebar && (
+            <div className="w-72 flex-none bg-gray-50 border-r overflow-y-auto">
+              <div className="p-4">
+                <AIPromptsPanel 
+                  pipelineStatus={pipelineStatus}
+                  onInstructionExecute={handleInstructionExecute}
+                  isExecuting={isExecutingInstruction}
+                  executingInstructionId={executingInstructionId}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Center - Document Preview */}
+          <div className="flex-1 bg-gray-100 overflow-y-auto">
+            <div className="flex justify-center p-4 md:p-6">
+              <div className="w-full max-w-4xl bg-white rounded-lg shadow-lg">
+                <DocumentPreviewPanel 
+                  markdown={currentMarkdown}
+                  sections={analysisData.sections}
+                  tables={analysisData.tables}
+                  signatura={analysisData.signatura}
+                  isProcessing={isExecutingInstruction}
+                />
+              </div>
             </div>
           </div>
-        )}
 
-        {/* Center - Document Preview */}
-        <div className="flex-1 bg-gray-100 overflow-y-auto">
-          <div className="flex justify-center p-4 md:p-8">
-            <div className="w-full max-w-4xl bg-white rounded-lg shadow-lg mx-4 md:mx-0">
-              <DocumentPreviewPanel 
-                markdown={currentMarkdown}
-                sections={analysisData.sections}
-                tables={analysisData.tables}
-                signatura={analysisData.signatura}
-                isProcessing={isExecutingInstruction}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Right Sidebar - Tags & Excel */}
-        {showRightSidebar && (
-          <div className="w-80 flex-none bg-gray-50 border-l overflow-y-auto">
-            <div className="p-4 space-y-4">
+          {/* Right Sidebar - Tags & Excel */}
+          {showRightSidebar && (
+            <div className="w-72 flex-none bg-gray-50 border-l overflow-y-auto">
+              <div className="p-4 space-y-4">
               <DetectedTagsPanel 
                 tags={analysisData.tags}
                 onTagUpdate={onTagUpdate}
@@ -210,6 +211,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
