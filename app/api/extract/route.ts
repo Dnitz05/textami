@@ -199,7 +199,7 @@ Tortosa, 8 d'abril de 2021`,
     } else {
       // Real GPT-5 multimodal call using standard chat completions API
       const completion = await openai.chat.completions.create({
-        model: "gpt-5",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -313,7 +313,7 @@ Return ONLY the JSON response, no additional text.`
         sectionsCount: parsedAnalysis.sections.length,
         tablesCount: parsedAnalysis.tables.length,
         tagsCount: parsedAnalysis.tags.length,
-        processingMethod: 'gpt-5-multimodal',
+        processingMethod: 'gpt-4-multimodal',
         timestamp: new Date().toISOString()
       }
     };
