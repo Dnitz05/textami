@@ -468,7 +468,7 @@ export default function GeneratorPage() {
             </div>
           )}
 
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className={`grid gap-8 ${aiState.template ? 'md:grid-cols-1 max-w-2xl mx-auto' : 'md:grid-cols-2'}`}>
             {/* DOCX Upload - Independent */}
             <div className="bg-white rounded-lg p-6 shadow-lg">
               <div className="text-center">
@@ -521,30 +521,35 @@ export default function GeneratorPage() {
               </div>
             </div>
 
-            {/* Excel Upload - Independent */}
-            <div className="bg-white rounded-lg p-6 shadow-lg">
+            {/* Excel Upload - Always Visible & Prominent when document loaded */}
+            <div className={`bg-white rounded-lg p-6 shadow-lg ${aiState.template ? 'ring-2 ring-green-500 ring-opacity-50' : ''}`}>
               <div className="text-center">
                 <div className="text-4xl mb-4">📊</div>
-                <h3 className="text-xl font-semibold mb-3">Upload Data</h3>
+                <h3 className={`text-xl font-semibold mb-3 ${aiState.template ? 'text-green-700' : ''}`}>
+                  {aiState.template ? '🎯 Now Upload Excel Data' : 'Upload Data'}
+                </h3>
                 <p className="text-gray-600 mb-4">
                   Upload Excel/CSV for intelligent column mapping
                   <br />
-                  <span className="text-xs text-gray-500">
-                    💡 Best after document upload for smart suggestions
+                  <span className={`text-xs font-medium ${aiState.template ? 'text-green-600' : 'text-gray-500'}`}>
+                    {aiState.template ? '⭐ Document loaded - Ready for Excel upload!' : '💡 Best after document upload for smart suggestions'}
                   </span>
                 </p>
 
                 {/* Always show upload button, but change text if Excel exists */}
                 <label 
                   onClick={() => console.log('🖱️ Excel Label clicked!')}
-                  className={`w-full py-2 px-4 rounded-md transition-colors block text-center ${
+                  className={`w-full py-3 px-4 rounded-md transition-all block text-center font-medium ${
                     !excelState.processing
-                      ? 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer' 
+                      ? aiState.template 
+                        ? 'bg-green-600 text-white hover:bg-green-700 cursor-pointer ring-2 ring-green-300' 
+                        : 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
                       : 'bg-gray-400 text-white cursor-not-allowed'
                   }`}
                 >
-                  {excelState.processing ? 'Analyzing Excel...' : 
-                   excelState.analysis ? 'Replace Excel/CSV' : 'Upload Excel/CSV'}
+                  {excelState.processing ? '🔄 Analyzing Excel...' : 
+                   excelState.analysis ? '🔄 Replace Excel/CSV' : 
+                   aiState.template ? '📊 Upload Excel Now!' : 'Upload Excel/CSV'}
                   <input
                     type="file"
                     accept=".xlsx,.xls,.csv"
