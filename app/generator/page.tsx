@@ -105,15 +105,28 @@ export default function GeneratorPage() {
     if (!file) return;
 
     const uploadId = Date.now();
-    console.log(`📤 UPLOAD #${uploadId} - Starting DOCX upload:`, {
+    const isPDF = file.name.toLowerCase().endsWith('.pdf');
+    const isDOCX = file.name.toLowerCase().endsWith('.docx');
+    
+    console.log(`📤 UPLOAD #${uploadId} - Starting ${isPDF ? 'PDF' : 'DOCX'} upload:`, {
       fileName: file.name,
       size: file.size,
+      fileType: isPDF ? 'PDF' : 'DOCX',
       currentState: {
         hasTemplate: !!aiState.template,
         hasAnalysis: !!aiState.aiAnalysis,
         processing: aiState.processing
       }
     });
+
+    if (!isPDF && !isDOCX) {
+      console.error('❌ Unsupported file type');
+      setAiState(prevState => ({
+        ...prevState,
+        error: 'Only PDF and DOCX files are supported'
+      }));
+      return;
+    }
 
     setAiState(prevState => ({ 
       ...prevState, 
@@ -122,10 +135,18 @@ export default function GeneratorPage() {
     }));
 
     const formData = new FormData();
-    formData.append('docx', file);
+    const templateId = `template_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+    
+    if (isPDF) {
+      formData.append('file', file);
+      formData.append('templateId', templateId);
+    } else {
+      formData.append('docx', file);
+    }
 
     try {
-      const response = await fetch('/api/ai-docx/analyze', {
+      const endpoint = isPDF ? '/api/upload-pdf' : '/api/ai-docx/analyze';
+      const response = await fetch(endpoint, {
         method: 'POST',
         body: formData
       });
@@ -145,6 +166,7 @@ export default function GeneratorPage() {
         console.log(`✅ UPLOAD #${uploadId} - SUCCESS:`, {
           templateId: result.data.templateId,
           fileName: result.data.fileName,
+          fileType: isPDF ? 'PDF' : 'DOCX',
           placeholders: result.data.placeholders?.length || 0,
           hasHtmlPreview: !!result.data.htmlPreview,
           transcriptionLength: result.data.transcription?.length || 0
@@ -157,10 +179,20 @@ export default function GeneratorPage() {
             templateId: result.data.templateId,
             fileName: result.data.fileName,
             size: file.size,
-            storagePath: result.data.storageUrl || '',
+            storagePath: result.data.storageUrl || result.data.filePath || '',
             message: 'Analysis completed successfully'
           },
-          aiAnalysis: {
+          aiAnalysis: isPDF ? {
+            // PDF upload doesn't include analysis yet - will need to call extract API
+            placeholders: [],
+            transcription: 'PDF uploaded successfully. Analysis pending.',
+            htmlPreview: `<div class="p-8 text-center">
+              <div class="text-4xl mb-4">📄</div>
+              <h3 class="text-lg font-semibold mb-2">${result.data.fileName}</h3>
+              <p class="text-gray-600">PDF uploaded successfully.</p>
+              <p class="text-sm text-blue-600 mt-2">Ready to extract placeholders with AI analysis.</p>
+            </div>`
+          } : {
             placeholders: result.data.placeholders || [],
             transcription: result.data.transcription || '',
             htmlPreview: result.data.htmlPreview
@@ -475,7 +507,7 @@ export default function GeneratorPage() {
                 <div className="text-4xl mb-4">📄</div>
                 <h3 className="text-xl font-semibold mb-3">Upload Document</h3>
                 <p className="text-gray-600 mb-4">
-                  Upload DOCX for instant preview & placeholder detection
+                  Upload DOCX or PDF for instant preview & placeholder detection
                 </p>
                 
                 {!aiState.template && (
@@ -487,9 +519,9 @@ export default function GeneratorPage() {
                       {aiState.processing ? 'GPT-5 Analitzant...' : 'Upload per AI Analysis'}
                       <input
                         type="file"
-                        accept=".docx"
+                        accept=".docx,.pdf"
                         onChange={(e) => {
-                          console.log('📁 DOCX Input activated!', e.target.files?.[0]?.name);
+                          console.log('📁 Document Input activated!', e.target.files?.[0]?.name);
                           handleAiDocumentAnalysis(e);
                         }}
                         disabled={aiState.processing}
