@@ -2,7 +2,7 @@
 // Top navigation bar with logo, new template, and knowledge base
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -14,6 +14,22 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
   const pathname = usePathname();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [templateName, setTemplateName] = useState('');
+  const [isEditingName, setIsEditingName] = useState(false);
+
+  // Load template name from sessionStorage on analyze page
+  useEffect(() => {
+    if (pathname === '/analyze') {
+      const storedName = sessionStorage.getItem('templateName') || '';
+      setTemplateName(storedName);
+    }
+  }, [pathname]);
+
+  // Save template name to sessionStorage when changed
+  const handleNameChange = (newName: string) => {
+    setTemplateName(newName);
+    sessionStorage.setItem('templateName', newName);
+  };
 
   const isActive = (path: string) => {
     if (path === '/') {
@@ -39,6 +55,7 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
         }
       };
       sessionStorage.setItem('selectedFile', JSON.stringify(fileData));
+      sessionStorage.setItem('templateName', file.name.replace('.pdf', ''));
       
       // Create FileReader to store file content
       const reader = new FileReader();
@@ -69,8 +86,34 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
                 </svg>
               </div>
               <div className="flex flex-col">
-                <span className="text-xl font-bold text-gray-900">Textami</span>
-                <span className="text-xs text-gray-500">Plantilla</span>
+                {pathname === '/analyze' && templateName ? (
+                  <>
+                    {isEditingName ? (
+                      <input
+                        type="text"
+                        value={templateName}
+                        onChange={(e) => handleNameChange(e.target.value)}
+                        onBlur={() => setIsEditingName(false)}
+                        onKeyDown={(e) => e.key === 'Enter' && setIsEditingName(false)}
+                        className="text-xl font-bold text-gray-900 bg-transparent border-b border-gray-300 focus:outline-none focus:border-blue-500"
+                        autoFocus
+                      />
+                    ) : (
+                      <span 
+                        className="text-xl font-bold text-gray-900 cursor-pointer hover:text-blue-600"
+                        onClick={() => setIsEditingName(true)}
+                      >
+                        {templateName}
+                      </span>
+                    )}
+                    <span className="text-xs text-gray-500">Plantilla</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-xl font-bold text-gray-900">Textami</span>
+                    {pathname === '/analyze' && <span className="text-xs text-gray-500">Plantilla</span>}
+                  </>
+                )}
               </div>
             </Link>
           </div>
