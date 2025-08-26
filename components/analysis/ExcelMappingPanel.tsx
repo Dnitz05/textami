@@ -288,10 +288,7 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
                 <div key={`${header}-${index}`} className="border border-gray-200 rounded-lg p-3 bg-white mb-3">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                      <div className="font-medium text-gray-900 text-sm mb-1">{header}</div>
-                      {currentMapping && (
-                        <div className="text-xs text-green-600 font-medium">→ {displayValue}</div>
-                      )}
+                      <div className="font-medium text-gray-900 text-sm">{header}</div>
                     </div>
                   </div>
 
