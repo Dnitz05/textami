@@ -235,6 +235,7 @@ export default function AnalyzePage() {
     const result = analysisResult.data;
     const analysisData: AnalysisData = {
       templateId,
+      title: result.title,
       markdown: result.markdown || `# ${file.name}\n\nDocument processed successfully.`,
       sections: result.sections || [],
       tables: result.tables || [],

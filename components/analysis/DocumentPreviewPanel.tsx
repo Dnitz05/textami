@@ -71,7 +71,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
     return highlightedText;
   };
   return (
-    <div className="bg-white shadow-xl border border-gray-200">
+    <div className="bg-white border-l border-r border-gray-200">
       {/* Styles for tag highlighting and Word-like appearance */}
       <style jsx>{`
         .document-container {
@@ -84,10 +84,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           background: white;
           margin: 0 auto;
           padding: 96px 72px;
-          min-height: calc(100vh - 200px);
-          box-shadow: 0 0 10px rgba(0,0,0,0.1);
-          border-left: 1px solid #e5e5e5;
-          border-right: 1px solid #e5e5e5;
+          min-height: 100vh;
         }
         
         .document-title {
@@ -266,7 +263,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         )}
         
         {/* Document Page - Word-like appearance */}
-        <div className="document-container py-8">
+        <div className="document-container">
           <div className="document-page max-w-4xl">
             {/* Document Title */}
             {title && (
