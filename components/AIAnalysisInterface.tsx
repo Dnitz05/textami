@@ -170,10 +170,10 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
   };
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col pt-14">
       {/* Fixed layout without outer padding/margins - sidebars attached to document */}
       <div className="flex-1 flex">
-        {/* Toggle buttons - positioned at top right */}
+        {/* Toggle buttons - positioned at top right (accounting for fixed navbar) */}
         <div className="absolute top-4 right-4 flex items-center space-x-2 z-20">
           <button
             onClick={() => setShowLeftSidebar(!showLeftSidebar)}
