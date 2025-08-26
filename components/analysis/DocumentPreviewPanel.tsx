@@ -71,172 +71,258 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
     return highlightedText;
   };
   return (
-    <div className="bg-white rounded-lg shadow border">
-      {/* Styles for tag highlighting */}
+    <div className="bg-white shadow-xl border border-gray-200">
+      {/* Styles for tag highlighting and Word-like appearance */}
       <style jsx>{`
+        .document-container {
+          font-family: 'Calibri', 'Segoe UI', 'Arial', sans-serif;
+          line-height: 1.6;
+          color: #1f1f1f;
+        }
+        
+        .document-page {
+          background: white;
+          margin: 0 auto;
+          padding: 96px 72px;
+          min-height: calc(100vh - 200px);
+          box-shadow: 0 0 10px rgba(0,0,0,0.1);
+          border-left: 1px solid #e5e5e5;
+          border-right: 1px solid #e5e5e5;
+        }
+        
+        .document-title {
+          font-family: 'Calibri', 'Segoe UI', sans-serif;
+          font-size: 28px;
+          font-weight: 600;
+          color: #1f1f1f;
+          text-align: center;
+          margin: 0 0 32px 0;
+          letter-spacing: -0.5px;
+        }
+        
+        .document-section {
+          margin-bottom: 24px;
+        }
+        
+        .document-section h2 {
+          font-family: 'Calibri', 'Segoe UI', sans-serif;
+          font-size: 18px;
+          font-weight: 600;
+          color: #1f1f1f;
+          margin: 24px 0 12px 0;
+          line-height: 1.4;
+        }
+        
+        .document-content {
+          font-family: 'Calibri', 'Segoe UI', sans-serif;
+          font-size: 14px;
+          line-height: 1.8;
+          color: #1f1f1f;
+          text-align: justify;
+          margin-bottom: 16px;
+        }
+        
+        .document-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 24px 0;
+          font-family: 'Calibri', 'Segoe UI', sans-serif;
+          font-size: 14px;
+        }
+        
+        .document-table th {
+          background-color: #f8f9fa;
+          border: 1px solid #d1d5db;
+          padding: 12px;
+          text-align: left;
+          font-weight: 600;
+          color: #374151;
+        }
+        
+        .document-table td {
+          border: 1px solid #d1d5db;
+          padding: 12px;
+          color: #1f1f1f;
+        }
+        
+        .document-table tr:nth-child(even) {
+          background-color: #f9fafb;
+        }
+        
+        .document-signature {
+          margin-top: 48px;
+          padding: 24px;
+          background: #f8f9fa;
+          border: 1px solid #e5e7eb;
+          text-align: center;
+        }
+        
         .detected-tag {
-          background: linear-gradient(120deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
-          border: 2px dotted #3b82f6;
-          border-radius: 4px;
-          padding: 1px 3px;
+          background: rgba(59, 130, 246, 0.08);
+          border: 1px dotted #3b82f6;
+          border-radius: 2px;
+          padding: 1px 2px;
           margin: 0 1px;
           cursor: help;
-          transition: all 0.2s ease;
-          display: inline-block;
+          transition: all 0.15s ease;
+          display: inline;
         }
         
         .detected-tag:hover {
-          background: linear-gradient(120deg, rgba(59, 130, 246, 0.2) 0%, rgba(147, 51, 234, 0.2) 100%);
+          background: rgba(59, 130, 246, 0.12);
           border-color: #1d4ed8;
-          transform: scale(1.02);
         }
         
         .detected-tag-string {
           border-color: #10b981;
-          background: linear-gradient(120deg, rgba(16, 185, 129, 0.1) 0%, rgba(34, 197, 94, 0.1) 100%);
+          background: rgba(16, 185, 129, 0.08);
         }
         
         .detected-tag-date {
           border-color: #f59e0b;
-          background: linear-gradient(120deg, rgba(245, 158, 11, 0.1) 0%, rgba(251, 191, 36, 0.1) 100%);
+          background: rgba(245, 158, 11, 0.08);
         }
         
         .detected-tag-currency {
           border-color: #ef4444;
-          background: linear-gradient(120deg, rgba(239, 68, 68, 0.1) 0%, rgba(248, 113, 113, 0.1) 100%);
+          background: rgba(239, 68, 68, 0.08);
         }
         
         .detected-tag-address {
           border-color: #8b5cf6;
-          background: linear-gradient(120deg, rgba(139, 92, 246, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+          background: rgba(139, 92, 246, 0.08);
         }
       `}</style>
       
-      <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
-        <div className="flex items-center space-x-3">
-          {isProcessing ? (
-            <svg className="animate-spin w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          ) : (
-            <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          )}
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className="text-lg font-semibold text-gray-900">{fileName}</span>
-              <span className="text-sm text-gray-500">·</span>
-              <span className="text-sm text-gray-500">Plantilla</span>
+      {/* Word-like Toolbar */}
+      <div className="bg-white border-b border-gray-300 px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            {isProcessing ? (
+              <svg className="animate-spin w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            )}
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-gray-900">{fileName}</span>
+              <span className="text-xs text-gray-500">Plantilla</span>
             </div>
           </div>
-        </div>
-        
-        <div className="flex gap-2">
-          {onSave && (
-            <button
-              onClick={onSave}
-              className="px-3 py-1.5 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
-            >
-              💾 Desar
-            </button>
-          )}
-          {onSaveAs && (
-            <button
-              onClick={onSaveAs}
-              className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
-            >
-              💾 Desar com...
-            </button>
-          )}
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="px-3 py-1.5 bg-gray-600 text-white text-sm rounded hover:bg-gray-700 transition-colors"
-            >
-              ✕ Tancar
-            </button>
-          )}
+          
+          <div className="flex items-center space-x-2">
+            {onSave && (
+              <button
+                onClick={onSave}
+                className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded border border-gray-300 transition-colors"
+              >
+                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                Desar
+              </button>
+            )}
+            {onSaveAs && (
+              <button
+                onClick={onSaveAs}
+                className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded border border-gray-300 transition-colors"
+              >
+                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Desar com...
+              </button>
+            )}
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded border border-gray-300 transition-colors"
+              >
+                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Tancar
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className={`p-6 relative ${isProcessing ? 'opacity-60' : ''}`}>
+      {/* Word-like Document Container */}
+      <div className="bg-gray-100 min-h-screen relative">
         {/* Processing overlay */}
         {isProcessing && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
-            <div className="flex items-center space-x-2 bg-purple-100 px-4 py-2 rounded-lg border border-purple-200">
-              <svg className="animate-spin w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-center space-x-3 bg-blue-50 px-6 py-3 rounded-lg border border-blue-200 shadow-sm">
+              <svg className="animate-spin w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-              <span className="text-purple-800 text-sm font-medium">Processant instrucció...</span>
+              <span className="text-blue-800 text-sm font-medium">Processant instrucció...</span>
             </div>
           </div>
         )}
         
-        {/* Document Title */}
-        {title && (
-          <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2 uppercase tracking-wide">
-              {title}
-            </h1>
-            <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-600 mx-auto rounded-full"></div>
-          </div>
-        )}
+        {/* Document Page - Word-like appearance */}
+        <div className="document-container py-8">
+          <div className="document-page max-w-4xl">
+            {/* Document Title */}
+            {title && (
+              <h1 className="document-title">
+                {title}
+              </h1>
+            )}
 
-        {/* Document Content - Visual Sections in Original Order */}
-        <div className="space-y-6">
-          {sections.length > 0 ? (
-            sections.map((section, index) => (
-              <div key={section.id || index} className="">
-                {section.title && (
-                  <h2 className="text-xl font-bold text-gray-900 mb-4 border-b border-gray-200 pb-2">
-                    {section.title}
-                  </h2>
-                )}
-                <div className="prose prose-sm max-w-none">
-                  <div 
-                    className="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: highlightTags(section.markdown) }}
-                  />
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="prose prose-sm max-w-none">
-              <div 
-                className="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: highlightTags(markdown) }}
-              />
+            {/* Document Content */}
+            <div>
+              {sections.length > 0 ? (
+                sections.map((section, index) => (
+                  <div key={section.id || index} className="document-section">
+                    {section.title && (
+                      <h2>{section.title}</h2>
+                    )}
+                    <div 
+                      className="document-content"
+                      dangerouslySetInnerHTML={{ __html: highlightTags(section.markdown) }}
+                    />
+                  </div>
+                ))
+              ) : (
+                <div 
+                  className="document-content"
+                  dangerouslySetInnerHTML={{ __html: highlightTags(markdown) }}
+                />
+              )}
             </div>
-          )}
-        </div>
 
-        {/* Tables */}
-        {tables.length > 0 && (
-          <div className="mt-8 space-y-6">
-            {tables.map((table, index) => (
-              <div key={table.id || index} className="">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  {table.title}
-                </h3>
-                
-                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full">
-                      <thead className="bg-gray-50">
+            {/* Tables */}
+            {tables.length > 0 && (
+              <div className="mt-8">
+                {tables.map((table, index) => (
+                  <div key={table.id || index} className="document-section">
+                    {table.title && (
+                      <h3 style={{fontSize: '16px', fontWeight: '600', marginBottom: '12px', color: '#1f1f1f'}}>
+                        {table.title}
+                      </h3>
+                    )}
+                    
+                    <table className="document-table">
+                      <thead>
                         <tr>
                           {table.headers.map((header, idx) => (
-                            <th key={idx} className="px-4 py-3 text-left text-sm font-semibold text-gray-900 border-b border-gray-200">
+                            <th key={idx}>
                               {header}
                             </th>
                           ))}
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-200">
+                      <tbody>
                         {table.rows.map((row, idx) => (
-                          <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                          <tr key={idx}>
                             {row.map((cell, cellIdx) => (
-                              <td key={cellIdx} className="px-4 py-3 text-sm text-gray-800">
+                              <td key={cellIdx}>
                                 {cell}
                               </td>
                             ))}
@@ -245,32 +331,24 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
                       </tbody>
                     </table>
                   </div>
+                ))}
+              </div>
+            )}
+
+            {/* Signature */}
+            {signatura && (
+              <div className="document-signature">
+                <div style={{fontFamily: 'Calibri, sans-serif', fontSize: '14px', lineHeight: '1.6'}}>
+                  <div style={{fontWeight: '600', fontSize: '16px', marginBottom: '8px', color: '#1f1f1f'}}>{signatura.nom}</div>
+                  <div style={{fontWeight: '500', marginBottom: '4px', color: '#374151'}}>{signatura.carrec}</div>
+                  <div style={{fontSize: '13px', color: '#6b7280'}}>{signatura.data_lloc}</div>
                 </div>
               </div>
-            ))}
+            )}
           </div>
-        )}
-
-        {/* Signature */}
-        {signatura && (
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
-              <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                </svg>
-                Signatura del Document
-              </h4>
-              <div className="text-base">
-                <div className="font-bold text-blue-900 text-lg mb-1">{signatura.nom}</div>
-                <div className="text-blue-800 font-medium mb-2">{signatura.carrec}</div>
-                <div className="text-blue-700 text-sm">{signatura.data_lloc}</div>
-              </div>
-            </div>
-          </div>
-        )}
-
+        </div>
       </div>
+
     </div>
   );
 };
