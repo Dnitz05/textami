@@ -95,27 +95,25 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-3 border-b">
-        <h3 className="text-sm font-medium text-gray-700">AI Instructions</h3>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-3">
+    <div style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}>
+      <div>
         {/* Existing Instructions */}
-        <div className="space-y-2">
+        <div className="space-y-1">
           {instructions.map((instruction) => (
             <div key={instruction.id} 
-                 className="p-2 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"
+                 className="px-3 py-2 hover:bg-gray-100 rounded cursor-pointer border border-gray-200 bg-white transition-colors"
                  onClick={() => executeInstruction(instruction)}>
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <div className="text-sm font-medium text-gray-900">{instruction.title}</div>
+                  <div className="text-sm font-medium text-gray-800">{instruction.title}</div>
                 </div>
                 <div className="ml-2 flex-shrink-0">
                   {isExecuting && executingInstructionId === instruction.id ? (
-                    <div className="w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                   ) : (
-                    <div className="text-purple-600 text-xs">▶</div>
+                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                   )}
                 </div>
               </div>
@@ -125,51 +123,51 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
 
         {/* Add New Instruction Form */}
         {showAddForm && (
-          <div className="border rounded-lg p-3 bg-purple-50">
-            <h4 className="font-medium text-sm mb-3">Nova Instrucció AI</h4>
+          <div className="mt-4 border border-gray-300 rounded-lg p-4 bg-blue-50">
+            <h4 className="font-medium text-sm mb-3 text-gray-800">Nova Instrucció AI</h4>
             
-            <div className="space-y-2">
-              <div>
-                <select
-                  value={newInstruction.type}
-                  onChange={(e) => setNewInstruction({...newInstruction, type: e.target.value as any})}
-                  className="w-full text-xs border rounded p-2"
-                >
-                  <option value="global">Global (tot el document)</option>
-                  <option value="section">Secció específica</option>
-                  <option value="paragraph">Paràgraf específic</option>
-                </select>
-              </div>
+            <div className="space-y-3">
+              <select
+                value={newInstruction.type}
+                onChange={(e) => setNewInstruction({...newInstruction, type: e.target.value as any})}
+                className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}
+              >
+                <option value="global">Global (tot el document)</option>
+                <option value="section">Secció específica</option>
+                <option value="paragraph">Paràgraf específic</option>
+              </select>
               
-              <div>
-                <input
-                  type="text"
-                  placeholder="Títol de la instrucció..."
-                  value={newInstruction.title}
-                  onChange={(e) => setNewInstruction({...newInstruction, title: e.target.value})}
-                  className="w-full text-xs border rounded p-2"
-                />
-              </div>
+              <input
+                type="text"
+                placeholder="Títol de la instrucció..."
+                value={newInstruction.title}
+                onChange={(e) => setNewInstruction({...newInstruction, title: e.target.value})}
+                className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}
+              />
               
-              <div>
-                <textarea
-                  placeholder="Descripció de la instrucció..."
-                  value={newInstruction.instruction}
-                  onChange={(e) => setNewInstruction({...newInstruction, instruction: e.target.value})}
-                  className="w-full text-xs border rounded p-2"
-                  rows={3}
-                />
-              </div>
+              <textarea
+                placeholder="Descripció de la instrucció..."
+                value={newInstruction.instruction}
+                onChange={(e) => setNewInstruction({...newInstruction, instruction: e.target.value})}
+                className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                rows={3}
+                style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}
+              />
               
               <div className="flex space-x-2">
                 <button
                   onClick={handleAddInstruction}
-                  className="text-xs bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700"
+                  className="text-sm bg-blue-600 text-white px-4 py-2 rounded border border-blue-600 hover:bg-blue-700 transition-colors"
+                  style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}
                 >
+                  Afegir
                 </button>
                 <button
                   onClick={() => setShowAddForm(false)}
-                  className="text-xs border border-gray-300 px-3 py-1 rounded hover:bg-gray-50"
+                  className="text-sm border border-gray-300 px-4 py-2 rounded hover:bg-gray-50 transition-colors"
+                  style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}
                 >
                   Cancel·lar
                 </button>

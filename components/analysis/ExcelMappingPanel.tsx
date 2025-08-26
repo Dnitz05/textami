@@ -177,24 +177,28 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow border">
-      <div className="p-4 border-b bg-gray-50">
-        <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-          <div className="flex items-center mr-2">
-            <svg className="w-5 h-5 mr-1 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            <span className="text-sm">🧠</span>
-          </div>
-          Smart Excel Mapping
-          <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
-            {getMappedCount()}/{tags.length}
+    <div style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}>
+      {/* Status indicator */}
+      {tags.length > 0 && (
+        <div className="mb-4 flex items-center justify-between">
+          <span className="text-xs font-medium text-gray-600">
+            Mapatge: {getMappedCount()}/{tags.length} tags
           </span>
-        </h3>
-        <p className="text-sm text-gray-600 mt-1">AI-powered mapping between detected tags and Excel columns</p>
-      </div>
+          <div className="flex items-center">
+            <div className="w-16 bg-gray-200 rounded-full h-1.5">
+              <div 
+                className="bg-green-500 h-1.5 rounded-full transition-all duration-300"
+                style={{ width: `${(getMappedCount() / tags.length) * 100}%` }}
+              ></div>
+            </div>
+            <span className="text-xs text-green-600 font-medium ml-2">
+              {Math.round((getMappedCount() / tags.length) * 100)}%
+            </span>
+          </div>
+        </div>
+      )}
 
-      <div className="p-4 max-h-96 overflow-y-auto">
+      <div>
         {excelHeaders.length === 0 ? (
           <div 
             className="cursor-pointer bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-dashed border-green-300 rounded-lg p-6 hover:from-green-100 hover:to-emerald-100 hover:border-green-400 transition-all duration-200"
@@ -318,26 +322,6 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
               );
             })}
 
-            {/* Mapping Summary */}
-            <div className="mt-6 pt-4 border-t">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">
-                  Mapping Progress: {getMappedCount()} of {tags.length} tags mapped
-                </span>
-                <div className="flex items-center space-x-1">
-                  <div className="w-24 bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-purple-600 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${(getMappedCount() / tags.length) * 100}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-purple-600 font-medium text-xs ml-2">
-                    {Math.round((getMappedCount() / tags.length) * 100)}%
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
         )}
       </div>
     </div>
