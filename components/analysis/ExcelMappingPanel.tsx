@@ -10,6 +10,7 @@ interface ExcelMappingPanelProps {
   pipelineStatus?: string;
   onExcelUpload?: (event: React.ChangeEvent<HTMLInputElement>) => void;
   isProcessingExcel?: boolean;
+  documentMarkdown?: string;
 }
 
 interface MappingSuggestion {
@@ -30,7 +31,8 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
   onMappingUpdate,
   pipelineStatus,
   onExcelUpload,
-  isProcessingExcel = false
+  isProcessingExcel = false,
+  documentMarkdown = ''
 }) => {
   const [mappings, setMappings] = useState<Record<string, string>>({});
   const [suggestions, setSuggestions] = useState<MappingSuggestion[]>([]);
@@ -57,7 +59,7 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
         body: JSON.stringify({
           tags: tags,
           excelHeaders: excelHeaders,
-          documentContent: '' // TODO: Pass document content for better context
+          documentContent: documentMarkdown || '' // Pass document content for better context
         })
       });
 

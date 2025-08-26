@@ -297,6 +297,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                 pipelineStatus={pipelineStatus}
                 onExcelUpload={onExcelUpload}
                 isProcessingExcel={isProcessingExcel}
+                documentMarkdown={currentMarkdown}
               />
             </div>
           </div>
