@@ -234,9 +234,11 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
             <div className="flex justify-center p-4 md:p-6">
               <div className="w-full max-w-4xl bg-white rounded-lg shadow-lg">
                 <DocumentPreviewPanel 
+                  title={analysisData.title}
                   markdown={currentMarkdown}
                   sections={analysisData.sections}
                   tables={analysisData.tables}
+                  tags={analysisData.tags}
                   signatura={analysisData.signatura}
                   isProcessing={isExecutingInstruction}
                   fileName={fileName}

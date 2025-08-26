@@ -10,9 +10,11 @@ interface DocumentSignature {
 }
 
 interface DocumentPreviewPanelProps {
+  title?: string;
   markdown: string;
   sections: ParsedSection[];
   tables: ParsedTable[];
+  tags?: any[];
   signatura?: DocumentSignature;
   isProcessing?: boolean;
   fileName?: string;
@@ -22,9 +24,11 @@ interface DocumentPreviewPanelProps {
 }
 
 const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
+  title,
   markdown,
   sections,
   tables,
+  tags = [],
   signatura,
   isProcessing = false,
   fileName = 'Document.pdf',
@@ -32,8 +36,70 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
   onSaveAs,
   onClose
 }) => {
+  
+  // Function to highlight detected tags in text
+  const highlightTags = (text: string): string => {
+    let highlightedText = text;
+    
+    // Sort tags by example length (longest first to avoid partial replacements)
+    const sortedTags = [...tags].sort((a, b) => (b.example?.length || 0) - (a.example?.length || 0));
+    
+    sortedTags.forEach((tag, index) => {
+      if (tag.example && tag.example.trim()) {
+        const example = tag.example.trim();
+        // Create a unique class for each tag type
+        const tagClass = `detected-tag detected-tag-${tag.type} detected-tag-${index}`;
+        
+        // Replace with highlighted version (case-insensitive, whole word)
+        const regex = new RegExp(`\\b${example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+        highlightedText = highlightedText.replace(regex, `<span class="${tagClass}" title="${tag.name} (${tag.type})">${example}</span>`);
+      }
+    });
+    
+    return highlightedText;
+  };
   return (
     <div className="bg-white rounded-lg shadow border">
+      {/* Styles for tag highlighting */}
+      <style jsx>{`
+        .detected-tag {
+          background: linear-gradient(120deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
+          border: 2px dotted #3b82f6;
+          border-radius: 4px;
+          padding: 1px 3px;
+          margin: 0 1px;
+          cursor: help;
+          transition: all 0.2s ease;
+          display: inline-block;
+        }
+        
+        .detected-tag:hover {
+          background: linear-gradient(120deg, rgba(59, 130, 246, 0.2) 0%, rgba(147, 51, 234, 0.2) 100%);
+          border-color: #1d4ed8;
+          transform: scale(1.02);
+        }
+        
+        .detected-tag-string {
+          border-color: #10b981;
+          background: linear-gradient(120deg, rgba(16, 185, 129, 0.1) 0%, rgba(34, 197, 94, 0.1) 100%);
+        }
+        
+        .detected-tag-date {
+          border-color: #f59e0b;
+          background: linear-gradient(120deg, rgba(245, 158, 11, 0.1) 0%, rgba(251, 191, 36, 0.1) 100%);
+        }
+        
+        .detected-tag-currency {
+          border-color: #ef4444;
+          background: linear-gradient(120deg, rgba(239, 68, 68, 0.1) 0%, rgba(248, 113, 113, 0.1) 100%);
+        }
+        
+        .detected-tag-address {
+          border-color: #8b5cf6;
+          background: linear-gradient(120deg, rgba(139, 92, 246, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+        }
+      `}</style>
+      
       <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
         <div>
           <h3 className="text-lg font-semibold text-gray-900 flex items-center">
@@ -92,6 +158,16 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           </div>
         )}
         
+        {/* Document Title */}
+        {title && (
+          <div className="mb-8 text-center">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2 uppercase tracking-wide">
+              {title}
+            </h1>
+            <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-600 mx-auto rounded-full"></div>
+          </div>
+        )}
+
         {/* Document Content - Visual Sections in Original Order */}
         <div className="space-y-6">
           {sections.length > 0 ? (
@@ -103,17 +179,19 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
                   </h2>
                 )}
                 <div className="prose prose-sm max-w-none">
-                  <div className="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed">
-                    {section.markdown}
-                  </div>
+                  <div 
+                    className="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: highlightTags(section.markdown) }}
+                  />
                 </div>
               </div>
             ))
           ) : (
             <div className="prose prose-sm max-w-none">
-              <div className="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed">
-                {markdown}
-              </div>
+              <div 
+                className="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: highlightTags(markdown) }}
+              />
             </div>
           )}
         </div>

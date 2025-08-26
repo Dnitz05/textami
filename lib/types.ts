@@ -38,6 +38,7 @@ export interface DocumentSignature {
 
 export interface AnalysisData {
   templateId: string;
+  title?: string;
   markdown: string;
   sections: ParsedSection[];
   tables: ParsedTable[];
@@ -66,6 +67,7 @@ export interface UploadResponse {
 export interface ExtractionResponse {
   templateId: string;
   analysisPath: string;
+  title?: string;
   markdown: string;
   sections: ParsedSection[];
   tables: ParsedTable[];

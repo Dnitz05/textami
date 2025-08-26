@@ -18,6 +18,19 @@ interface ExtractRequest {
   fileName?: string;
 }
 
+// Helper function to extract document title from markdown
+function extractDocumentTitle(markdown: string): string | undefined {
+  // Look for H1 headers at the beginning of the document
+  const lines = markdown.split('\n');
+  for (let i = 0; i < Math.min(5, lines.length); i++) {
+    const line = lines[i].trim();
+    if (line.startsWith('# ')) {
+      return line.substring(2).trim();
+    }
+  }
+  return undefined;
+}
+
 interface AIAnalysisResponse {
   markdown: string;
   json: {
@@ -340,11 +353,15 @@ Return ONLY the JSON response, no additional text.`
       normalizedTags: parsedAnalysis.tags.map(t => `${t.name}:${t.type}:${t.confidence}`)
     });
 
+    // Extract document title from markdown
+    const documentTitle = extractDocumentTitle(analysisResult.markdown);
+
     return NextResponse.json({
       success: true,
       data: {
         templateId,
         analysisPath,
+        title: documentTitle,
         markdown: analysisResult.markdown,
         sections: parsedAnalysis.sections,
         tables: parsedAnalysis.tables,
