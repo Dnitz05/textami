@@ -223,39 +223,6 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                       executingInstructionId={executingInstructionId}
                     />
                   </div>
-                  
-                  {/* Custom instruction input area with enhanced spacing */}
-                  <div className="border-t border-gray-300 p-6 bg-gradient-to-r from-gray-50 to-gray-100 flex-none shadow-inner">
-                    <label className="block text-xs font-medium text-gray-700 mb-2">
-                      Instrucció personalitzada
-                    </label>
-                    <textarea
-                      value={customInstruction}
-                      onChange={(e) => setCustomInstruction(e.target.value)}
-                      placeholder="Escriu la teva instrucció aquí..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-sans"
-                      rows={3}
-                      disabled={isExecutingCustom}
-                      style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}
-                    />
-                    <button
-                      onClick={handleCustomInstructionExecute}
-                      disabled={isExecutingCustom || !customInstruction.trim()}
-                      className="w-full mt-3 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded border border-blue-600 hover:bg-blue-700 hover:border-blue-700 disabled:bg-gray-400 disabled:border-gray-400 transition-colors"
-                      style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}
-                    >
-                      {isExecutingCustom ? (
-                        <span className="flex items-center justify-center">
-                          <svg className="animate-spin w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                          </svg>
-                          Executant...
-                        </span>
-                      ) : (
-                        'Executar Instrucció'
-                      )}
-                    </button>
-                  </div>
                 </div>
               )}
 
