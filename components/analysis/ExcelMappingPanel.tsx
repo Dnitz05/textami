@@ -241,10 +241,18 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
         ) : (
           <div className="space-y-4">
             {isLoadingSuggestions && (
-              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-                <div className="flex items-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600 mr-3"></div>
-                  <span className="text-purple-800 text-sm">🧠 Loading intelligent AI mapping suggestions...</span>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                <div className="flex items-center justify-center mb-3">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3"></div>
+                  <span className="text-blue-800 font-medium">🧠 Analitzant Excel amb IA...</span>
+                </div>
+                <p className="text-sm text-blue-700">
+                  La intel·ligència artificial està processant les capçaleres d'Excel i suggerint els tags més adequats. Això pot trigar uns segons.
+                </p>
+                <div className="mt-3 flex items-center justify-center space-x-2">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                 </div>
               </div>
             )}
@@ -263,7 +271,7 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
                     
                     {suggestedTag && (
                       <div className={`px-2 py-1 text-xs rounded border bg-blue-50 border-blue-200 text-blue-800`}>
-                        IA: {Math.round(suggestedTag.confidence * 100)}%
+                        IA: {Math.round((suggestedTag.score || 0) * 100)}%
                       </div>
                     )}
                   </div>
@@ -290,7 +298,7 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
                             <div className="flex items-center space-x-2 mb-1">
                               <span className="text-xs font-medium text-blue-700">🧠 Suggeriment IA:</span>
                               <div className="px-2 py-1 text-xs rounded border bg-blue-100 border-blue-200 text-blue-800">
-                                {Math.round(suggestedTag.confidence * 100)}%
+                                {Math.round((suggestedTag.score || 0) * 100)}%
                               </div>
                             </div>
                             <div className="text-sm font-medium text-blue-900 mb-1">{suggestedTag.tagName}</div>
