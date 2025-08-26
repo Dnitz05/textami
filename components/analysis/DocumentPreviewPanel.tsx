@@ -264,7 +264,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         
         {/* Document Page - Word-like appearance with enhanced spacing */}
         <div className="document-container p-6 bg-gray-100 rounded-b-2xl">
-          <div className="document-page bg-white rounded-xl shadow-inner" style={{width: 'calc(210mm - 60px)', margin: '0 auto', padding: '60px 50px'}}>
+          <div className="document-page bg-white shadow-lg border border-gray-200" style={{width: 'calc(210mm - 60px)', margin: '0 auto', padding: '60px 50px'}}>
             {/* Document Title */}
             {title && (
               <h1 className="document-title">
