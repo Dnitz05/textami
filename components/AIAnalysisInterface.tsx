@@ -170,7 +170,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
   };
 
   return (
-    <div className="h-screen flex flex-col pt-14">
+    <div className="h-screen flex flex-col">
       {/* Fixed layout without outer padding/margins - sidebars attached to document */}
       <div className="flex-1 flex">
         {/* Toggle buttons - positioned at top right (accounting for fixed navbar) */}
