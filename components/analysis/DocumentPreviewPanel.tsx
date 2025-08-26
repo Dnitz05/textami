@@ -192,7 +192,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
       `}</style>
       
       {/* Document Header with template name and actions - modern office style */}
-      <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-400 px-4 py-4 shadow-md rounded-t-2xl">
+      <div className="bg-gray-100 border-b border-gray-400 px-4 py-4 shadow-md rounded-t-2xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {isProcessing ? (
@@ -263,7 +263,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         )}
         
         {/* Document Page - Word-like appearance with enhanced spacing */}
-        <div className="document-container p-6 bg-gray-50 rounded-b-2xl">
+        <div className="document-container p-6 bg-gray-100 rounded-b-2xl">
           <div className="document-page bg-white rounded-xl shadow-inner" style={{width: 'calc(210mm - 60px)', margin: '0 auto', padding: '60px 50px'}}>
             {/* Document Title */}
             {title && (
