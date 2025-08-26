@@ -86,7 +86,7 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
         });
         
         setMappings(autoMappings);
-        onMappingUpdate?.(autoMappings);"
+        onMappingUpdate?.(autoMappings);
         
         console.log('✅ AI mappings loaded:', {
           total: aiSuggestions.length,
