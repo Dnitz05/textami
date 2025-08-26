@@ -258,6 +258,34 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                 </div>
               )}
 
+              {/* Right Sidebar - positioned at document edge */}
+              {showRightSidebar && (
+                <div className="absolute right-0 top-0 w-80 bg-white border-l-2 border-gray-300 flex flex-col h-full z-10 transform translate-x-full">
+                  {/* Sidebar Header */}
+                  <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex-none">
+                    <h3 className="text-sm font-semibold text-gray-800 flex items-center">
+                      <svg className="w-4 h-4 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                      Smart Mapping
+                    </h3>
+                  </div>
+                  
+                  {/* Excel Mapping Content */}
+                  <div className="flex-1 overflow-y-auto px-4 py-3">
+                    <ExcelMappingPanel 
+                      tags={analysisData.tags}
+                      excelHeaders={excelHeaders}
+                      onMappingUpdate={handleMappingUpdate}
+                      pipelineStatus={pipelineStatus}
+                      onExcelUpload={onExcelUpload}
+                      isProcessingExcel={isProcessingExcel}
+                      documentMarkdown={currentMarkdown}
+                    />
+                  </div>
+                </div>
+              )}
+
               <DocumentPreviewPanel 
                 title={analysisData.title}
                 markdown={currentMarkdown}
@@ -274,34 +302,6 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
             </div>
           </div>
         </div>
-
-        {/* Right Sidebar - Smart Mapping */}
-        {showRightSidebar && (
-          <div className="w-80 flex-none bg-white border-l-2 border-gray-300 flex flex-col h-full">
-            {/* Sidebar Header */}
-            <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex-none">
-              <h3 className="text-sm font-semibold text-gray-800 flex items-center">
-                <svg className="w-4 h-4 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                Smart Mapping
-              </h3>
-            </div>
-            
-            {/* Excel Mapping Content */}
-            <div className="flex-1 overflow-y-auto px-4 py-3">
-              <ExcelMappingPanel 
-                tags={analysisData.tags}
-                excelHeaders={excelHeaders}
-                onMappingUpdate={handleMappingUpdate}
-                pipelineStatus={pipelineStatus}
-                onExcelUpload={onExcelUpload}
-                isProcessingExcel={isProcessingExcel}
-                documentMarkdown={currentMarkdown}
-              />
-            </div>
-          </div>
-        )}
 
       </div>
     </div>

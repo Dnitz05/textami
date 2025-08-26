@@ -191,8 +191,8 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         }
       `}</style>
       
-      {/* Document Header with template name and actions */}
-      <div className="bg-white border-b border-gray-300 px-4 py-3">
+      {/* Document Header with template name and actions - matching sidebar style */}
+      <div className="bg-gray-50 border-b border-gray-200 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {isProcessing ? (
