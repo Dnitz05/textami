@@ -104,7 +104,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
                 )}
                 <div className="prose prose-sm max-w-none">
                   <div className="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed">
-                    {section.content || section.markdown}
+                    {section.markdown}
                   </div>
                 </div>
               </div>
