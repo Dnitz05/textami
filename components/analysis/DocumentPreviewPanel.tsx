@@ -92,95 +92,91 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           </div>
         )}
         
-        {/* Markdown Content - Main Document */}
-        <div className="prose prose-sm max-w-none">
-          <div className="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed">
-            {markdown}
-          </div>
+        {/* Document Content - Visual Sections in Original Order */}
+        <div className="space-y-6">
+          {sections.length > 0 ? (
+            sections.map((section, index) => (
+              <div key={section.id || index} className="">
+                {section.title && (
+                  <h2 className="text-xl font-bold text-gray-900 mb-4 border-b border-gray-200 pb-2">
+                    {section.title}
+                  </h2>
+                )}
+                <div className="prose prose-sm max-w-none">
+                  <div className="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed">
+                    {section.content || section.markdown}
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="prose prose-sm max-w-none">
+              <div className="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed">
+                {markdown}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Tables Summary */}
+        {/* Tables */}
         {tables.length > 0 && (
-          <div className="mt-6 pt-6 border-t">
-            <h4 className="text-md font-medium text-gray-900 mb-3">Document Tables</h4>
-            <div className="space-y-4">
-              {tables.map((table, index) => (
-                <div key={table.id || index} className="bg-gray-50 rounded p-3">
-                  <div className="font-medium text-gray-900 text-sm mb-2">
-                    {table.title}
-                  </div>
-                  
+          <div className="mt-8 space-y-6">
+            {tables.map((table, index) => (
+              <div key={table.id || index} className="">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  {table.title}
+                </h3>
+                
+                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
                   <div className="overflow-x-auto">
-                    <table className="min-w-full text-xs">
-                      <thead>
-                        <tr className="border-b border-gray-300">
+                    <table className="min-w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
                           {table.headers.map((header, idx) => (
-                            <th key={idx} className="text-left py-1 px-2 font-medium text-gray-700">
+                            <th key={idx} className="px-4 py-3 text-left text-sm font-semibold text-gray-900 border-b border-gray-200">
                               {header}
                             </th>
                           ))}
                         </tr>
                       </thead>
-                      <tbody>
-                        {table.rows.slice(0, 3).map((row, idx) => (
-                          <tr key={idx} className="border-b border-gray-200">
+                      <tbody className="divide-y divide-gray-200">
+                        {table.rows.map((row, idx) => (
+                          <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                             {row.map((cell, cellIdx) => (
-                              <td key={cellIdx} className="py-1 px-2 text-gray-600">
+                              <td key={cellIdx} className="px-4 py-3 text-sm text-gray-800">
                                 {cell}
                               </td>
                             ))}
                           </tr>
                         ))}
-                        {table.rows.length > 3 && (
-                          <tr>
-                            <td colSpan={table.headers.length} className="py-1 px-2 text-gray-500 italic text-center">
-                              +{table.rows.length - 3} more rows...
-                            </td>
-                          </tr>
-                        )}
                       </tbody>
                     </table>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         )}
 
         {/* Signature */}
         {signatura && (
-          <div className="mt-6 pt-6 border-t">
-            <h4 className="text-md font-medium text-gray-900 mb-3">Document Signature</h4>
-            <div className="bg-blue-50 rounded p-3">
-              <div className="text-sm">
-                <div className="font-medium text-blue-900">{signatura.nom}</div>
-                <div className="text-blue-700">{signatura.carrec}</div>
-                <div className="text-blue-600 text-xs mt-1">{signatura.data_lloc}</div>
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
+              <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                </svg>
+                Signatura del Document
+              </h4>
+              <div className="text-base">
+                <div className="font-bold text-blue-900 text-lg mb-1">{signatura.nom}</div>
+                <div className="text-blue-800 font-medium mb-2">{signatura.carrec}</div>
+                <div className="text-blue-700 text-sm">{signatura.data_lloc}</div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Debug: Sections breakdown - only show if needed for troubleshooting */}
-        {sections.length > 0 && process.env.NODE_ENV === 'development' && (
-          <details className="mt-6 pt-6 border-t">
-            <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700">
-              Debug: Sections breakdown ({sections.length} sections)
-            </summary>
-            <div className="mt-3 space-y-2">
-              {sections.map((section, index) => (
-                <div key={section.id || index} className="bg-yellow-50 border border-yellow-200 rounded p-2">
-                  <div className="text-xs font-medium text-yellow-800 mb-1">
-                    Section: {section.title}
-                  </div>
-                  <div className="text-xs text-yellow-700 leading-relaxed max-h-20 overflow-y-auto">
-                    {section.markdown}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </details>
-        )}
       </div>
     </div>
   );
