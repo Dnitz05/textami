@@ -221,6 +221,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                       onInstructionExecute={handleInstructionExecute}
                       isExecuting={isExecutingInstruction}
                       executingInstructionId={executingInstructionId}
+                      documentSections={analysisData?.sections?.map(s => ({id: s.id || s.title, title: s.title})) || []}
                     />
                   </div>
                 </div>

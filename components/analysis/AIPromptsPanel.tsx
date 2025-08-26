@@ -15,13 +15,15 @@ interface AIPromptsPanelProps {
   onInstructionExecute?: (instruction: AIInstruction) => void;
   isExecuting?: boolean;
   executingInstructionId?: string | null;
+  documentSections?: Array<{id: string; title: string;}>;
 }
 
 const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
   pipelineStatus = 'uploaded',
   onInstructionExecute,
   isExecuting = false,
-  executingInstructionId = null
+  executingInstructionId = null,
+  documentSections = []
 }) => {
   const [instructions, setInstructions] = useState<AIInstruction[]>([
     {
@@ -60,11 +62,13 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
 
   const handleAddInstruction = () => {
     if (newInstruction.title && newInstruction.instruction) {
+      const isSection = documentSections.some(s => s.id === newInstruction.type);
       const instruction: AIInstruction = {
         id: Date.now().toString(),
-        type: newInstruction.type,
+        type: isSection ? 'section' : newInstruction.type,
         title: newInstruction.title,
-        instruction: newInstruction.instruction
+        instruction: newInstruction.instruction,
+        target: isSection ? newInstruction.type : undefined
       };
       setInstructions([...instructions, instruction]);
       setNewInstruction({ type: 'global', title: '', instruction: '' });
@@ -119,6 +123,9 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="text-sm font-medium text-gray-800">{instruction.title}</div>
+                  {instruction.target && (
+                    <div className="text-xs text-blue-600 mt-1">📋 {documentSections.find(s => s.id === instruction.target)?.title || instruction.target}</div>
+                  )}
                 </div>
                 <div className="ml-2 flex-shrink-0">
                   {isExecuting && executingInstructionId === instruction.id ? (
@@ -146,9 +153,11 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
                 className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}
               >
-                <option value="global">Global (tot el document)</option>
-                <option value="section">Secció específica</option>
-                <option value="paragraph">Paràgraf específic</option>
+                <option value="global">🌐 Global (tot el document)</option>
+                {documentSections.map((section) => (
+                  <option key={section.id} value={section.id}>📋 {section.title}</option>
+                ))}
+                <option value="paragraph">📝 Paràgraf específic</option>
               </select>
               
               <input
