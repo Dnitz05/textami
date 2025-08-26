@@ -321,7 +321,7 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
                 </div>
               );
             })}
-
+          </div>
         )}
       </div>
     </div>
