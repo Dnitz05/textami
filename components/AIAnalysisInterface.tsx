@@ -202,7 +202,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
             <div className="w-full max-w-4xl bg-white shadow-xl relative">
               {/* Left Sidebar - positioned at document edge */}
               {showLeftSidebar && (
-                <div className="absolute left-0 top-0 w-80 bg-white border-r-2 border-gray-300 flex flex-col h-full z-10 transform -translate-x-full">
+                <div className="absolute left-0 top-14 bottom-0 w-80 bg-white border-r-2 border-gray-300 flex flex-col z-10 transform -translate-x-full">
                   {/* Sidebar Header */}
                   <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex-none">
                     <h3 className="text-sm font-semibold text-gray-800 flex items-center">
@@ -260,7 +260,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
 
               {/* Right Sidebar - positioned at document edge */}
               {showRightSidebar && (
-                <div className="absolute right-0 top-0 w-80 bg-white border-l-2 border-gray-300 flex flex-col h-full z-10 transform translate-x-full">
+                <div className="absolute right-0 top-14 bottom-0 w-80 bg-white border-l-2 border-gray-300 flex flex-col z-10 transform translate-x-full">
                   {/* Sidebar Header */}
                   <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex-none">
                     <h3 className="text-sm font-semibold text-gray-800 flex items-center">
