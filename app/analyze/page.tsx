@@ -508,8 +508,8 @@ export default function AnalyzePage() {
     <div className="min-h-screen bg-white">
       <TopNavBar />
       
-      {/* Main content - no padding needed */}
-      <div>
+      {/* Main content with padding-top to compensate for taller fixed navbar */}
+      <div className="pt-20">
         {/* Upload Section */}
         {!analysisData && (
           <div className="max-w-7xl mx-auto px-6 py-12">
