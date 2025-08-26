@@ -199,11 +199,11 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
         {/* Center - Document Preview with positioned left sidebar */}
         <div className="flex-1 bg-gray-100 overflow-y-auto relative">
           <div className="flex justify-center">
-            <div className="w-full max-w-4xl bg-white shadow-xl relative">
+            <div className="bg-white shadow-xl relative" style={{width: '210mm'}}>
               {/* Left Sidebar - positioned to align right edge with left edge of template */}
               {showLeftSidebar && (
                 <div className="fixed top-14 bottom-0 w-80 bg-white border-r-2 border-gray-300 flex flex-col z-10" 
-                     style={{right: 'calc(50% + 512px)'}}>
+                     style={{right: 'calc(50% + 105mm)'}}>
                   {/* Sidebar Header */}
                   <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex-none">
                     <h3 className="text-sm font-semibold text-gray-800 flex items-center">
@@ -262,7 +262,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
               {/* Right Sidebar - positioned to align left edge with right edge of template */}
               {showRightSidebar && (
                 <div className="fixed top-14 bottom-0 w-80 bg-white border-l-2 border-gray-300 flex flex-col z-10" 
-                     style={{left: 'calc(50% + 512px)'}}>
+                     style={{left: 'calc(50% + 105mm)'}}>
                   {/* Sidebar Header */}
                   <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex-none">
                     <h3 className="text-sm font-semibold text-gray-800 flex items-center">
