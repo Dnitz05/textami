@@ -192,7 +192,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
       `}</style>
       
       {/* Document Header with template name and actions - modern office style */}
-      <div className="bg-gray-50 border-b border-gray-300 px-4 py-3 shadow-sm">
+      <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-400 px-4 py-4 shadow-md">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {isProcessing ? (
@@ -214,7 +214,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
             {onSave && (
               <button
                 onClick={onSave}
-                className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-200 rounded border border-gray-300 hover:border-gray-400 transition-all duration-150 shadow-sm hover:shadow"
+                className="flex items-center px-4 py-2 text-sm font-medium text-gray-800 bg-white hover:bg-blue-50 rounded-lg border border-gray-300 hover:border-blue-400 transition-all duration-200 shadow-md hover:shadow-lg"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
@@ -225,7 +225,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
             {onSaveAs && (
               <button
                 onClick={onSaveAs}
-                className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-200 rounded border border-gray-300 hover:border-gray-400 transition-all duration-150 shadow-sm hover:shadow"
+                className="flex items-center px-4 py-2 text-sm font-medium text-gray-800 bg-white hover:bg-blue-50 rounded-lg border border-gray-300 hover:border-blue-400 transition-all duration-200 shadow-md hover:shadow-lg"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -236,7 +236,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
             {onClose && (
               <button
                 onClick={onClose}
-                className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-200 rounded border border-gray-300 hover:border-gray-400 transition-all duration-150 shadow-sm hover:shadow"
+                className="flex items-center px-4 py-2 text-sm font-medium text-gray-800 bg-white hover:bg-blue-50 rounded-lg border border-gray-300 hover:border-blue-400 transition-all duration-200 shadow-md hover:shadow-lg"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
