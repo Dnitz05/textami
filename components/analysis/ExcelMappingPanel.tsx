@@ -79,12 +79,11 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
         
         setSuggestions(aiSuggestions);
         
-        // Auto-apply high confidence mappings (>= 0.8) - reversed mapping: header -> tag
+        // Auto-apply ALL AI suggestions by default - reversed mapping: header -> tag
         const autoMappings: Record<string, string> = {};
         aiSuggestions.forEach((suggestion) => {
-          if (suggestion.score >= 0.8) {
-            autoMappings[suggestion.suggestedHeader] = suggestion.tagSlug;
-          }
+          // Auto-apply all suggestions, not just high confidence ones
+          autoMappings[suggestion.suggestedHeader] = suggestion.tagSlug;
         });
         
         setMappings(autoMappings);
@@ -126,12 +125,11 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
         if (result.success && result.data?.suggestions) {
           setSuggestions(result.data.suggestions);
           
-          // Auto-apply high confidence mappings - reversed mapping: header -> tag
+          // Auto-apply ALL fuzzy mapping suggestions - reversed mapping: header -> tag
           const autoMappings: Record<string, string> = {};
           result.data.suggestions.forEach((suggestion: MappingSuggestion) => {
-            if (suggestion.confidence === 'high') {
-              autoMappings[suggestion.suggestedHeader] = suggestion.tagSlug;
-            }
+            // Auto-apply all suggestions, not just high confidence ones
+            autoMappings[suggestion.suggestedHeader] = suggestion.tagSlug;
           });
           
           setMappings(autoMappings);
@@ -277,13 +275,23 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
             {excelHeaders.map((header, index) => {
               const currentMapping = mappings[header] || '';
               const suggestedTag = getSuggestedTagForHeader(header);
+              
+              // Find the selected tag to show its name and example
+              const selectedTag = tags.find(tag => tag.slug === currentMapping);
+              const displayValue = selectedTag && selectedTag.example 
+                ? `${selectedTag.name} (${selectedTag.example})`
+                : selectedTag?.name || header;
 
               return (
                 <div key={`${header}-${index}`} className="border border-gray-200 rounded-lg p-3 bg-white mb-3">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
                       <div className="font-medium text-gray-900 text-sm mb-1">{header}</div>
-                      <div className="text-xs text-gray-500">Capçalera d'Excel</div>
+                      {currentMapping ? (
+                        <div className="text-xs text-green-600 font-medium">→ {displayValue}</div>
+                      ) : (
+                        <div className="text-xs text-gray-500">Capçalera d'Excel</div>
+                      )}
                     </div>
                     
                     {suggestedTag && (
@@ -301,14 +309,18 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
                       style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}
                     >
                       <option value="">Selecciona un tag...</option>
-                      {tags.map((tag) => (
-                        <option key={tag.slug} value={tag.slug}>
-                          {tag.name} ({tag.type})
-                        </option>
-                      ))}
+                      {tags.map((tag) => {
+                        // Format: tagName (originalExample) for better context
+                        const displayText = tag.example ? `${tag.name} (${tag.example})` : `${tag.name} (${tag.type})`;
+                        return (
+                          <option key={tag.slug} value={tag.slug}>
+                            {displayText}
+                          </option>
+                        );
+                      })}
                     </select>
 
-                    {suggestedTag && suggestedTag.tagSlug !== currentMapping && (
+                    {suggestedTag && !currentMapping && (
                       <div className="bg-blue-50 border border-blue-100 rounded p-3">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">

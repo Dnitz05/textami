@@ -195,68 +195,96 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
           </button>
         </div>
 
-        {/* Left Sidebar - AI Instructions */}
-        {showLeftSidebar && (
-          <div className="w-80 flex-none bg-white border-r-2 border-gray-300 flex flex-col h-full sticky top-0">
-            {/* Sidebar Header */}
-            <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex-none">
-              <h3 className="text-sm font-semibold text-gray-800 flex items-center">
-                <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-                AI Instructions
-              </h3>
-            </div>
-            
-            {/* Scrollable prompts area */}
-            <div className="flex-1 overflow-y-auto px-4 py-3">
-              <AIPromptsPanel 
-                pipelineStatus={pipelineStatus}
-                onInstructionExecute={handleInstructionExecute}
-                isExecuting={isExecutingInstruction}
-                executingInstructionId={executingInstructionId}
-              />
-            </div>
-            
-            {/* Custom instruction input area */}
-            <div className="border-t border-gray-200 p-4 bg-gray-50 flex-none">
-              <label className="block text-xs font-medium text-gray-700 mb-2">
-                Instrucció personalitzada
-              </label>
-              <textarea
-                value={customInstruction}
-                onChange={(e) => setCustomInstruction(e.target.value)}
-                placeholder="Escriu la teva instrucció aquí..."
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-sans"
-                rows={3}
-                disabled={isExecutingCustom}
-                style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}
-              />
-              <button
-                onClick={handleCustomInstructionExecute}
-                disabled={isExecutingCustom || !customInstruction.trim()}
-                className="w-full mt-3 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded border border-blue-600 hover:bg-blue-700 hover:border-blue-700 disabled:bg-gray-400 disabled:border-gray-400 transition-colors"
-                style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}
-              >
-                {isExecutingCustom ? (
-                  <span className="flex items-center justify-center">
-                    <svg className="animate-spin w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Executant...
-                  </span>
-                ) : (
-                  'Executar Instrucció'
-                )}
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Center - Document Preview */}
-        <div className="flex-1 bg-gray-100 overflow-y-auto">
-          <div className="flex justify-center">
-            <div className="w-full max-w-4xl bg-white shadow-xl">
+        <div className="flex-1 bg-gray-100 overflow-y-auto flex">
+          <div className="flex-1 flex justify-center">
+            <div className="w-full max-w-4xl bg-white shadow-xl relative">
+              {/* Left sidebar positioned at document edge */}
+              {showLeftSidebar && (
+                <div className="absolute left-0 top-0 w-80 bg-white border-r-2 border-gray-300 flex flex-col h-full z-10">
+                  {/* Sidebar Header */}
+                  <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex-none">
+                    <h3 className="text-sm font-semibold text-gray-800 flex items-center">
+                      <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                      AI Instructions
+                    </h3>
+                  </div>
+                  
+                  {/* Scrollable prompts area */}
+                  <div className="flex-1 overflow-y-auto px-4 py-3">
+                    <AIPromptsPanel 
+                      pipelineStatus={pipelineStatus}
+                      onInstructionExecute={handleInstructionExecute}
+                      isExecuting={isExecutingInstruction}
+                      executingInstructionId={executingInstructionId}
+                    />
+                  </div>
+                  
+                  {/* Custom instruction input area */}
+                  <div className="border-t border-gray-200 p-4 bg-gray-50 flex-none">
+                    <label className="block text-xs font-medium text-gray-700 mb-2">
+                      Instrucció personalitzada
+                    </label>
+                    <textarea
+                      value={customInstruction}
+                      onChange={(e) => setCustomInstruction(e.target.value)}
+                      placeholder="Escriu la teva instrucció aquí..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-sans"
+                      rows={3}
+                      disabled={isExecutingCustom}
+                      style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}
+                    />
+                    <button
+                      onClick={handleCustomInstructionExecute}
+                      disabled={isExecutingCustom || !customInstruction.trim()}
+                      className="w-full mt-3 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded border border-blue-600 hover:bg-blue-700 hover:border-blue-700 disabled:bg-gray-400 disabled:border-gray-400 transition-colors"
+                      style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}
+                    >
+                      {isExecutingCustom ? (
+                        <span className="flex items-center justify-center">
+                          <svg className="animate-spin w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                          Executant...
+                        </span>
+                      ) : (
+                        'Executar Instrucció'
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Right sidebar positioned at document edge */}
+              {showRightSidebar && (
+                <div className="absolute right-0 top-0 w-80 bg-white border-l-2 border-gray-300 flex flex-col h-full z-10">
+                  {/* Sidebar Header */}
+                  <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex-none">
+                    <h3 className="text-sm font-semibold text-gray-800 flex items-center">
+                      <svg className="w-4 h-4 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                      Smart Mapping
+                    </h3>
+                  </div>
+                  
+                  {/* Excel Mapping Content */}
+                  <div className="flex-1 overflow-y-auto px-4 py-3">
+                    <ExcelMappingPanel 
+                      tags={analysisData.tags}
+                      excelHeaders={excelHeaders}
+                      onMappingUpdate={handleMappingUpdate}
+                      pipelineStatus={pipelineStatus}
+                      onExcelUpload={onExcelUpload}
+                      isProcessingExcel={isProcessingExcel}
+                    />
+                  </div>
+                </div>
+              )}
+
               <DocumentPreviewPanel 
                 title={analysisData.title}
                 markdown={currentMarkdown}
@@ -274,32 +302,6 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
           </div>
         </div>
 
-        {/* Right Sidebar - Smart Mapping */}
-        {showRightSidebar && (
-          <div className="w-80 flex-none bg-white border-l-2 border-gray-300 flex flex-col h-full sticky top-0">
-            {/* Sidebar Header */}
-            <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex-none">
-              <h3 className="text-sm font-semibold text-gray-800 flex items-center">
-                <svg className="w-4 h-4 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                Smart Mapping
-              </h3>
-            </div>
-            
-            {/* Excel Mapping Content */}
-            <div className="flex-1 overflow-y-auto px-4 py-3">
-              <ExcelMappingPanel 
-                tags={analysisData.tags}
-                excelHeaders={excelHeaders}
-                onMappingUpdate={handleMappingUpdate}
-                pipelineStatus={pipelineStatus}
-                onExcelUpload={onExcelUpload}
-                isProcessingExcel={isProcessingExcel}
-              />
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
