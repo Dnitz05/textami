@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { AnalysisData, ParsedTag, PipelineStatus } from '../lib/types';
 import DocumentPreviewPanel from './analysis/DocumentPreviewPanel';
-import DetectedTagsPanel from './analysis/DetectedTagsPanel';
 import ExcelMappingPanel from './analysis/ExcelMappingPanel';
 import AIPromptsPanel from './analysis/AIPromptsPanel';
 // Knowledge moved to its own page - /knowledge
@@ -186,7 +185,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
           <button
             onClick={() => setShowRightSidebar(!showRightSidebar)}
             className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded shadow-sm bg-white"
-            title="Toggle Tags & Excel"
+            title="Toggle Excel Mapping"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -250,15 +249,9 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
             </div>
           </div>
 
-          {/* Right Sidebar - Tags & Excel */}
+          {/* Right Sidebar - Smart Excel Mapping */}
           {showRightSidebar && (
-            <div className="w-72 flex-none bg-gray-50 border-l overflow-y-auto p-3 space-y-3">
-              <DetectedTagsPanel 
-                tags={analysisData.tags}
-                onTagUpdate={onTagUpdate}
-                editingEnabled={pipelineStatus !== 'frozen'}
-              />
-              
+            <div className="w-72 flex-none bg-gray-50 border-l overflow-y-auto p-3">
               <ExcelMappingPanel 
                 tags={analysisData.tags}
                 excelHeaders={excelHeaders}
@@ -266,7 +259,6 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                 pipelineStatus={pipelineStatus}
                 onExcelUpload={onExcelUpload}
               />
-              
             </div>
         )}
       </div>
