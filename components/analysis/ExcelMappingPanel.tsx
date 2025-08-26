@@ -9,6 +9,7 @@ interface ExcelMappingPanelProps {
   onMappingUpdate?: (mappings: Record<string, string>) => void;
   pipelineStatus?: string;
   onExcelUpload?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  isProcessingExcel?: boolean;
 }
 
 interface MappingSuggestion {
@@ -28,7 +29,8 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
   excelHeaders,
   onMappingUpdate,
   pipelineStatus,
-  onExcelUpload
+  onExcelUpload,
+  isProcessingExcel = false
 }) => {
   const [mappings, setMappings] = useState<Record<string, string>>({});
   const [suggestions, setSuggestions] = useState<MappingSuggestion[]>([]);
@@ -205,7 +207,22 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
       )}
 
       <div>
-        {excelHeaders.length === 0 ? (
+        {isProcessingExcel ? (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+            <div className="flex items-center justify-center mb-3">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3"></div>
+              <span className="text-blue-800 font-medium">🧠 Analitzant Excel amb IA...</span>
+            </div>
+            <p className="text-sm text-blue-700">
+              La intel·ligència artificial està processant l'Excel i extraient les capçaleres. Això pot trigar uns segons.
+            </p>
+            <div className="mt-3 flex items-center justify-center space-x-2">
+              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+            </div>
+          </div>
+        ) : excelHeaders.length === 0 ? (
           <div 
             className="cursor-pointer bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-dashed border-green-300 rounded-lg p-6 hover:from-green-100 hover:to-emerald-100 hover:border-green-400 transition-all duration-200"
             onClick={() => fileInputRef.current?.click()}

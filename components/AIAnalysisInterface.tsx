@@ -19,6 +19,7 @@ interface AIAnalysisInterfaceProps {
   onSaveAs?: () => void;
   onClose?: () => void;
   onExcelUpload?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  isProcessingExcel?: boolean;
 }
 
 const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
@@ -32,7 +33,8 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
   onSave,
   onSaveAs,
   onClose,
-  onExcelUpload
+  onExcelUpload,
+  isProcessingExcel = false
 }) => {
   const [mappings, setMappings] = useState<Record<string, string>>({});
   const [showLeftSidebar, setShowLeftSidebar] = useState(true);
@@ -292,6 +294,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                   onMappingUpdate={handleMappingUpdate}
                   pipelineStatus={pipelineStatus}
                   onExcelUpload={onExcelUpload}
+                  isProcessingExcel={isProcessingExcel}
                 />
               </div>
             </div>
