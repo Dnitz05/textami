@@ -287,18 +287,10 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
                       <div className="font-medium text-gray-900 text-sm mb-1">{header}</div>
-                      {currentMapping ? (
+                      {currentMapping && (
                         <div className="text-xs text-green-600 font-medium">→ {displayValue}</div>
-                      ) : (
-                        <div className="text-xs text-gray-500">Capçalera d'Excel</div>
                       )}
                     </div>
-                    
-                    {suggestedTag && (
-                      <div className={`px-2 py-1 text-xs rounded border bg-blue-50 border-blue-200 text-blue-800`}>
-                        IA: {Math.round((suggestedTag.score || 0) * 100)}%
-                      </div>
-                    )}
                   </div>
 
                   <div className="space-y-2">
