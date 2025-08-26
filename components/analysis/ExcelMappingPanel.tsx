@@ -206,9 +206,10 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
         </div>
       )}
 
-      <div>
+      {/* Main content area with enhanced spacing */}
+      <div className="space-y-6">
         {isProcessingExcel ? (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center shadow-lg">
             <div className="flex items-center justify-center mb-3">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3"></div>
               <span className="text-blue-800 font-medium">🧠 Analitzant Excel amb IA...</span>
@@ -258,7 +259,7 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
         ) : (
           <div className="space-y-4">
             {isLoadingSuggestions && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center shadow-lg">
                 <div className="flex items-center justify-center mb-3">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3"></div>
                   <span className="text-blue-800 font-medium">🧠 Analitzant Excel amb IA...</span>

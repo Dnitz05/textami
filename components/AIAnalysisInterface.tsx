@@ -196,13 +196,13 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
         </div>
 
 
-        {/* Center - Document Preview with positioned left sidebar */}
+        {/* Center - Document Preview with enhanced spacing */}
         <div className="flex-1 bg-gray-100 overflow-y-auto relative">
-          <div className="flex justify-center">
-            <div className="bg-white shadow-2xl border border-gray-200 rounded-lg relative" style={{width: '210mm'}}>
+          <div className="flex justify-center py-8 px-4">
+            <div className="bg-white shadow-2xl border border-gray-200 rounded-xl relative" style={{width: '210mm'}}>
               {/* Left Sidebar - positioned to align right edge with left edge of template */}
               {showLeftSidebar && (
-                <div className="fixed top-14 bottom-0 w-80 bg-white border-r-2 border-gray-400 shadow-xl flex flex-col z-10" 
+                <div className="fixed top-14 bottom-0 w-80 bg-gradient-to-b from-white to-gray-50 border-r-2 border-gray-400 shadow-xl flex flex-col z-10" 
                      style={{right: 'calc(50% + 105mm)'}}>
                   {/* Sidebar Header */}
                   <div className="px-4 py-4 border-b border-gray-400 bg-gradient-to-r from-gray-50 to-gray-100 shadow-md flex-none">
@@ -214,8 +214,8 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                     </h3>
                   </div>
                   
-                  {/* Scrollable prompts area */}
-                  <div className="flex-1 overflow-y-auto px-4 py-3">
+                  {/* Scrollable prompts area with better spacing */}
+                  <div className="flex-1 overflow-y-auto px-6 py-6">
                     <AIPromptsPanel 
                       pipelineStatus={pipelineStatus}
                       onInstructionExecute={handleInstructionExecute}
@@ -224,8 +224,8 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                     />
                   </div>
                   
-                  {/* Custom instruction input area */}
-                  <div className="border-t border-gray-200 p-4 bg-gray-50 flex-none">
+                  {/* Custom instruction input area with enhanced spacing */}
+                  <div className="border-t border-gray-300 p-6 bg-gradient-to-r from-gray-50 to-gray-100 flex-none shadow-inner">
                     <label className="block text-xs font-medium text-gray-700 mb-2">
                       Instrucció personalitzada
                     </label>
@@ -261,7 +261,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
 
               {/* Right Sidebar - positioned to align left edge with right edge of template */}
               {showRightSidebar && (
-                <div className="fixed top-14 bottom-0 w-80 bg-white border-l-2 border-gray-400 shadow-xl flex flex-col z-10" 
+                <div className="fixed top-14 bottom-0 w-80 bg-gradient-to-b from-white to-gray-50 border-l-2 border-gray-400 shadow-xl flex flex-col z-10" 
                      style={{left: 'calc(50% + 105mm)'}}>
                   {/* Sidebar Header */}
                   <div className="px-4 py-4 border-b border-gray-400 bg-gradient-to-r from-gray-50 to-gray-100 shadow-md flex-none">
@@ -273,8 +273,8 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                     </h3>
                   </div>
                   
-                  {/* Excel Mapping Content */}
-                  <div className="flex-1 overflow-y-auto px-4 py-3">
+                  {/* Excel Mapping Content with better spacing */}
+                  <div className="flex-1 overflow-y-auto px-6 py-6">
                     <ExcelMappingPanel 
                       tags={analysisData.tags}
                       excelHeaders={excelHeaders}

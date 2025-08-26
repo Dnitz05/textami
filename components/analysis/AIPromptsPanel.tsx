@@ -96,12 +96,25 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
 
   return (
     <div style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}>
+      {/* Add button section with breathing room */}
+      <div className="mb-6">
+        <button
+          onClick={() => setShowAddForm(!showAddForm)}
+          className="w-full px-4 py-3 text-sm font-medium text-blue-700 bg-white border border-blue-300 rounded-lg hover:bg-blue-50 hover:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center space-x-2"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          <span>Nova Instrucció</span>
+        </button>
+      </div>
+
       <div>
-        {/* Existing Instructions */}
-        <div className="space-y-1">
+        {/* Existing Instructions with cards */}
+        <div className="space-y-3">
           {instructions.map((instruction) => (
             <div key={instruction.id} 
-                 className="px-3 py-2 hover:bg-gray-100 rounded cursor-pointer border border-gray-200 bg-white transition-colors"
+                 className="px-4 py-3 hover:bg-blue-50 rounded-lg cursor-pointer border border-gray-200 bg-white shadow-sm hover:shadow-md transition-all duration-200"
                  onClick={() => executeInstruction(instruction)}>
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -123,7 +136,7 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
 
         {/* Add New Instruction Form */}
         {showAddForm && (
-          <div className="mt-4 border border-gray-300 rounded-lg p-4 bg-blue-50">
+          <div className="mt-6 border border-gray-300 rounded-xl p-5 bg-gradient-to-br from-blue-50 to-blue-100 shadow-lg">
             <h4 className="font-medium text-sm mb-3 text-gray-800">Nova Instrucció AI</h4>
             
             <div className="space-y-3">
