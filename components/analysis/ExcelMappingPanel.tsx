@@ -14,6 +14,8 @@ interface ExcelMappingPanelProps {
 interface MappingSuggestion {
   tagSlug: string;
   tagName: string;
+  tagType?: string;
+  tagExample?: string;
   suggestedHeader: string;
   score: number;
   confidence: 'high' | 'medium' | 'low';
@@ -60,10 +62,12 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
       const result = await response.json();
       
       if (result.success && result.data.suggestions) {
-        // Convert AI suggestions to our MappingSuggestion format
+        // Convert AI suggestions to header-based mapping format
         const aiSuggestions: MappingSuggestion[] = result.data.suggestions.map((aiSugg: any) => ({
           tagSlug: aiSugg.tagSlug,
           tagName: aiSugg.tagName,
+          tagType: aiSugg.tagType || 'string',
+          tagExample: aiSugg.tagExample || '',
           suggestedHeader: aiSugg.suggestedHeader,
           score: aiSugg.confidence,
           confidence: aiSugg.confidence >= 0.8 ? 'high' : aiSugg.confidence >= 0.6 ? 'medium' : 'low',
@@ -73,16 +77,16 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
         
         setSuggestions(aiSuggestions);
         
-        // Auto-apply high confidence mappings (>= 0.8)
+        // Auto-apply high confidence mappings (>= 0.8) - reversed mapping: header -> tag
         const autoMappings: Record<string, string> = {};
         aiSuggestions.forEach((suggestion) => {
           if (suggestion.score >= 0.8) {
-            autoMappings[suggestion.tagSlug] = suggestion.suggestedHeader;
+            autoMappings[suggestion.suggestedHeader] = suggestion.tagSlug;
           }
         });
         
         setMappings(autoMappings);
-        onMappingUpdate?.(autoMappings);
+        onMappingUpdate?.(autoMappings);"
         
         console.log('✅ AI mappings loaded:', {
           total: aiSuggestions.length,
@@ -120,11 +124,11 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
         if (result.success && result.data?.suggestions) {
           setSuggestions(result.data.suggestions);
           
-          // Auto-apply high confidence mappings
+          // Auto-apply high confidence mappings - reversed mapping: header -> tag
           const autoMappings: Record<string, string> = {};
           result.data.suggestions.forEach((suggestion: MappingSuggestion) => {
             if (suggestion.confidence === 'high') {
-              autoMappings[suggestion.tagSlug] = suggestion.suggestedHeader;
+              autoMappings[suggestion.suggestedHeader] = suggestion.tagSlug;
             }
           });
           
@@ -137,22 +141,27 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
     }
   };
 
-  const handleMappingChange = (tagSlug: string, header: string) => {
+  const handleHeaderMappingChange = (header: string, tagSlug: string) => {
     const newMappings = {
       ...mappings,
-      [tagSlug]: header
+      [header]: tagSlug
     };
     
-    if (header === '') {
-      delete newMappings[tagSlug];
+    if (tagSlug === '') {
+      delete newMappings[header];
     }
     
     setMappings(newMappings);
     onMappingUpdate?.(newMappings);
   };
 
-  const applySuggestion = (suggestion: MappingSuggestion) => {
-    handleMappingChange(suggestion.tagSlug, suggestion.suggestedHeader);
+  const applySuggestionForHeader = (header: string, suggestion: any) => {
+    handleHeaderMappingChange(header, suggestion.tagSlug);
+  };
+  
+  const getSuggestedTagForHeader = (header: string) => {
+    // Find AI suggestion for this Excel header
+    return suggestions.find(s => s.suggestedHeader === header);
   };
 
   const getConfidenceColor = (confidence: string) => {
@@ -172,27 +181,24 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
     return Object.keys(mappings).length;
   };
 
-  const getSuggestionForTag = (tagSlug: string) => {
-    return suggestions.find(s => s.tagSlug === tagSlug);
-  };
 
   return (
     <div style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}>
       {/* Status indicator */}
-      {tags.length > 0 && (
+      {excelHeaders.length > 0 && (
         <div className="mb-4 flex items-center justify-between">
           <span className="text-xs font-medium text-gray-600">
-            Mapatge: {getMappedCount()}/{tags.length} tags
+            Mapatge: {getMappedCount()}/{excelHeaders.length} capçaleres
           </span>
           <div className="flex items-center">
             <div className="w-16 bg-gray-200 rounded-full h-1.5">
               <div 
                 className="bg-green-500 h-1.5 rounded-full transition-all duration-300"
-                style={{ width: `${(getMappedCount() / tags.length) * 100}%` }}
+                style={{ width: `${(getMappedCount() / excelHeaders.length) * 100}%` }}
               ></div>
             </div>
             <span className="text-xs text-green-600 font-medium ml-2">
-              {Math.round((getMappedCount() / tags.length) * 100)}%
+              {Math.round((getMappedCount() / excelHeaders.length) * 100)}%
             </span>
           </div>
         </div>
@@ -243,21 +249,21 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
               </div>
             )}
 
-            {tags.map((tag, index) => {
-              const suggestion = getSuggestionForTag(tag.slug);
-              const currentMapping = mappings[tag.slug] || '';
+            {excelHeaders.map((header, index) => {
+              const currentMapping = mappings[header] || '';
+              const suggestedTag = getSuggestedTagForHeader(header);
 
               return (
-                <div key={`${tag.slug}-${index}`} className="border rounded-lg p-3">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <div className="font-medium text-gray-900 text-sm">{tag.name}</div>
-                      <div className="text-xs text-gray-500">Example: {tag.example}</div>
+                <div key={`${header}-${index}`} className="border border-gray-200 rounded-lg p-3 bg-white mb-3">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900 text-sm mb-1">{header}</div>
+                      <div className="text-xs text-gray-500">Capçalera d'Excel</div>
                     </div>
                     
-                    {suggestion && (
-                      <div className={`px-2 py-1 text-xs rounded border ${getConfidenceColor(suggestion.confidence)}`}>
-                        {suggestion.confidence} confidence
+                    {suggestedTag && (
+                      <div className={`px-2 py-1 text-xs rounded border bg-blue-50 border-blue-200 text-blue-800`}>
+                        IA: {Math.round(suggestedTag.confidence * 100)}%
                       </div>
                     )}
                   </div>
@@ -265,54 +271,43 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
                   <div className="space-y-2">
                     <select
                       value={currentMapping}
-                      onChange={(e) => handleMappingChange(tag.slug, e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      onChange={(e) => handleHeaderMappingChange(header, e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}
                     >
-                      <option value="">Select Excel column...</option>
-                      {excelHeaders.map((header) => (
-                        <option key={header} value={header}>{header}</option>
+                      <option value="">Selecciona un tag...</option>
+                      {tags.map((tag) => (
+                        <option key={tag.slug} value={tag.slug}>
+                          {tag.name} ({tag.type})
+                        </option>
                       ))}
                     </select>
 
-                    {suggestion && suggestion.suggestedHeader !== currentMapping && (
-                      <div className="bg-purple-50 border border-purple-100 rounded p-3">
-                        <div className="flex items-start justify-between mb-2">
+                    {suggestedTag && suggestedTag.tagSlug !== currentMapping && (
+                      <div className="bg-blue-50 border border-blue-100 rounded p-3">
+                        <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center space-x-2 mb-1">
-                              <span className="text-xs font-medium text-purple-700">🧠 AI Suggestion:</span>
-                              <div className={`px-2 py-1 text-xs rounded border ${getConfidenceColor(suggestion.confidence)}`}>
-                                {Math.round(suggestion.score * 100)}%
+                              <span className="text-xs font-medium text-blue-700">🧠 Suggeriment IA:</span>
+                              <div className="px-2 py-1 text-xs rounded border bg-blue-100 border-blue-200 text-blue-800">
+                                {Math.round(suggestedTag.confidence * 100)}%
                               </div>
                             </div>
-                            <div className="text-sm font-medium text-purple-900 mb-1">{suggestion.suggestedHeader}</div>
-                            <div className="text-xs text-purple-700 mb-2">
-                              {suggestion.reasoning}
+                            <div className="text-sm font-medium text-blue-900 mb-1">{suggestedTag.tagName}</div>
+                            <div className="text-xs text-blue-700 mb-1">
+                              Tipus: {suggestedTag.tagType} | Exemple: {suggestedTag.tagExample}
                             </div>
-                            
-                            {/* Alternative suggestions */}
-                            {suggestion.alternativeHeaders && suggestion.alternativeHeaders.length > 0 && (
-                              <div className="mt-2 pt-2 border-t border-purple-200">
-                                <div className="text-xs font-medium text-purple-600 mb-1">Alternatives:</div>
-                                <div className="flex flex-wrap gap-1">
-                                  {suggestion.alternativeHeaders.map((altHeader) => (
-                                    <button
-                                      key={altHeader}
-                                      onClick={() => handleMappingChange(tag.slug, altHeader)}
-                                      className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors"
-                                      title={`Use ${altHeader} instead`}
-                                    >
-                                      {altHeader}
-                                    </button>
-                                  ))}
-                                </div>
+                            {suggestedTag.reasoning && (
+                              <div className="text-xs text-blue-600">
+                                {suggestedTag.reasoning}
                               </div>
                             )}
                           </div>
                           <button
-                            onClick={() => applySuggestion(suggestion)}
-                            className="ml-3 px-3 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors flex-shrink-0"
+                            onClick={() => applySuggestionForHeader(header, suggestedTag)}
+                            className="ml-3 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex-shrink-0"
                           >
-                            Apply
+                            Aplicar
                           </button>
                         </div>
                       </div>
