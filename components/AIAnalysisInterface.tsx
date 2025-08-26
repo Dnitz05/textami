@@ -199,7 +199,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
         {/* Center - Document Preview with enhanced spacing */}
         <div className="flex-1 bg-gray-100 overflow-y-auto relative">
           <div className="flex justify-center py-8 px-4">
-            <div className="bg-white shadow-2xl border border-gray-200 rounded-2xl relative" style={{width: '210mm'}}>
+            <div className="bg-gray-100 shadow-2xl border border-gray-200 rounded-2xl relative" style={{width: '210mm'}}>
               {/* Left Sidebar - positioned to align right edge with left edge of template */}
               {showLeftSidebar && (
                 <div className="fixed w-80 bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 flex flex-col z-10 m-4" 

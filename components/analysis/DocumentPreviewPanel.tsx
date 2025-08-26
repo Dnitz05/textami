@@ -249,7 +249,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
       </div>
 
       {/* Word-like Document Container */}
-      <div className="bg-gray-100 min-h-screen relative">
+      <div className="bg-transparent min-h-screen relative rounded-b-2xl overflow-hidden">
         {/* Processing overlay */}
         {isProcessing && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
@@ -263,7 +263,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         )}
         
         {/* Document Page - Word-like appearance with enhanced spacing */}
-        <div className="document-container p-6 rounded-b-2xl">
+        <div className="document-container p-6 bg-gray-50 rounded-b-2xl">
           <div className="document-page bg-white rounded-xl shadow-inner" style={{width: 'calc(210mm - 60px)', margin: '0 auto', padding: '60px 50px'}}>
             {/* Document Title */}
             {title && (
