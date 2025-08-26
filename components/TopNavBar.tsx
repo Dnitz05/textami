@@ -79,42 +79,34 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
+            <Link href="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
               <img 
                 src="/logo.png" 
                 alt="Textami Logo" 
-                className="w-10 h-10 object-contain"
+                className="w-12 h-12 object-contain"
               />
-              <div className="flex flex-col">
-                {pathname === '/analyze' && templateName ? (
-                  <>
-                    {isEditingName ? (
-                      <input
-                        type="text"
-                        value={templateName}
-                        onChange={(e) => handleNameChange(e.target.value)}
-                        onBlur={() => setIsEditingName(false)}
-                        onKeyDown={(e) => e.key === 'Enter' && setIsEditingName(false)}
-                        className="text-xl font-bold text-gray-900 bg-transparent border-b border-gray-300 focus:outline-none focus:border-blue-500"
-                        autoFocus
-                      />
-                    ) : (
-                      <span 
-                        className="text-xl font-bold text-gray-900 cursor-pointer hover:text-blue-600"
-                        onClick={() => setIsEditingName(true)}
-                      >
-                        {templateName}
-                      </span>
-                    )}
-                    <span className="text-xs text-gray-500">Plantilla</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-xl font-bold text-gray-900">Textami</span>
-                    {pathname === '/analyze' && <span className="text-xs text-gray-500">Plantilla</span>}
-                  </>
-                )}
-              </div>
+              {pathname === '/analyze' && templateName && (
+                <div className="flex flex-col">
+                  {isEditingName ? (
+                    <input
+                      type="text"
+                      value={templateName}
+                      onChange={(e) => handleNameChange(e.target.value)}
+                      onBlur={() => setIsEditingName(false)}
+                      onKeyDown={(e) => e.key === 'Enter' && setIsEditingName(false)}
+                      className="text-xl font-bold text-gray-900 bg-transparent border-b border-gray-300 focus:outline-none focus:border-blue-500"
+                      autoFocus
+                    />
+                  ) : (
+                    <span 
+                      className="text-xl font-bold text-gray-900 cursor-pointer hover:text-blue-600"
+                      onClick={() => setIsEditingName(true)}
+                    >
+                      {templateName}
+                    </span>
+                  )}
+                </div>
+              )}
             </Link>
           </div>
 
