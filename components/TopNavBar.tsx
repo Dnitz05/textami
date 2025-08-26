@@ -76,14 +76,14 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14">
+        <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
               <img 
                 src="/logo.png" 
                 alt="Textami Logo" 
-                className="w-12 h-12 object-contain"
+                className="w-16 h-16 object-contain"
               />
               {pathname === '/analyze' && templateName && (
                 <div className="flex flex-col">
