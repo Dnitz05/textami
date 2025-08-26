@@ -37,9 +37,21 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
   onClose
 }) => {
   
+  // Function to remove document title from content to avoid duplication
+  const removeDocumentTitle = (text: string): string => {
+    if (!title) return text;
+    
+    const lines = text.split('\n');
+    // Remove the first H1 header if it matches the detected title
+    if (lines.length > 0 && lines[0].trim() === `# ${title}`) {
+      return lines.slice(1).join('\n').replace(/^\n+/, ''); // Remove leading newlines
+    }
+    return text;
+  };
+
   // Function to highlight detected tags in text
   const highlightTags = (text: string): string => {
-    let highlightedText = text;
+    let highlightedText = removeDocumentTitle(text);
     
     // Sort tags by example length (longest first to avoid partial replacements)
     const sortedTags = [...tags].sort((a, b) => (b.example?.length || 0) - (a.example?.length || 0));
