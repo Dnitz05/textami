@@ -509,7 +509,7 @@ export default function AnalyzePage() {
       <TopNavBar />
       
       {/* Main content with padding-top to compensate for fixed navbar */}
-      <div className="pt-14">
+      <div className="pt-16">
         {/* Upload Section */}
         {!analysisData && (
           <div className="max-w-7xl mx-auto px-6 py-12">

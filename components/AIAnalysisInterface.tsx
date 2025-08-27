@@ -203,7 +203,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
               {/* Left Sidebar - positioned to align right edge with left edge of template */}
               {showLeftSidebar && (
                 <div className="fixed w-80 bg-gray-50/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 flex flex-col z-10 m-4" 
-                     style={{right: 'calc(50% + 105mm)', top: '4.5rem', bottom: '1rem'}}>
+                     style={{right: 'calc(50% + 105mm)', top: '5rem', bottom: '1rem'}}>
                   {/* Sidebar Header */}
                   <div className="px-6 py-5 border-b border-gray-200/50 bg-gray-50/40 backdrop-blur-sm rounded-t-2xl flex-none">
                     <h3 className="text-sm font-semibold text-gray-800 flex items-center">
@@ -230,7 +230,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
               {/* Right Sidebar - positioned to align left edge with right edge of template */}
               {showRightSidebar && (
                 <div className="fixed w-80 bg-gray-50/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 flex flex-col z-10 m-4" 
-                     style={{left: 'calc(50% + 105mm)', top: '4.5rem', bottom: '1rem'}}>
+                     style={{left: 'calc(50% + 105mm)', top: '5rem', bottom: '1rem'}}>
                   {/* Sidebar Header */}
                   <div className="px-6 py-5 border-b border-gray-200/50 bg-gray-50/40 backdrop-blur-sm rounded-t-2xl flex-none">
                     <h3 className="text-sm font-semibold text-gray-800 flex items-center">
