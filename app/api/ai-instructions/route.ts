@@ -127,7 +127,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         })
       );
       
-      const validContents = knowledgeContents.filter(Boolean);
+      const validContents = knowledgeContents.filter((doc): doc is NonNullable<typeof doc> => Boolean(doc));
       
       if (validContents.length > 0) {
         knowledgeContext = `\n\nDOCUMENTS DE REFERÈNCIA DISPONIBLES:\n\n` +
