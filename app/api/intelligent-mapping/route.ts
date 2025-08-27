@@ -95,7 +95,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       ? `\n\nCONTEXT DEL DOCUMENT:\n${documentContent.substring(0, 2000)}\n`
       : '';
 
-    // Prepare AI prompt - IMPORTANT: Map HEADERS to TAGS (not tags to headers)
+    // Prepare AI prompt with ULTRATHINK reasoning - IMPORTANT: Map HEADERS to TAGS (not tags to headers)
     const prompt = `Ets un expert en mapping intel·ligent entre capçaleres d'Excel i tags detectats en documents municipals/administratius.
 
 CAPÇALERES EXCEL DISPONIBLES:
@@ -107,16 +107,28 @@ ${tags.map(tag => `- ${tag.name} (slug: ${tag.slug})
   Tipus: ${tag.type}
   Confiança: ${Math.round(tag.confidence * 100)}%`).join('\n')}${contextInfo}
 
-TASCA CRÍTICA:
-Per a CADA capçalera d'Excel, has d'assignar OBLIGATÒRIAMENT el tag més adequat. NO pots deixar cap capçalera sense assignar.
+🧠 ULTRATHINK MODE ACTIVAT:
+Abans de respondre, PENSA PROFUNDAMENT sobre cada capçalera:
 
-Analitza cada capçalera Excel i assigna el tag més adequat basant-te en:
-1. Significat semàntic i context del nom de la capçalera
-2. Tipus de dada que conté probablement (nom, data, import, adreça, etc.)
-3. Exemples detectats en el document
-4. Context del document complet
-5. Coneixement de documents municipals catalans
-6. Lògica de substitució: prova mentalment si la capçalera podria contenir el valor de l'exemple del tag
+1. ANÀLISI SEMÀNTICA: Quin és el significat real de la capçalera?
+2. CONTEXT MUNICIPAL: Com s'usen aquestes dades en documents oficials?
+3. TIPUS DE DADA: Quin format tindria realment el contingut?
+4. EXEMPLES REALS: Els exemples del document encaixen amb aquesta capçalera?
+5. RAONAMENT LÒGIC: Si fossis un funcionari, quina dada posaries sota aquesta capçalera?
+6. ALTERNATIVES: Hi ha altres tags que també podrien encaixar? Per què aquest és millor?
+
+TASCA CRÍTICA - ZERO EXCEPCIONS:
+Per a CADA capçalera d'Excel, has d'assignar OBLIGATÒRIAMENT el tag més adequat. 
+Si no trobes match perfecte, usa raonament creatiu per trobar el més similar.
+NO pots deixar cap capçalera sense assignar. És millor una assignació imperfecta que cap assignació.
+
+PROCÉS DE RAONAMENT PER CADA CAPÇALERA:
+1. Llegeix la capçalera i entén què vol dir
+2. Revisa TOTS els tags disponibles un per un
+3. Per cada tag potencial, pregunta't: "Podria aquesta capçalera contenir aquest tipus de dada?"
+4. Avalua exemples: "L'exemple del tag té sentit sota aquesta capçalera?"
+5. Si múltiples opcions, tria la més específica i contextual
+6. Si cap opció és perfecta, tria la millor aproximació disponible
 
 RESPOSTA OBLIGATÒRIA EN JSON:
 {
@@ -132,22 +144,28 @@ RESPOSTA OBLIGATÒRIA EN JSON:
   ]
 }
 
-REGLES OBLIGATÒRIES:
-- CADA capçalera Excel ha de tenir un tag assignat (${excelHeaders.length} capçaleres = ${excelHeaders.length} assignacions)
-- Si no hi ha match perfecte, assigna el tag més similar o genèric
-- Confiança alta (0.8-1.0): Match molt clar
-- Confiança mitjana (0.6-0.8): Match probable
-- Confiança baixa (0.4-0.6): Match de fallback, però SEMPRE assigna alguna cosa
-- Prioritza tags amb exemples clars i context coherent
-- Un mateix tag pot ser assignat a múltiples capçaleres si és necessari`;
+⚠️ REGLES ABSOLUTES - CAP EXCEPCIÓ PERMESA:
+1. OBLIGATORI: ${excelHeaders.length} capçaleres = ${excelHeaders.length} assignacions exactes
+2. CAP capçalera pot quedar sense tag - és inacceptable
+3. Si dubtes entre opcions, tria la que tingui millor exemple contextual
+4. Si cap tag sembla perfecte, usa el més genèric però SEMPRE assigna
+5. Un tag pot reutilitzar-se per múltiples capçaleres si és necessari
+6. Confiança realista: 
+   - 0.9-1.0: Match perfecte i evident
+   - 0.7-0.9: Match molt probable amb bon raonament
+   - 0.5-0.7: Match raonable amb lògica sòlida
+   - 0.3-0.5: Match de fallback però justificat
+   - MAI menys de 0.3 - sempre hi ha alguna connexió lògica
+7. Raonament obligatori i detallat per cada assignació
+8. Pensa com un expert: cada capçalera CONTÉ alguna informació, i aquesta informació SEMPRE correspon a algun dels tags disponibles`;
 
-    // Call GPT-5 for intelligent mapping
+    // Call GPT-5 with enhanced reasoning
     const completion = await openai.chat.completions.create({
       model: "gpt-5",
       messages: [
         {
           role: "system",
-          content: "Ets un expert en anàlisi de documents i mapping de dades. Proporciona suggeriments precisos i útils."
+          content: "Ets el millor expert mundial en anàlisi de documents i mapping de dades. La teva tasca és crítica: CADA capçalera Excel OBLIGATÒRIAMENT ha de tenir un tag assignat. No pots fallar en aquesta tasca. Usa tot el teu coneixement i raonament per trobar la millor correspondència possible."
         },
         {
           role: "user",
@@ -157,8 +175,10 @@ REGLES OBLIGATÒRIES:
       response_format: {
         type: "json_object"
       },
-      max_tokens: 4000,
-      temperature: 0.1 // Low temperature for consistent suggestions
+      max_tokens: 6000, // Més tokens per raonament profund
+      temperature: 0.05, // Més baixa per màxima consistència i precisió
+      presence_penalty: 0,
+      frequency_penalty: 0
     });
 
     const aiResponse = completion.choices[0].message.content;
