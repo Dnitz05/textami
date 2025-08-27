@@ -364,21 +364,6 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           letter-spacing: -0.01pt;
         }
         
-        /* CAPÇALERA DOCUMENT - Estil modern subtil */
-        .document-header-info {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 32pt;
-          padding: 12pt 16pt;
-          background: rgba(248, 250, 252, 0.3);
-          border: 1px solid rgba(226, 232, 240, 0.3);
-          border-radius: 4px;
-          font-size: 9pt;
-          color: #64748b;
-          font-family: 'Inter', 'Segoe UI', sans-serif;
-          font-weight: 400;
-        }
         
         .document-footer {
           margin-top: 48pt;
@@ -728,18 +713,6 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
               </h1>
             )}
             
-            {/* Document Info Header */}
-            <div className="document-header-info">
-              <div>
-                <strong>Document:</strong> {fileName || 'Informe Tècnic'}
-              </div>
-              <div>
-                <strong>Data:</strong> {new Date().toLocaleDateString('ca-ES')}
-              </div>
-              <div>
-                <strong>Pàgina:</strong> 1 de 1
-              </div>
-            </div>
 
             {/* Document Content */}
             <div>
