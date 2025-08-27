@@ -5,6 +5,8 @@
 import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useUser } from '../hooks/useUser';
+import AuthForm from './AuthForm';
 
 interface TopNavBarProps {
   className?: string;
@@ -16,6 +18,8 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [templateName, setTemplateName] = useState('');
   const [isEditingName, setIsEditingName] = useState(false);
+  const [showAuthForm, setShowAuthForm] = useState(false);
+  const { user, isAuthenticated, signOut } = useUser();
 
   // Load template name from sessionStorage on analyze page
   useEffect(() => {
@@ -165,22 +169,73 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
             </Link>
           </div>
 
-          {/* User Avatar - Right side */}
+          {/* Auth Section - Right side */}
           <div className="flex items-center space-x-3 flex-shrink-0">
-            <button className="flex items-center space-x-2 hover:bg-gray-50 rounded-lg p-2 transition-colors">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-md">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
+            {isAuthenticated ? (
+              <div className="flex items-center space-x-3">
+                <button className="flex items-center space-x-2 hover:bg-gray-50 rounded-lg p-2 transition-colors">
+                  <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center shadow-md">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <div className="hidden sm:flex flex-col items-start">
+                    <span className="text-sm font-medium text-gray-900">
+                      {user?.email?.split('@')[0] || 'Usuari'}
+                    </span>
+                    <span className="text-xs text-green-600">Autenticat</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => signOut()}
+                  className="px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+                >
+                  Sortir
+                </button>
               </div>
-              <div className="hidden sm:flex flex-col items-start">
-                <span className="text-sm font-medium text-gray-900">Usuari</span>
-                <span className="text-xs text-gray-500">Admin</span>
+            ) : (
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full flex items-center justify-center shadow-md">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div className="hidden sm:flex flex-col items-start">
+                  <span className="text-xs text-gray-500">No autenticat</span>
+                </div>
+                <button
+                  onClick={() => setShowAuthForm(true)}
+                  className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors border border-blue-300"
+                >
+                  Entrar
+                </button>
               </div>
-            </button>
+            )}
           </div>
         </div>
       </div>
+      
+      {/* Auth Form Modal */}
+      {showAuthForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="flex justify-between items-center p-6 border-b">
+              <h2 className="text-xl font-semibold text-gray-900">Autenticació</h2>
+              <button
+                onClick={() => setShowAuthForm(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6">
+              <AuthForm />
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
   );
 };
