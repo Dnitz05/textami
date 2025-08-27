@@ -38,6 +38,10 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
   const [suggestions, setSuggestions] = useState<MappingSuggestion[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Manual mapping state
+  const [isManualMappingActive, setIsManualMappingActive] = useState(false);
+  const [activeManualHeader, setActiveManualHeader] = useState<string | null>(null);
 
   // Load intelligent AI mapping suggestions
   useEffect(() => {
@@ -45,6 +49,40 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
       loadIntelligentMappings();
     }
   }, [tags, excelHeaders]);
+
+  // Listen for manual text selection events from DocumentPreviewPanel
+  useEffect(() => {
+    const handleTextSelection = (event: any) => {
+      if (isManualMappingActive && activeManualHeader) {
+        const { selectedText } = event.detail;
+        console.log('📝 Text selected for manual mapping:', { 
+          header: activeManualHeader, 
+          selectedText 
+        });
+        
+        // Create a manual mapping entry - find the tag that matches the selected text
+        const matchingTag = tags.find(tag => 
+          tag.example === selectedText || 
+          tag.name.toLowerCase().includes(selectedText.toLowerCase())
+        );
+        
+        if (matchingTag) {
+          handleHeaderMappingChange(activeManualHeader, matchingTag.slug);
+          console.log('✅ Manual mapping created:', { 
+            header: activeManualHeader, 
+            tagSlug: matchingTag.slug,
+            tagName: matchingTag.name
+          });
+        }
+        
+        // Deactivate manual mapping after selection
+        deactivateManualMapping();
+      }
+    };
+
+    document.addEventListener('textSelected', handleTextSelection);
+    return () => document.removeEventListener('textSelected', handleTextSelection);
+  }, [isManualMappingActive, activeManualHeader, tags]);
 
   const loadIntelligentMappings = async () => {
     setIsLoadingSuggestions(true);
@@ -191,6 +229,28 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
     return suggestions.find(s => s.suggestedHeader === header);
   };
 
+  // Handle manual mapping activation
+  const handleManualMappingClick = (header: string) => {
+    console.log('🖱️ Manual mapping activated for header:', header);
+    setIsManualMappingActive(true);
+    setActiveManualHeader(header);
+    
+    // Communicate to parent that manual mapping is active
+    // This will enable text selection in DocumentPreviewPanel
+    document.dispatchEvent(new CustomEvent('manualMappingActivated', { 
+      detail: { header, isActive: true } 
+    }));
+  };
+
+  // Handle manual mapping deactivation
+  const deactivateManualMapping = () => {
+    console.log('🖱️ Manual mapping deactivated');
+    setIsManualMappingActive(false);
+    setActiveManualHeader(null);
+    
+    document.dispatchEvent(new CustomEvent('manualMappingDeactivated'));
+  };
+
   const getConfidenceColor = (confidence: string) => {
     switch (confidence) {
       case 'high':
@@ -318,6 +378,20 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
                     <div className="flex-1">
                       <div className="font-medium text-gray-900 text-sm">{header}</div>
                     </div>
+                    <button
+                      onClick={() => handleManualMappingClick(cleanHeader)}
+                      className={`px-3 py-1 text-xs rounded-md transition-all duration-200 flex items-center space-x-1 ${
+                        activeManualHeader === cleanHeader
+                          ? 'bg-orange-500 text-white shadow-lg'
+                          : 'bg-gray-100 text-gray-600 hover:bg-orange-100 hover:text-orange-700'
+                      }`}
+                      title="Click per seleccionar text manualment"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.121 2.122" />
+                      </svg>
+                      <span>{activeManualHeader === cleanHeader ? 'Selecciona text' : 'Manual'}</span>
+                    </button>
                   </div>
 
                   <div className="space-y-2">

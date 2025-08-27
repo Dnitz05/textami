@@ -1,6 +1,6 @@
 // components/analysis/DocumentPreviewPanel.tsx
 // Panel 1: Document Preview with markdown content
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ParsedSection, ParsedTable } from '../../lib/types';
 
 interface DocumentSignature {
@@ -40,6 +40,56 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
   mappedTags = {},
   onMappingRemove
 }) => {
+  // Manual mapping state
+  const [isManualMappingActive, setIsManualMappingActive] = useState(false);
+  const [activeManualHeader, setActiveManualHeader] = useState<string | null>(null);
+  
+  // Listen for manual mapping events
+  useEffect(() => {
+    const handleManualMappingActivated = (event: any) => {
+      const { header } = event.detail;
+      console.log('📍 Manual mapping activated in DocumentPreview:', header);
+      setIsManualMappingActive(true);
+      setActiveManualHeader(header);
+    };
+
+    const handleManualMappingDeactivated = () => {
+      console.log('📍 Manual mapping deactivated in DocumentPreview');
+      setIsManualMappingActive(false);
+      setActiveManualHeader(null);
+    };
+
+    document.addEventListener('manualMappingActivated', handleManualMappingActivated);
+    document.addEventListener('manualMappingDeactivated', handleManualMappingDeactivated);
+
+    return () => {
+      document.removeEventListener('manualMappingActivated', handleManualMappingActivated);
+      document.removeEventListener('manualMappingDeactivated', handleManualMappingDeactivated);
+    };
+  }, []);
+
+  // Handle text selection for manual mapping
+  const handleTextSelection = () => {
+    if (isManualMappingActive && activeManualHeader) {
+      const selection = window.getSelection();
+      const selectedText = selection?.toString()?.trim();
+      
+      if (selectedText && selectedText.length > 0) {
+        console.log('🎯 Text selected for mapping:', { 
+          header: activeManualHeader, 
+          selectedText 
+        });
+        
+        // Dispatch event to ExcelMappingPanel
+        document.dispatchEvent(new CustomEvent('textSelected', {
+          detail: { selectedText, header: activeManualHeader }
+        }));
+        
+        // Clear selection
+        selection?.removeAllRanges();
+      }
+    }
+  };
   
   // Extract title from markdown if title/fileName are not provided
   const extractTitleFromMarkdown = (text: string): { extractedTitle: string, cleanedText: string } => {
@@ -667,7 +717,31 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         
         {/* Document Page - Technical surgical report appearance */}
         <div className="document-container bg-transparent">
-          <div className="document-page bg-white" style={{width: '100%', maxWidth: '100%', margin: '0', boxShadow: 'none', border: 'none'}}>
+          <div 
+            className="document-page bg-white" 
+            style={{
+              width: '100%', 
+              maxWidth: '100%', 
+              margin: '0', 
+              boxShadow: 'none', 
+              border: 'none',
+              cursor: isManualMappingActive ? 'crosshair' : 'default'
+            }}
+            onMouseUp={handleTextSelection}
+            onClick={handleTextSelection}
+          >
+            {isManualMappingActive && (
+              <div className="bg-orange-100 border border-orange-300 rounded-lg p-3 mb-4 flex items-center space-x-2">
+                <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.121 2.122" />
+                </svg>
+                <div className="text-orange-800">
+                  <div className="font-medium">Mode mapatge manual actiu</div>
+                  <div className="text-sm">Selecciona el text que vols mapejsar amb <strong>"{activeManualHeader}"</strong></div>
+                </div>
+              </div>
+            )}
+            
             {/* Document Title */}
             {finalDisplayTitle && (
               <h1 className="document-title">
