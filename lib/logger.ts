@@ -90,6 +90,9 @@ class Logger {
 // Export singleton instance
 export const logger = Logger.getInstance();
 
+// Import YOLO mode for enhanced logging
+import { yolo } from './yolo-mode';
+
 // Convenience exports for common patterns
 export const log = {
   error: (message: string, data?: any) => logger.error(message, data),
