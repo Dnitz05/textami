@@ -4,7 +4,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 import { ApiResponse } from '../../../lib/types';
-import pdfParse from 'pdf-parse';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -96,6 +95,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
               console.error(`❌ Failed to fetch ${doc.filename}`);
               return null;
             }
+            
+            // Dynamically import pdf-parse to avoid build issues
+            const pdfParse = (await import('pdf-parse')).default;
             
             // Extract PDF content using pdf-parse
             const pdfBuffer = Buffer.from(await pdfResponse.arrayBuffer());
