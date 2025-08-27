@@ -206,7 +206,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         .document-page {
           background: white;
           margin: 0;
-          padding: 10mm 25mm 30mm 0mm; /* Eliminat marge esquerre i reduït superior */
+          padding: 10mm 40mm 30mm 0mm; /* Amplada expandida amb més marge dret */
           min-height: 297mm; /* Altura A4 */
         }
         
@@ -604,7 +604,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         
         {/* Document Page - Professional report appearance */}
         <div className="document-container bg-gray-50 rounded-b-2xl">
-          <div className="document-page bg-white border border-gray-300 shadow-lg" style={{width: '210mm', margin: '0'}}>
+          <div className="document-page bg-white border border-gray-300 shadow-lg" style={{width: '280mm', margin: '0'}}>
             {/* Document Title */}
             {finalDisplayTitle && (
               <h1 className="document-title">
