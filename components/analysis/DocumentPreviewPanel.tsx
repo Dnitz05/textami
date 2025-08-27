@@ -126,82 +126,173 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
       <style jsx>{`
         .document-container {
           font-family: 'Calibri', 'Segoe UI', 'Arial', sans-serif;
-          line-height: 1.6;
-          color: #1f1f1f;
+          line-height: 1.5;
+          color: #2d3748;
         }
         
         .document-page {
           background: white;
           margin: 0 auto;
-          padding: 96px 72px;
-          min-height: 100vh;
+          padding: 40mm 25mm 30mm 25mm; /* Margens estàndard A4 */
+          min-height: 297mm; /* Altura A4 */
         }
         
+        /* TÍTOL PRINCIPAL - Estil informe tècnic */
         .document-title {
           font-family: 'Calibri', 'Segoe UI', sans-serif;
-          font-size: 28px;
-          font-weight: 600;
-          color: #1f1f1f;
+          font-size: 18pt;
+          font-weight: 700;
+          color: #1a202c;
           text-align: center;
-          margin: 0 0 32px 0;
-          letter-spacing: -0.5px;
+          text-transform: uppercase;
+          margin: 0 0 40px 0;
+          padding-bottom: 15px;
+          border-bottom: 3px solid #2b6cb0;
+          letter-spacing: 1px;
         }
         
+        /* SECCIONS - Estil administratiu */
         .document-section {
-          margin-bottom: 24px;
+          margin-bottom: 30px;
+          page-break-inside: avoid;
         }
         
         .document-section h2 {
           font-family: 'Calibri', 'Segoe UI', sans-serif;
-          font-size: 18px;
+          font-size: 14pt;
           font-weight: 600;
-          color: #1f1f1f;
-          margin: 24px 0 12px 0;
-          line-height: 1.4;
+          color: #2b6cb0;
+          margin: 25px 0 15px 0;
+          padding-left: 8px;
+          border-left: 4px solid #2b6cb0;
+          background: linear-gradient(90deg, #ebf8ff 0%, transparent 100%);
+          padding: 8px 12px;
+          text-transform: capitalize;
         }
         
+        .document-section h3 {
+          font-family: 'Calibri', 'Segoe UI', sans-serif;
+          font-size: 12pt;
+          font-weight: 600;
+          color: #4a5568;
+          margin: 20px 0 10px 0;
+          text-decoration: underline;
+          text-underline-offset: 3px;
+        }
+        
+        /* CONTINGUT - Estil professional */
         .document-content {
           font-family: 'Calibri', 'Segoe UI', sans-serif;
-          font-size: 14px;
-          line-height: 1.8;
-          color: #1f1f1f;
+          font-size: 11pt;
+          line-height: 1.6;
+          color: #2d3748;
           text-align: justify;
-          margin-bottom: 16px;
+          margin-bottom: 15px;
+          text-indent: 0;
         }
         
+        /* NUMERACIÓ I ELEMENTS AUXILIARS */
+        .document-header-info {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 30px;
+          padding: 15px 20px;
+          background: linear-gradient(90deg, #edf2f7 0%, #e2e8f0 100%);
+          border-radius: 6px;
+          font-size: 9pt;
+          color: #4a5568;
+        }
+        
+        .document-footer {
+          margin-top: 40px;
+          text-align: center;
+          font-size: 9pt;
+          color: #718096;
+          border-top: 1px solid #e2e8f0;
+          padding-top: 15px;
+        }
+        
+        .document-content p {
+          margin-bottom: 12px;
+        }
+        
+        .document-content ul, .document-content ol {
+          margin: 10px 0;
+          padding-left: 25px;
+        }
+        
+        .document-content li {
+          margin-bottom: 5px;
+        }
+        
+        /* TAULES - Estil administratiu professional */
         .document-table {
           width: 100%;
           border-collapse: collapse;
-          margin: 24px 0;
+          margin: 25px 0;
           font-family: 'Calibri', 'Segoe UI', sans-serif;
-          font-size: 14px;
+          font-size: 10pt;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         
         .document-table th {
-          background-color: #f8f9fa;
-          border: 1px solid #d1d5db;
-          padding: 12px;
+          background: linear-gradient(135deg, #2b6cb0 0%, #3182ce 100%);
+          color: white;
+          border: 1px solid #2563eb;
+          padding: 12px 15px;
           text-align: left;
           font-weight: 600;
-          color: #374151;
+          font-size: 10pt;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
         
         .document-table td {
-          border: 1px solid #d1d5db;
-          padding: 12px;
-          color: #1f1f1f;
+          border: 1px solid #cbd5e0;
+          padding: 10px 15px;
+          color: #2d3748;
+          vertical-align: top;
         }
         
         .document-table tr:nth-child(even) {
-          background-color: #f9fafb;
+          background-color: #f7fafc;
         }
         
+        .document-table tr:hover {
+          background-color: #edf2f7;
+        }
+        
+        /* SIGNATURA - Estil oficial */
         .document-signature {
-          margin-top: 48px;
-          padding: 24px;
-          background: #f8f9fa;
-          border: 1px solid #e5e7eb;
+          margin-top: 60px;
+          padding: 30px;
+          background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+          border: 2px solid #e2e8f0;
+          border-radius: 8px;
           text-align: center;
+          page-break-inside: avoid;
+        }
+        
+        .document-signature-name {
+          font-size: 14pt;
+          font-weight: 700;
+          color: #2d3748;
+          margin-bottom: 8px;
+          text-transform: uppercase;
+        }
+        
+        .document-signature-title {
+          font-size: 12pt;
+          font-weight: 500;
+          color: #4a5568;
+          margin-bottom: 6px;
+        }
+        
+        .document-signature-date {
+          font-size: 10pt;
+          color: #718096;
+          font-style: italic;
         }
         
         .detected-tag {
@@ -320,15 +411,28 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           </div>
         )}
         
-        {/* Document Page - Word-like appearance with enhanced spacing */}
-        <div className="document-container p-6 bg-gray-50 rounded-b-2xl">
-          <div className="document-page bg-white border border-gray-200" style={{width: 'calc(210mm - 60px)', margin: '0 auto', padding: '60px 50px'}}>
+        {/* Document Page - Professional report appearance */}
+        <div className="document-container p-8 bg-gray-50 rounded-b-2xl">
+          <div className="document-page bg-white border border-gray-300 shadow-lg" style={{width: '210mm', margin: '0 auto'}}>
             {/* Document Title */}
             {finalDisplayTitle && (
               <h1 className="document-title">
                 {finalDisplayTitle}
               </h1>
             )}
+            
+            {/* Document Info Header */}
+            <div className="document-header-info">
+              <div>
+                <strong>Document:</strong> {fileName || 'Informe Tècnic'}
+              </div>
+              <div>
+                <strong>Data:</strong> {new Date().toLocaleDateString('ca-ES')}
+              </div>
+              <div>
+                <strong>Pàgina:</strong> 1 de 1
+              </div>
+            </div>
 
             {/* Document Content */}
             <div>
@@ -393,13 +497,16 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
             {/* Signature */}
             {signatura && (
               <div className="document-signature">
-                <div style={{fontFamily: 'Calibri, sans-serif', fontSize: '14px', lineHeight: '1.6'}}>
-                  <div style={{fontWeight: '600', fontSize: '16px', marginBottom: '8px', color: '#1f1f1f'}}>{signatura.nom}</div>
-                  <div style={{fontWeight: '500', marginBottom: '4px', color: '#374151'}}>{signatura.carrec}</div>
-                  <div style={{fontSize: '13px', color: '#6b7280'}}>{signatura.data_lloc}</div>
-                </div>
+                <div className="document-signature-name">{signatura.nom}</div>
+                <div className="document-signature-title">{signatura.carrec}</div>
+                <div className="document-signature-date">{signatura.data_lloc}</div>
               </div>
             )}
+            
+            {/* Document Footer */}
+            <div className="document-footer">
+              Generat amb Textami • {new Date().toLocaleDateString('ca-ES')} • Pàgina 1
+            </div>
           </div>
         </div>
       </div>
