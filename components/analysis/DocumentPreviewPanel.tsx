@@ -55,7 +55,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
 
   // Use custom hooks for complex logic
   const { displayTitle, cleanedText } = useDocumentTitle({ title, fileName, markdown });
-  const { highlightTags } = useTagHighlighting({ 
+  const { highlightTags, headerColors } = useTagHighlighting({ 
     tags, 
     mappedTags, 
     manualTextMappings, 
