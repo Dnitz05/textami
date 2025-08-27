@@ -141,7 +141,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           padding: 20pt 24pt 24pt 24pt;
           background: rgba(248, 250, 252, 0.4);
           border: 1px solid rgba(226, 232, 240, 0.3);
-          border-radius: 8px;
+          border-radius: 0px;
           letter-spacing: -0.2pt;
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
         }
@@ -152,7 +152,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           page-break-inside: avoid;
           background: rgba(248, 250, 252, 0.2);
           border: 1px solid rgba(226, 232, 240, 0.2);
-          border-radius: 6px;
+          border-radius: 0px;
           padding: 18pt 20pt;
           box-shadow: 0 1px 2px rgba(0, 0, 0, 0.01);
         }
@@ -229,7 +229,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           font-size: 10pt;
           background: rgba(248, 250, 252, 0.1);
           border: 1px solid rgba(226, 232, 240, 0.3);
-          border-radius: 6px;
+          border-radius: 0px;
           overflow: hidden;
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
         }
@@ -269,7 +269,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           padding: 20pt 24pt;
           background: rgba(248, 250, 252, 0.3);
           border: 1px solid rgba(226, 232, 240, 0.3);
-          border-radius: 6px;
+          border-radius: 0px;
           text-align: center;
           page-break-inside: avoid;
           font-family: 'Inter', 'Segoe UI', sans-serif;
@@ -302,7 +302,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         .detected-tag {
           background: rgba(59, 130, 246, 0.08);
           border: 1px dotted #3b82f6;
-          border-radius: 2px;
+          border-radius: 0px;
           padding: 1px 2px;
           margin: 0 1px;
           cursor: help;
@@ -326,7 +326,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           display: inline-block;
           padding: 3px 8px;
           border: 2px solid;
-          border-radius: 6px;
+          border-radius: 0px;
           font-weight: 600;
           position: relative;
           transition: all 0.3s ease;
@@ -347,7 +347,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           padding: 20pt 24pt;
           background: rgba(248, 250, 252, 0.3);
           border: 1px solid rgba(226, 232, 240, 0.3);
-          border-radius: 6px;
+          border-radius: 0px;
           page-break-inside: avoid;
           font-family: 'Inter', 'Segoe UI', sans-serif;
           box-shadow: 0 1px 2px rgba(0, 0, 0, 0.01);
@@ -364,7 +364,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           align-items: center;
           background: white;
           padding: 8px 12px;
-          border-radius: 8px;
+          border-radius: 0px;
           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
           border: 1px solid #e2e8f0;
           transition: all 0.2s ease;
@@ -378,7 +378,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         .legend-color {
           width: 16px;
           height: 16px;
-          border-radius: 4px;
+          border-radius: 0px;
           margin-right: 8px;
           border: 2px solid white;
           box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
@@ -395,7 +395,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           background: #4a5568;
           color: white;
           padding: 2px 6px;
-          border-radius: 10px;
+          border-radius: 0px;
           font-size: 8pt;
           font-weight: 600;
           margin-left: auto;
@@ -445,7 +445,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
             {onSave && (
               <button
                 onClick={onSave}
-                className="flex items-center px-2 py-1 text-xs font-medium text-gray-800 bg-white hover:bg-blue-50 rounded border border-gray-300 hover:border-blue-400 transition-all duration-200 shadow-sm hover:shadow"
+                className="flex items-center px-2 py-1 text-xs font-medium text-gray-800 bg-white hover:bg-blue-50  border border-gray-300 hover:border-blue-400 transition-all duration-200 shadow-sm hover:shadow"
               >
                 <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
@@ -454,7 +454,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
               </button>
             )}
             <button
-              className="flex items-center px-2 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded border border-green-600 hover:border-green-700 transition-all duration-200 shadow-sm hover:shadow"
+              className="flex items-center px-2 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700  border border-green-600 hover:border-green-700 transition-all duration-200 shadow-sm hover:shadow"
             >
               <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -464,7 +464,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
             {onSaveAs && (
               <button
                 onClick={onSaveAs}
-                className="flex items-center px-2 py-1 text-xs font-medium text-gray-800 bg-white hover:bg-blue-50 rounded border border-gray-300 hover:border-blue-400 transition-all duration-200 shadow-sm hover:shadow"
+                className="flex items-center px-2 py-1 text-xs font-medium text-gray-800 bg-white hover:bg-blue-50  border border-gray-300 hover:border-blue-400 transition-all duration-200 shadow-sm hover:shadow"
               >
                 <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -475,7 +475,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
             {onClose && (
               <button
                 onClick={onClose}
-                className="flex items-center px-2 py-1 text-xs font-medium text-gray-800 bg-white hover:bg-blue-50 rounded border border-gray-300 hover:border-blue-400 transition-all duration-200 shadow-sm hover:shadow"
+                className="flex items-center px-2 py-1 text-xs font-medium text-gray-800 bg-white hover:bg-blue-50  border border-gray-300 hover:border-blue-400 transition-all duration-200 shadow-sm hover:shadow"
               >
                 <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -492,7 +492,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         {/* Processing overlay */}
         {isProcessing && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
-            <div className="flex items-center space-x-3 bg-blue-50 px-6 py-3 rounded-lg border border-blue-200 shadow-sm">
+            <div className="flex items-center space-x-3 bg-blue-50 px-6 py-3 -lg border border-blue-200 shadow-sm">
               <svg className="animate-spin w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
@@ -517,7 +517,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
             onClick={handleTextSelection}
           >
             {isManualMappingActive && (
-              <div className="bg-orange-100 border border-orange-300 rounded-lg p-3 mb-4 flex items-center space-x-2">
+              <div className="bg-orange-100 border border-orange-300 -lg p-3 mb-4 flex items-center space-x-2">
                 <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.121 2.122" />
                 </svg>
