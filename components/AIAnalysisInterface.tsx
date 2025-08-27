@@ -51,14 +51,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
   const [customInstruction, setCustomInstruction] = useState('');
   const [isExecutingCustom, setIsExecutingCustom] = useState(false);
   
-  // State for section-specific instructions
-  const [sectionSpecificInstructions, setSectionSpecificInstructions] = useState<Array<{
-    id: string;
-    sectionTitle: string;
-    sectionIndex: number;
-    instruction: string;
-    created: Date;
-  }>>([]);
+  // Removed: section-specific instructions state (no longer needed)
   
   // State for knowledge documents
   const [knowledgeDocuments, setKnowledgeDocuments] = useState<Array<{
@@ -217,24 +210,17 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
   };
 
   const handleSectionClick = (section: any, index: number) => {
-    log.yolo('Section clicked for instruction creation', { 
+    log.yolo('Section instruction button clicked - opening AI prompts panel', { 
       section: section.title || `Section ${index + 1}`, 
       index 
     });
     
-    // Create a section-specific instruction
-    const newInstruction = {
-      id: `section_${Date.now()}_${index}`,
-      sectionTitle: section.title || `Secció ${index + 1}`,
-      sectionIndex: index,
-      instruction: `Modifica només la secció "${section.title || `Secció ${index + 1}`}" del document`,
-      created: new Date()
-    };
+    // Show the left sidebar (AI prompts panel) if hidden
+    setShowLeftSidebar(true);
     
-    setSectionSpecificInstructions(prev => [newInstruction, ...prev]);
-    
-    // Show notification
-    log.success(`Nova instrucció creada per: ${newInstruction.sectionTitle}`);
+    // The AIPromptsPanel will handle creating the section-specific instruction
+    // with knowledge context via its own form
+    log.success(`Panel AI obert per crear instrucció específica de: ${section.title || `Secció ${index + 1}`}`);
   };
 
   const handleSectionEdit = (section: any, index: number) => {
@@ -305,7 +291,6 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                       isExecuting={isExecutingInstruction}
                       executingInstructionId={executingInstructionId}
                       documentSections={analysisData?.sections?.map(s => ({id: s.id || s.title, title: s.title})) || []}
-                      sectionSpecificInstructions={sectionSpecificInstructions}
                     />
                   </div>
                 </div>
