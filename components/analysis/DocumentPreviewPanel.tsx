@@ -89,12 +89,6 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
     sectionsCount: sections.length
   });
 
-  // DEBUG: Log final processed markdown
-  console.log('🔍 Final markdown DEBUG:', {
-    originalMarkdown: markdown.substring(0, 200),
-    processedMarkdown: highlightTags(markdown).substring(0, 200),
-    afterRemoveTitle: removeDocumentTitle(markdown).substring(0, 200)
-  });
 
   // Handle clicks on mapped terms to remove them
   React.useEffect(() => {
