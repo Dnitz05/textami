@@ -7,6 +7,7 @@ import ExcelMappingPanel from './analysis/ExcelMappingPanel';
 import AIPromptsPanel from './analysis/AIPromptsPanel';
 import { MappingProvider } from '../contexts/MappingContext';
 import { log } from '../lib/logger';
+import { useUser } from '../hooks/useUser';
 // Knowledge moved to its own page - /knowledge
 
 interface AIAnalysisInterfaceProps {
@@ -38,6 +39,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
   onExcelUpload,
   isProcessingExcel = false
 }) => {
+  const { user } = useUser();
   const [mappings, setMappings] = useState<Record<string, string>>({});
   const [showLeftSidebar, setShowLeftSidebar] = useState(true);
   const [showRightSidebar, setShowRightSidebar] = useState(true);
@@ -73,9 +75,12 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
 
   // Load knowledge documents on component mount
   React.useEffect(() => {
+    if (!user) return; // Wait for user to be loaded
+    
     const loadKnowledgeDocuments = async () => {
       try {
-        const response = await fetch('/api/knowledge?userId=anonymous');
+        const userId = user.id || 'anonymous';
+        const response = await fetch(`/api/knowledge?userId=${userId}`);
         const result = await response.json();
         if (result.success) {
           setKnowledgeDocuments(result.data.map((doc: any) => ({
@@ -91,7 +96,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
     };
 
     loadKnowledgeDocuments();
-  }, []);
+  }, [user]);
 
   if (!analysisData) {
     return (

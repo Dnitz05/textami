@@ -1,6 +1,7 @@
 // components/analysis/AIPromptsPanel.tsx
 // Left sidebar panel for AI instructions to modify document content
 import React, { useState } from 'react';
+import { useUser } from '../../hooks/useUser';
 
 interface AIInstruction {
   id: string;
@@ -28,6 +29,7 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
   documentSections = [],
   openFormWithSection = null
 }) => {
+  const { user } = useUser();
   const [knowledgeFiles, setKnowledgeFiles] = useState<Array<{
     id: string;
     title: string;
@@ -38,10 +40,13 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
 
   // Load knowledge files on component mount
   React.useEffect(() => {
+    if (!user) return; // Wait for user to be loaded
+    
     const loadKnowledgeFiles = async () => {
       setLoadingKnowledge(true);
       try {
-        const response = await fetch('/api/knowledge?userId=anonymous');
+        const userId = user.id || 'anonymous';
+        const response = await fetch(`/api/knowledge?userId=${userId}`);
         const result = await response.json();
         if (result.success) {
           setKnowledgeFiles(result.data.map((doc: any) => ({
@@ -59,7 +64,7 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
     };
 
     loadKnowledgeFiles();
-  }, []);
+  }, [user]);
 
   const [instructions, setInstructions] = useState<AIInstruction[]>([
     {
