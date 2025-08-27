@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ParsedSection, ParsedTable } from '../../lib/types';
 import { log } from '../../lib/logger';
+import { useMapping } from '../../contexts/MappingContext';
 
 interface DocumentSignature {
   nom: string;
@@ -41,51 +42,16 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
   mappedTags = {},
   onMappingRemove
 }) => {
-  // Manual mapping state
-  const [isManualMappingActive, setIsManualMappingActive] = useState(false);
-  const [activeManualHeader, setActiveManualHeader] = useState<string | null>(null);
+  // Use mapping context instead of local state
+  const {
+    isManualMappingActive,
+    activeManualHeader,
+    manualTextMappings,
+    manualTagInfo,
+    handleTextSelection: contextHandleTextSelection
+  } = useMapping();
   
-  // ULTRATHINK: Manual text mappings separate from tag mappings
-  const [manualTextMappings, setManualTextMappings] = useState<Record<string, string>>({});
-  
-  // ULTRATHINK: Store original tag info for color preservation
-  const [manualTagInfo, setManualTagInfo] = useState<Record<string, {selectedText: string, originalTag?: any}>>({});
-  
-  // Listen for manual mapping events
-  useEffect(() => {
-    const handleManualMappingActivated = (event: any) => {
-      const { header } = event.detail;
-      log.debug('Manual mapping activated in DocumentPreview', { header });
-      setIsManualMappingActive(true);
-      setActiveManualHeader(header);
-    };
-
-    const handleManualMappingDeactivated = () => {
-      log.debug('Manual mapping deactivated in DocumentPreview');
-      setIsManualMappingActive(false);
-      setActiveManualHeader(null);
-    };
-
-    const handleManualTextMappingsUpdated = (event: any) => {
-      const { manualTextMappings: newManualTextMappings, manualTagInfo: newManualTagInfo } = event.detail;
-      log.ultrathink('Manual text mappings updated', {
-        newManualTextMappings,
-        newManualTagInfo
-      });
-      setManualTextMappings(newManualTextMappings);
-      setManualTagInfo(newManualTagInfo);
-    };
-
-    document.addEventListener('manualMappingActivated', handleManualMappingActivated);
-    document.addEventListener('manualMappingDeactivated', handleManualMappingDeactivated);
-    document.addEventListener('manualTextMappingsUpdated', handleManualTextMappingsUpdated);
-
-    return () => {
-      document.removeEventListener('manualMappingActivated', handleManualMappingActivated);
-      document.removeEventListener('manualMappingDeactivated', handleManualMappingDeactivated);
-      document.removeEventListener('manualTextMappingsUpdated', handleManualTextMappingsUpdated);
-    };
-  }, []);
+  // Note: Manual mapping events now handled via Context API
 
   // Handle text selection for manual mapping
   const handleTextSelection = () => {
@@ -94,21 +60,8 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
       const selectedText = selection?.toString()?.trim();
       
       if (selectedText && selectedText.length > 0) {
-        log.ultrathink('Text selected for mapping', { 
-          header: activeManualHeader, 
-          selectedText,
-          previousMappings: Object.entries(mappedTags)
-        });
-        
-        // Dispatch event to ExcelMappingPanel with ULTRATHINK reassignment logic
-        document.dispatchEvent(new CustomEvent('textSelected', {
-          detail: { 
-            selectedText, 
-            header: activeManualHeader,
-            // Send current mappings so we can revert previous locations
-            currentMappings: mappedTags
-          }
-        }));
+        // Use Context API instead of CustomEvents
+        contextHandleTextSelection(selectedText, mappedTags);
         
         // Clear selection
         selection?.removeAllRanges();

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ParsedTag } from '../../lib/types';
 import { log } from '../../lib/logger';
+import { useMapping } from '../../contexts/MappingContext';
 
 interface ExcelMappingPanelProps {
   tags: ParsedTag[];
@@ -40,15 +41,15 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Manual mapping state
-  const [isManualMappingActive, setIsManualMappingActive] = useState(false);
-  const [activeManualHeader, setActiveManualHeader] = useState<string | null>(null);
-  
-  // ULTRATHINK: Store manual text mappings separately from tag mappings
-  const [manualTextMappings, setManualTextMappings] = useState<Record<string, string>>({});
-  
-  // ULTRATHINK: Store original tag info for manual mappings to preserve colors
-  const [manualTagInfo, setManualTagInfo] = useState<Record<string, {selectedText: string, originalTag?: any}>>({});
+  // Use mapping context instead of local state
+  const {
+    isManualMappingActive,
+    activeManualHeader,
+    manualTextMappings,
+    manualTagInfo,
+    activateManualMapping,
+    deactivateManualMapping
+  } = useMapping();
 
   // Load intelligent AI mapping suggestions
   useEffect(() => {
@@ -57,82 +58,7 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
     }
   }, [tags, excelHeaders]);
 
-  // ULTRATHINK: Listen for manual text selection events from DocumentPreviewPanel
-  useEffect(() => {
-    const handleTextSelection = (event: any) => {
-      if (isManualMappingActive && activeManualHeader) {
-        const { selectedText, currentMappings } = event.detail;
-        
-        log.ultrathink('Processing text selection', { 
-          header: activeManualHeader, 
-          selectedText: selectedText.substring(0, 50) + '...'
-        });
-        
-        // STEP 1: Remove this header from previous mappings (if exists)
-        const newMappings = { ...mappings };
-        const newManualTextMappings = { ...manualTextMappings };
-        
-        // Find if this header was previously mapped to a tag
-        const wasTagMapped = Object.keys(newMappings).find(header => newMappings[header] && header === activeManualHeader);
-        if (wasTagMapped) {
-          console.log('🔄 ULTRATHINK - Removing previous tag mapping for header:', wasTagMapped);
-          delete newMappings[wasTagMapped];
-        }
-        
-        // Find if this header had a previous manual text mapping
-        const wasManuallMapped = Object.keys(newManualTextMappings).find(header => header === activeManualHeader);
-        const newManualTagInfo = { ...manualTagInfo };
-        if (wasManuallMapped) {
-          console.log('🔄 ULTRATHINK - Removing previous manual mapping for header:', wasManuallMapped);
-          delete newManualTextMappings[wasManuallMapped];
-          delete newManualTagInfo[wasManuallMapped]; // Also remove tag info
-        }
-        
-        // STEP 2: Find the original tag that matches the selected text (to preserve its color)
-        const originalTag = tags.find(tag => 
-          tag.example === selectedText || 
-          tag.name.toLowerCase().includes(selectedText.toLowerCase()) ||
-          selectedText.toLowerCase().includes(tag.name.toLowerCase())
-        );
-        
-        // STEP 3: Create new manual text mapping
-        newManualTextMappings[activeManualHeader] = selectedText;
-        
-        // STEP 4: Store tag info for color preservation
-        newManualTagInfo[activeManualHeader] = {
-          selectedText,
-          originalTag: originalTag || null
-        };
-        
-        console.log('✅ ULTRATHINK - New manual mapping created:', {
-          header: activeManualHeader,
-          selectedText,
-          originalTag: originalTag ? {name: originalTag.name, example: originalTag.example} : 'No matching tag found',
-          allManualMappings: Object.entries(newManualTextMappings)
-        });
-        
-        // STEP 5: Update states
-        setMappings(newMappings);
-        setManualTextMappings(newManualTextMappings);
-        setManualTagInfo(newManualTagInfo);
-        onMappingUpdate?.(newMappings);
-        
-        // STEP 6: Notify DocumentPreviewPanel about manual text mappings with tag info
-        document.dispatchEvent(new CustomEvent('manualTextMappingsUpdated', {
-          detail: { 
-            manualTextMappings: newManualTextMappings,
-            manualTagInfo: newManualTagInfo
-          }
-        }));
-        
-        // Deactivate manual mapping after selection
-        deactivateManualMapping();
-      }
-    };
-
-    document.addEventListener('textSelected', handleTextSelection);
-    return () => document.removeEventListener('textSelected', handleTextSelection);
-  }, [isManualMappingActive, activeManualHeader, tags, mappings, manualTextMappings]);
+  // Note: Text selection now handled via Context API
 
   const loadIntelligentMappings = async () => {
     setIsLoadingSuggestions(true);
@@ -279,26 +205,10 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
     return suggestions.find(s => s.suggestedHeader === header);
   };
 
-  // Handle manual mapping activation
+  // Handle manual mapping activation - now uses Context
   const handleManualMappingClick = (header: string) => {
-    console.log('🖱️ Manual mapping activated for header:', header);
-    setIsManualMappingActive(true);
-    setActiveManualHeader(header);
-    
-    // Communicate to parent that manual mapping is active
-    // This will enable text selection in DocumentPreviewPanel
-    document.dispatchEvent(new CustomEvent('manualMappingActivated', { 
-      detail: { header, isActive: true } 
-    }));
-  };
-
-  // Handle manual mapping deactivation
-  const deactivateManualMapping = () => {
-    console.log('🖱️ Manual mapping deactivated');
-    setIsManualMappingActive(false);
-    setActiveManualHeader(null);
-    
-    document.dispatchEvent(new CustomEvent('manualMappingDeactivated'));
+    log.debug('Manual mapping activated for header', { header });
+    activateManualMapping(header);
   };
 
   const getConfidenceColor = (confidence: string) => {

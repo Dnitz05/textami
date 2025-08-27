@@ -5,6 +5,7 @@ import { AnalysisData, ParsedTag, PipelineStatus } from '../lib/types';
 import DocumentPreviewPanel from './analysis/DocumentPreviewPanel';
 import ExcelMappingPanel from './analysis/ExcelMappingPanel';
 import AIPromptsPanel from './analysis/AIPromptsPanel';
+import { MappingProvider } from '../contexts/MappingContext';
 // Knowledge moved to its own page - /knowledge
 
 interface AIAnalysisInterfaceProps {
@@ -178,9 +179,13 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
   };
 
   return (
-    <div className="h-screen flex flex-col">
-      {/* Fixed layout without outer padding/margins - sidebars attached to document */}
-      <div className="flex-1 flex">
+    <MappingProvider 
+      tags={analysisData?.tags || []} 
+      onMappingUpdate={onMappingUpdate}
+    >
+      <div className="h-screen flex flex-col">
+        {/* Fixed layout without outer padding/margins - sidebars attached to document */}
+        <div className="flex-1 flex">
         {/* Toggle buttons - positioned at top right (accounting for fixed navbar) */}
         <div className="absolute top-4 right-4 flex items-center space-x-2 z-20">
           <button
@@ -285,6 +290,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
 
       </div>
     </div>
+    </MappingProvider>
   );
 };
 
