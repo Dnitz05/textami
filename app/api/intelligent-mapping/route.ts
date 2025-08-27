@@ -159,9 +159,9 @@ RESPOSTA OBLIGATÒRIA EN JSON:
 7. Raonament obligatori i detallat per cada assignació
 8. Pensa com un expert: cada capçalera CONTÉ alguna informació, i aquesta informació SEMPRE correspon a algun dels tags disponibles`;
 
-    // Call GPT-5 with enhanced reasoning
+    // Call GPT-4o with enhanced reasoning (fallback from GPT-5)
     const completion = await openai.chat.completions.create({
-      model: "gpt-5",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
@@ -175,10 +175,7 @@ RESPOSTA OBLIGATÒRIA EN JSON:
       response_format: {
         type: "json_object"
       },
-      max_completion_tokens: 6000, // Més tokens per raonament profund
-      temperature: 0.05, // Més baixa per màxima consistència i precisió
-      presence_penalty: 0,
-      frequency_penalty: 0
+      max_tokens: 6000 // Més tokens per raonament profund
     });
 
     const aiResponse = completion.choices[0].message.content;
