@@ -37,18 +37,35 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
   onClose
 }) => {
   
+  // Extract title from markdown if title/fileName are not provided
+  const extractTitleFromMarkdown = (text: string): { extractedTitle: string, cleanedText: string } => {
+    const lines = text.split('\n');
+    if (lines.length > 0 && lines[0].startsWith('# ')) {
+      const extractedTitle = lines[0].replace('# ', '').trim();
+      const cleanedText = lines.slice(1).join('\n').replace(/^\n+/, '');
+      return { extractedTitle, cleanedText };
+    }
+    return { extractedTitle: '', cleanedText: text };
+  };
+  
+  // Get the final title to display
+  const getDisplayTitle = (): string => {
+    if (fileName) return fileName.replace(/\.[^/.]+$/, '');
+    if (title) return title;
+    
+    // Extract from markdown if no title/fileName provided
+    const { extractedTitle } = extractTitleFromMarkdown(markdown);
+    return extractedTitle;
+  };
+  
   // Function to remove document title from content to avoid duplication
   const removeDocumentTitle = (text: string): string => {
-    // Get template name from fileName (remove extension)
-    const templateName = fileName ? fileName.replace(/\.[^/.]+$/, '') : title;
-    if (!templateName) return text;
+    const displayTitle = getDisplayTitle();
+    if (!displayTitle) return text;
     
     const lines = text.split('\n');
-    // Remove the first H1 header if it matches the template name or detected title
-    if (lines.length > 0 && (
-      lines[0].trim() === `# ${templateName}` || 
-      lines[0].trim() === `# ${title}`
-    )) {
+    // Remove the first H1 header if it matches the display title
+    if (lines.length > 0 && lines[0].trim() === `# ${displayTitle}`) {
       return lines.slice(1).join('\n').replace(/^\n+/, ''); // Remove leading newlines
     }
     return text;
@@ -76,13 +93,16 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
     return highlightedText;
   };
 
+  // Get final display title
+  const finalDisplayTitle = getDisplayTitle();
+  
   // DEBUG: Log title and filename values
   console.log('🔍 DocumentPreviewPanel DEBUG:', {
     title,
     fileName,
     titleExists: !!title,
     fileNameExists: !!fileName,
-    templateName: fileName ? fileName.replace(/\.[^/.]+$/, '') : title,
+    finalDisplayTitle,
     markdownStart: markdown.substring(0, 200)
   });
 
@@ -304,9 +324,9 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         <div className="document-container p-6 bg-gray-50 rounded-b-2xl">
           <div className="document-page bg-white border border-gray-200" style={{width: 'calc(210mm - 60px)', margin: '0 auto', padding: '60px 50px'}}>
             {/* Document Title */}
-            {(fileName || title) && (
+            {finalDisplayTitle && (
               <h1 className="document-title">
-                {fileName ? fileName.replace(/\.[^/.]+$/, '') : title}
+                {finalDisplayTitle}
               </h1>
             )}
 
