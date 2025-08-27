@@ -50,6 +50,15 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
   const [customInstruction, setCustomInstruction] = useState('');
   const [isExecutingCustom, setIsExecutingCustom] = useState(false);
   
+  // State for section-specific instructions
+  const [sectionSpecificInstructions, setSectionSpecificInstructions] = useState<Array<{
+    id: string;
+    sectionTitle: string;
+    sectionIndex: number;
+    instruction: string;
+    created: Date;
+  }>>([]);
+  
   // Update current markdown when analysis data changes
   React.useEffect(() => {
     if (analysisData?.markdown) {
@@ -178,6 +187,27 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
     }
   };
 
+  const handleSectionClick = (section: any, index: number) => {
+    log.yolo('Section clicked for instruction creation', { 
+      section: section.title || `Section ${index + 1}`, 
+      index 
+    });
+    
+    // Create a section-specific instruction
+    const newInstruction = {
+      id: `section_${Date.now()}_${index}`,
+      sectionTitle: section.title || `Secció ${index + 1}`,
+      sectionIndex: index,
+      instruction: `Modifica només la secció "${section.title || `Secció ${index + 1}`}" del document`,
+      created: new Date()
+    };
+    
+    setSectionSpecificInstructions(prev => [newInstruction, ...prev]);
+    
+    // Show notification
+    log.success(`Nova instrucció creada per: ${newInstruction.sectionTitle}`);
+  };
+
   return (
     <MappingProvider 
       tags={analysisData?.tags || []} 
@@ -235,6 +265,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                       isExecuting={isExecutingInstruction}
                       executingInstructionId={executingInstructionId}
                       documentSections={analysisData?.sections?.map(s => ({id: s.id || s.title, title: s.title})) || []}
+                      sectionSpecificInstructions={sectionSpecificInstructions}
                     />
                   </div>
                 </div>
@@ -283,6 +314,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                 onClose={onClose}
                 mappedTags={mappings}
                 onMappingRemove={handleMappingRemove}
+                onSectionClick={handleSectionClick}
               />
             </div>
           </div>

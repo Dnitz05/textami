@@ -27,6 +27,7 @@ interface DocumentPreviewPanelProps {
   onClose?: () => void;
   mappedTags?: Record<string, string>; // header -> tagSlug mappings
   onMappingRemove?: (header: string) => void; // Callback to remove mapping
+  onSectionClick?: (section: ParsedSection, index: number) => void; // Callback when section clicked
 }
 
 const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
@@ -42,7 +43,8 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
   onSaveAs,
   onClose,
   mappedTags = {},
-  onMappingRemove
+  onMappingRemove,
+  onSectionClick
 }) => {
   // Use mapping context instead of local state
   const {
@@ -155,6 +157,37 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           border-radius: 0px;
           padding: 18pt 20pt;
           box-shadow: 0 1px 2px rgba(0, 0, 0, 0.01);
+          cursor: pointer;
+          transition: all 0.3s ease;
+          position: relative;
+        }
+        
+        .document-section:hover {
+          background: rgba(59, 130, 246, 0.08);
+          border-color: rgba(59, 130, 246, 0.3);
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+          transform: translateY(-2px);
+        }
+        
+        .document-section:hover::after {
+          content: '+ Crear Instrucció per aquesta secció';
+          position: absolute;
+          top: 12px;
+          right: 16px;
+          background: rgba(59, 130, 246, 0.95);
+          color: white;
+          padding: 6px 12px;
+          font-size: 11px;
+          font-weight: 500;
+          border-radius: 0px;
+          opacity: 0;
+          animation: fadeInPrompt 0.3s ease forwards;
+          z-index: 10;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        @keyframes fadeInPrompt {
+          to { opacity: 1; }
         }
         
         .document-section h2 {
@@ -540,7 +573,12 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
             <div>
               {sections.length > 0 ? (
                 sections.map((section, index) => (
-                  <div key={section.id || index} className="document-section">
+                  <div 
+                    key={section.id || index} 
+                    className="document-section"
+                    onClick={() => onSectionClick?.(section, index)}
+                    title="Clica per crear una instrucció específica per aquesta secció"
+                  >
                     {section.title && (
                       <h2>{section.title}</h2>
                     )}
