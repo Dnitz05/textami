@@ -59,12 +59,42 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
     created: Date;
   }>>([]);
   
+  // State for knowledge documents
+  const [knowledgeDocuments, setKnowledgeDocuments] = useState<Array<{
+    filename: string;
+    storagePath: string;
+    type: string;
+    description: string;
+  }>>([]);
+  
   // Update current markdown when analysis data changes
   React.useEffect(() => {
     if (analysisData?.markdown) {
       setCurrentMarkdown(analysisData.markdown);
     }
   }, [analysisData?.markdown]);
+
+  // Load knowledge documents on component mount
+  React.useEffect(() => {
+    const loadKnowledgeDocuments = async () => {
+      try {
+        const response = await fetch('/api/knowledge?userId=anonymous');
+        const result = await response.json();
+        if (result.success) {
+          setKnowledgeDocuments(result.data.map((doc: any) => ({
+            filename: doc.filename,
+            storagePath: doc.storagePath,
+            type: doc.type,
+            description: doc.description
+          })));
+        }
+      } catch (error) {
+        console.error('Error loading knowledge documents:', error);
+      }
+    };
+
+    loadKnowledgeDocuments();
+  }, []);
 
   if (!analysisData) {
     return (
@@ -99,8 +129,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
       setIsExecutingInstruction(true);
       setExecutingInstructionId(instruction.id);
 
-      // Get current knowledge base documents (would need to be passed from KnowledgePanel)
-      const knowledgeDocuments: any[] = []; // TODO: Get from KnowledgePanel state
+      // Use loaded knowledge documents for context
 
       const response = await fetch('/api/ai-instructions', {
         method: 'POST',
@@ -153,8 +182,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
         instruction: customInstruction.trim()
       };
 
-      // Get current knowledge base documents (would need to be passed from KnowledgePanel)
-      const knowledgeDocuments: any[] = []; // TODO: Get from KnowledgePanel state
+      // Use loaded knowledge documents for context
 
       const response = await fetch('/api/ai-instructions', {
         method: 'POST',

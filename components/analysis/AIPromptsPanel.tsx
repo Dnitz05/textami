@@ -33,6 +33,39 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
   documentSections = [],
   sectionSpecificInstructions = []
 }) => {
+  const [knowledgeFiles, setKnowledgeFiles] = useState<Array<{
+    id: string;
+    title: string;
+    filename: string;
+    type: string;
+  }>>([]);
+  const [loadingKnowledge, setLoadingKnowledge] = useState(false);
+
+  // Load knowledge files on component mount
+  React.useEffect(() => {
+    const loadKnowledgeFiles = async () => {
+      setLoadingKnowledge(true);
+      try {
+        const response = await fetch('/api/knowledge?userId=anonymous');
+        const result = await response.json();
+        if (result.success) {
+          setKnowledgeFiles(result.data.map((doc: any) => ({
+            id: doc.id,
+            title: doc.title,
+            filename: doc.filename,
+            type: doc.type
+          })));
+        }
+      } catch (error) {
+        console.error('Error loading knowledge files:', error);
+      } finally {
+        setLoadingKnowledge(false);
+      }
+    };
+
+    loadKnowledgeFiles();
+  }, []);
+
   const [instructions, setInstructions] = useState<AIInstruction[]>([
     {
       id: '1',
@@ -62,24 +95,25 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
 
   const [newInstruction, setNewInstruction] = useState({
     type: 'global' as 'global' | 'section' | 'paragraph',
-    title: '',
+    knowledgeFileId: '',
     instruction: ''
   });
 
   const [showAddForm, setShowAddForm] = useState(false);
 
   const handleAddInstruction = () => {
-    if (newInstruction.title && newInstruction.instruction) {
+    if (newInstruction.knowledgeFileId && newInstruction.instruction) {
+      const selectedKnowledge = knowledgeFiles.find(f => f.id === newInstruction.knowledgeFileId);
       const isSection = documentSections.some(s => s.id === newInstruction.type);
       const instruction: AIInstruction = {
         id: Date.now().toString(),
         type: isSection ? 'section' : newInstruction.type,
-        title: newInstruction.title,
-        instruction: newInstruction.instruction,
+        title: `Context: ${selectedKnowledge?.title || 'Document de coneixement'}`,
+        instruction: `Utilitza el document "${selectedKnowledge?.filename}" com a context per: ${newInstruction.instruction}`,
         target: isSection ? newInstruction.type : undefined
       };
       setInstructions([...instructions, instruction]);
-      setNewInstruction({ type: 'global', title: '', instruction: '' });
+      setNewInstruction({ type: 'global', knowledgeFileId: '', instruction: '' });
       setShowAddForm(false);
     }
   };
@@ -221,17 +255,28 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
                 <option value="paragraph">📝 Paràgraf específic</option>
               </select>
               
-              <input
-                type="text"
-                placeholder="Títol de la instrucció..."
-                value={newInstruction.title}
-                onChange={(e) => setNewInstruction({...newInstruction, title: e.target.value})}
+              <select
+                value={newInstruction.knowledgeFileId}
+                onChange={(e) => setNewInstruction({...newInstruction, knowledgeFileId: e.target.value})}
                 className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}
-              />
+              >
+                <option value="">📚 Selecciona document de coneixement...</option>
+                {loadingKnowledge ? (
+                  <option value="" disabled>⏳ Carregant documents...</option>
+                ) : knowledgeFiles.length === 0 ? (
+                  <option value="" disabled>❌ Cap document de coneixement disponible</option>
+                ) : (
+                  knowledgeFiles.map((file) => (
+                    <option key={file.id} value={file.id}>
+                      📄 {file.title} ({file.type})
+                    </option>
+                  ))
+                )}
+              </select>
               
               <textarea
-                placeholder="Descripció de la instrucció..."
+                placeholder="Què vols fer amb aquest document de coneixement? Ex: 'Comprova si el document compleix aquesta normativa', 'Utilitza aquestes directrius per millorar el text'..."
                 value={newInstruction.instruction}
                 onChange={(e) => setNewInstruction({...newInstruction, instruction: e.target.value})}
                 className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -242,10 +287,11 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
               <div className="flex space-x-2">
                 <button
                   onClick={handleAddInstruction}
-                  className="text-sm bg-blue-600 text-white px-4 py-2 rounded border border-blue-600 hover:bg-blue-700 transition-colors"
+                  disabled={!newInstruction.knowledgeFileId || !newInstruction.instruction}
+                  className="text-sm bg-blue-600 text-white px-4 py-2 rounded border border-blue-600 hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                   style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}
                 >
-                  Afegir
+                  Crear amb Context
                 </button>
                 <button
                   onClick={() => setShowAddForm(false)}
