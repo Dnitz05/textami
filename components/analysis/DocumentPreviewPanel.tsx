@@ -106,15 +106,54 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
       totalTags: tags.length,
       mappedTagSlugs: Array.from(mappedTagSlugs),
       tagsToHighlight: tagsToHighlight.map(t => ({ name: t.name, example: t.example, slug: t.slug })),
-      headerColors
+      headerColors,
+      mappedTagsComplete: Object.entries(mappedTags).map(([header, slug]) => ({ 
+        header, 
+        slug, 
+        tagData: tags.find(t => t.slug === slug) 
+      }))
     });
     
     sortedTags.forEach((tag, index) => {
+      console.log(`🏷️ Processing tag ${index + 1}/${sortedTags.length}:`, { 
+        name: tag.name, 
+        example: tag.example, 
+        slug: tag.slug,
+        hasPressupost: tag.name.toUpperCase().includes('PRESSUPOST') || tag.example?.toUpperCase().includes('PRESSUPOST')
+      });
+
       if (tag.example && tag.example.trim()) {
         const example = tag.example.trim();
         
         // Find which Excel header this tag is mapped to
         const excelHeader = Object.keys(mappedTags).find(header => mappedTags[header] === tag.slug);
+        
+        // ULTRATHINK DEBUG per PRESSUPOST
+        const isPressuposto = example.toUpperCase().includes('PRESSUPOST') || tag.name.toUpperCase().includes('PRESSUPOST') || (excelHeader && excelHeader.toUpperCase().includes('PRESSUPOST'));
+        
+        if (isPressuposto) {
+          console.log('🔍 ULTRATHINK DEBUG PRESSUPOST:', {
+            tagName: tag.name,
+            tagSlug: tag.slug,
+            example: `"${example}"`,
+            excelHeader,
+            exampleLength: example.length,
+            exampleBytes: new TextEncoder().encode(example),
+            textContainsExample: highlightedText.includes(example),
+            textContainsExampleCI: highlightedText.toLowerCase().includes(example.toLowerCase()),
+            exampleCharCodes: Array.from(example).map(c => ({ char: c, code: c.charCodeAt(0) })),
+            regexEscaped: example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+            textPreview: highlightedText.substring(0, 500),
+            // Més debugging específic
+            mappedTagsEntries: Object.entries(mappedTags),
+            tagFoundInMappings: excelHeader ? 'SÍ' : 'NO',
+            allPossibleMatches: [
+              highlightedText.match(new RegExp(example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')),
+              highlightedText.match(new RegExp(example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')),
+              highlightedText.match(new RegExp(`\\b${example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi'))
+            ]
+          });
+        }
         
         if (excelHeader) {
           const headerColor = headerColors[excelHeader];
@@ -136,9 +175,54 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
             </span>
           `;
           
-          // Replace with highlighted version (case-insensitive, whole word)
-          const regex = new RegExp(`\\b${example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
-          highlightedText = highlightedText.replace(regex, visualMapping);
+          // Try multiple replacement strategies for better matching
+          let replacements = 0;
+          
+          // Strategy 1: Exact match (case sensitive)
+          const exactRegex = new RegExp(example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+          highlightedText = highlightedText.replace(exactRegex, (match) => {
+            replacements++;
+            if (isPressuposto) console.log('✅ PRESSUPOST Strategy 1 success:', match);
+            return visualMapping;
+          });
+          
+          // Strategy 2: Case insensitive exact
+          if (replacements === 0) {
+            const ciRegex = new RegExp(example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+            highlightedText = highlightedText.replace(ciRegex, (match) => {
+              replacements++;
+              if (isPressuposto) console.log('✅ PRESSUPOST Strategy 2 success:', match);
+              return visualMapping;
+            });
+          }
+          
+          // Strategy 3: Word boundary (original)
+          if (replacements === 0) {
+            const wbRegex = new RegExp(`\\b${example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+            highlightedText = highlightedText.replace(wbRegex, (match) => {
+              replacements++;
+              if (isPressuposto) console.log('✅ PRESSUPOST Strategy 3 success:', match);
+              return visualMapping;
+            });
+          }
+          
+          // Strategy 4: Flexible match (remove word boundaries for numbers/special chars)
+          if (replacements === 0 && /[\d€$.,]/.test(example)) {
+            const flexRegex = new RegExp(example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+            highlightedText = highlightedText.replace(flexRegex, (match) => {
+              replacements++;
+              if (isPressuposto) console.log('✅ PRESSUPOST Strategy 4 success:', match);
+              return visualMapping;
+            });
+          }
+          
+          if (isPressuposto) {
+            console.log('🔍 PRESSUPOST Final result:', {
+              replacements,
+              finalTextContains: highlightedText.includes('visual-mapping-container'),
+              mappingCreated: replacements > 0
+            });
+          }
         }
       }
     });
