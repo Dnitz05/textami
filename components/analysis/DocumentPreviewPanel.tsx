@@ -141,7 +141,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
             exampleBytes: new TextEncoder().encode(example),
             textContainsExample: highlightedText.includes(example),
             textContainsExampleCI: highlightedText.toLowerCase().includes(example.toLowerCase()),
-            exampleCharCodes: Array.from(example).map((c: string) => ({ char: c, code: c.charCodeAt(0) })),
+            exampleCharCodes: Array.from<string>(example).map(c => ({ char: c, code: c.charCodeAt(0) })),
             regexEscaped: example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
             textPreview: highlightedText.substring(0, 500),
             // Més debugging específic
