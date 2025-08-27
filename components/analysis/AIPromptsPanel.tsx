@@ -40,8 +40,7 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
 
   // Load knowledge files on component mount
   React.useEffect(() => {
-    if (!user) return; // Wait for user to be loaded
-    
+    // Don't wait for user - load immediately with fallback
     const loadKnowledgeFiles = async () => {
       setLoadingKnowledge(true);
       try {
@@ -66,7 +65,7 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
     };
 
     loadKnowledgeFiles();
-  }, [user]);
+  }, [user]); // Still depend on user to reload if auth status changes
 
   const [instructions, setInstructions] = useState<AIInstruction[]>([
     {

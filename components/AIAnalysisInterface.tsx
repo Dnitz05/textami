@@ -75,8 +75,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
 
   // Load knowledge documents on component mount
   React.useEffect(() => {
-    if (!user) return; // Wait for user to be loaded
-    
+    // Don't wait for user - load immediately with fallback
     const loadKnowledgeDocuments = async () => {
       try {
         const userId = user.id || 'anonymous';
