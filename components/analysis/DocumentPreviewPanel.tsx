@@ -198,7 +198,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
       {/* Styles for tag highlighting and Word-like appearance */}
       <style jsx>{`
         .document-container {
-          font-family: 'Times New Roman', 'serif';
+          font-family: 'Inter', 'Segoe UI', 'Arial', sans-serif;
           line-height: 1.6;
           color: #1a1a1a;
           background: white;
@@ -214,82 +214,97 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           box-sizing: border-box;
         }
         
-        /* TÍTOL PRINCIPAL - Estil tècnic quirúrgic */
+        /* TÍTOL PRINCIPAL - Estil modern */
         .document-title {
-          font-family: 'Times New Roman', serif;
-          font-size: 16pt;
-          font-weight: 700;
-          color: #000000;
+          font-family: 'Inter', 'Segoe UI', sans-serif;
+          font-size: 18pt;
+          font-weight: 600;
+          color: #1a1a1a;
           text-align: center;
           text-transform: none;
-          margin: 0 0 24pt 0;
-          padding: 0;
-          border: none;
-          letter-spacing: 0.5pt;
+          margin: 0 0 32pt 0;
+          padding: 20pt 24pt 24pt 24pt;
+          background: rgba(248, 250, 252, 0.4);
+          border: 1px solid rgba(226, 232, 240, 0.3);
+          border-radius: 8px;
+          letter-spacing: -0.2pt;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
         }
         
-        /* SECCIONS - Estil tècnic neutral */
+        /* SECCIONS - Estil modern amb caixes subtils */
         .document-section {
-          margin-bottom: 18pt;
+          margin-bottom: 24pt;
           page-break-inside: avoid;
+          background: rgba(248, 250, 252, 0.2);
+          border: 1px solid rgba(226, 232, 240, 0.2);
+          border-radius: 6px;
+          padding: 18pt 20pt;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.01);
         }
         
         .document-section h2 {
-          font-family: 'Times New Roman', serif;
-          font-size: 14pt;
-          font-weight: 700;
-          color: #000000;
-          margin: 18pt 0 12pt 0;
-          padding: 0;
+          font-family: 'Inter', 'Segoe UI', sans-serif;
+          font-size: 15pt;
+          font-weight: 600;
+          color: #0f172a;
+          margin: 0 0 16pt 0;
+          padding: 0 0 8pt 0;
           border: none;
           background: none;
           text-transform: none;
           text-align: left;
+          border-bottom: 1px solid rgba(226, 232, 240, 0.4);
+          letter-spacing: -0.1pt;
         }
         
         .document-section h3 {
-          font-family: 'Times New Roman', serif;
-          font-size: 12pt;
-          font-weight: 600;
-          color: #000000;
-          margin: 12pt 0 6pt 0;
+          font-family: 'Inter', 'Segoe UI', sans-serif;
+          font-size: 13pt;
+          font-weight: 500;
+          color: #334155;
+          margin: 14pt 0 8pt 0;
           text-decoration: none;
+          letter-spacing: -0.05pt;
         }
         
-        /* CONTINGUT - Estil tècnic quirúrgic */
+        /* CONTINGUT - Estil modern llegible */
         .document-content {
-          font-family: 'Times New Roman', serif;
-          font-size: 12pt;
-          line-height: 1.5;
-          color: #000000;
+          font-family: 'Inter', 'Segoe UI', sans-serif;
+          font-size: 11pt;
+          line-height: 1.6;
+          color: #374151;
           text-align: left;
-          margin-bottom: 12pt;
+          margin-bottom: 0;
           text-indent: 0;
+          font-weight: 400;
+          letter-spacing: -0.01pt;
         }
         
-        /* CAPÇALERA DOCUMENT - Estil minimalista */
+        /* CAPÇALERA DOCUMENT - Estil modern subtil */
         .document-header-info {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 24pt;
-          padding: 6pt 0;
-          background: none;
-          border: none;
-          border-bottom: 1px solid #cccccc;
+          margin-bottom: 32pt;
+          padding: 12pt 16pt;
+          background: rgba(248, 250, 252, 0.3);
+          border: 1px solid rgba(226, 232, 240, 0.3);
+          border-radius: 4px;
           font-size: 9pt;
-          color: #666666;
-          font-family: 'Times New Roman', serif;
+          color: #64748b;
+          font-family: 'Inter', 'Segoe UI', sans-serif;
+          font-weight: 400;
         }
         
         .document-footer {
           margin-top: 48pt;
           text-align: center;
           font-size: 8pt;
-          color: #999999;
-          border-top: 1px solid #cccccc;
-          padding-top: 12pt;
-          font-family: 'Times New Roman', serif;
+          color: #94a3b8;
+          border-top: 1px solid rgba(226, 232, 240, 0.4);
+          padding-top: 16pt;
+          font-family: 'Inter', 'Segoe UI', sans-serif;
+          font-weight: 400;
         }
         
         .document-content p {
@@ -305,73 +320,81 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           margin-bottom: 3pt;
         }
         
-        /* TAULES - Estil tècnic minimalista */
+        /* TAULES - Estil modern subtil */
         .document-table {
           width: 100%;
           border-collapse: collapse;
-          margin: 18pt 0;
-          font-family: 'Times New Roman', serif;
-          font-size: 11pt;
-          box-shadow: none;
+          margin: 20pt 0;
+          font-family: 'Inter', 'Segoe UI', sans-serif;
+          font-size: 10pt;
+          background: rgba(248, 250, 252, 0.1);
+          border: 1px solid rgba(226, 232, 240, 0.3);
+          border-radius: 6px;
+          overflow: hidden;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
         }
         
         .document-table th {
-          background: #f8f8f8;
-          color: #000000;
-          border: 1px solid #666666;
-          padding: 8pt 12pt;
+          background: rgba(248, 250, 252, 0.6);
+          color: #0f172a;
+          border: none;
+          border-bottom: 1px solid rgba(226, 232, 240, 0.4);
+          padding: 12pt 16pt;
           text-align: left;
-          font-weight: 700;
-          font-size: 11pt;
+          font-weight: 600;
+          font-size: 10pt;
           text-transform: none;
-          letter-spacing: 0;
+          letter-spacing: -0.01pt;
         }
         
         .document-table td {
-          border: 1px solid #cccccc;
-          padding: 6pt 12pt;
-          color: #000000;
+          border: none;
+          border-bottom: 1px solid rgba(226, 232, 240, 0.2);
+          padding: 10pt 16pt;
+          color: #374151;
           vertical-align: top;
         }
         
         .document-table tr:nth-child(even) {
-          background-color: #fafafa;
+          background-color: rgba(248, 250, 252, 0.2);
         }
         
         .document-table tr:hover {
-          background-color: transparent;
+          background-color: rgba(248, 250, 252, 0.4);
         }
         
-        /* SIGNATURA - Estil tècnic minimalista */
+        /* SIGNATURA - Estil modern elegant */
         .document-signature {
           margin-top: 48pt;
-          padding: 18pt;
-          background: none;
-          border: 1px solid #cccccc;
-          border-radius: 0;
+          padding: 20pt 24pt;
+          background: rgba(248, 250, 252, 0.3);
+          border: 1px solid rgba(226, 232, 240, 0.3);
+          border-radius: 6px;
           text-align: center;
           page-break-inside: avoid;
-          font-family: 'Times New Roman', serif;
+          font-family: 'Inter', 'Segoe UI', sans-serif;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.01);
         }
         
         .document-signature-name {
-          font-size: 12pt;
-          font-weight: 700;
-          color: #000000;
-          margin-bottom: 6pt;
+          font-size: 13pt;
+          font-weight: 600;
+          color: #0f172a;
+          margin-bottom: 8pt;
           text-transform: none;
+          letter-spacing: -0.02pt;
         }
         
         .document-signature-title {
           font-size: 11pt;
           font-weight: 400;
-          color: #000000;
+          color: #334155;
           margin-bottom: 6pt;
         }
         
         .document-signature-date {
-          font-size: 10pt;
-          color: #666666;
+          font-size: 9pt;
+          color: #64748b;
           font-style: normal;
         }
         
@@ -451,15 +474,16 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           border-top-color: inherit;
         }
         
-        /* LLEGENDA DE MAPATGES - Estil tècnic */
+        /* LLEGENDA DE MAPATGES - Estil modern */
         .mapping-legend {
-          margin: 24pt 0;
-          padding: 12pt;
-          background: #fafafa;
-          border: 1px solid #cccccc;
-          border-radius: 0;
+          margin: 32pt 0;
+          padding: 20pt 24pt;
+          background: rgba(248, 250, 252, 0.3);
+          border: 1px solid rgba(226, 232, 240, 0.3);
+          border-radius: 6px;
           page-break-inside: avoid;
-          font-family: 'Times New Roman', serif;
+          font-family: 'Inter', 'Segoe UI', sans-serif;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.01);
         }
         
         .legend-items {
