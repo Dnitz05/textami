@@ -39,11 +39,16 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
   
   // Function to remove document title from content to avoid duplication
   const removeDocumentTitle = (text: string): string => {
-    if (!title) return text;
+    // Get template name from fileName (remove extension)
+    const templateName = fileName ? fileName.replace(/\.[^/.]+$/, '') : title;
+    if (!templateName) return text;
     
     const lines = text.split('\n');
-    // Remove the first H1 header if it matches the detected title
-    if (lines.length > 0 && lines[0].trim() === `# ${title}`) {
+    // Remove the first H1 header if it matches the template name or detected title
+    if (lines.length > 0 && (
+      lines[0].trim() === `# ${templateName}` || 
+      lines[0].trim() === `# ${title}`
+    )) {
       return lines.slice(1).join('\n').replace(/^\n+/, ''); // Remove leading newlines
     }
     return text;
@@ -201,7 +206,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
               </svg>
             ) : (
               <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             )}
             <div className="flex flex-col">
@@ -274,9 +279,9 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         <div className="document-container p-6 bg-gray-100 rounded-b-2xl">
           <div className="document-page bg-white shadow-lg border border-gray-200" style={{width: 'calc(210mm - 60px)', margin: '0 auto', padding: '60px 50px'}}>
             {/* Document Title */}
-            {title && (
+            {(fileName || title) && (
               <h1 className="document-title">
-                {title}
+                {fileName ? fileName.replace(/\.[^/.]+$/, '') : title}
               </h1>
             )}
 
