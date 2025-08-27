@@ -73,7 +73,23 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
     return text;
   };
 
-  // Function to highlight detected tags in text - prioritizing mapped tags
+  // Generate a unique color for each Excel header
+  const getHeaderColor = (header: string, index: number): string => {
+    const colors = [
+      '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', 
+      '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6366F1'
+    ];
+    return colors[index % colors.length];
+  };
+  
+  // Get unique Excel headers and assign colors
+  const uniqueHeaders = [...new Set(Object.keys(mappedTags))];
+  const headerColors = uniqueHeaders.reduce((acc, header, index) => {
+    acc[header] = getHeaderColor(header, index);
+    return acc;
+  }, {} as Record<string, string>);
+
+  // Function to highlight detected tags in text with visual mapping system
   const highlightTags = (text: string): string => {
     let highlightedText = removeDocumentTitle(text);
     
@@ -84,10 +100,11 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
     const tagsToHighlight = tags.filter(tag => mappedTagSlugs.has(tag.slug));
     const sortedTags = tagsToHighlight.sort((a, b) => (b.example?.length || 0) - (a.example?.length || 0));
     
-    console.log('🔍 Highlighting mapped tags:', {
+    console.log('🔍 Visual mapping system:', {
       totalTags: tags.length,
       mappedTagSlugs: Array.from(mappedTagSlugs),
-      tagsToHighlight: tagsToHighlight.map(t => ({ name: t.name, example: t.example, slug: t.slug }))
+      tagsToHighlight: tagsToHighlight.map(t => ({ name: t.name, example: t.example, slug: t.slug })),
+      headerColors
     });
     
     sortedTags.forEach((tag, index) => {
@@ -97,15 +114,30 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         // Find which Excel header this tag is mapped to
         const excelHeader = Object.keys(mappedTags).find(header => mappedTags[header] === tag.slug);
         
-        // Create enhanced class for mapped tags
-        const tagClass = `detected-tag mapped-tag mapped-tag-${tag.type} detected-tag-${index}`;
-        const tooltipText = `${tag.name} (${tag.type})${excelHeader ? ` → Mapejat amb "${excelHeader}"` : ''}`;
-        
-        // Replace with highlighted version (case-insensitive, whole word)
-        const regex = new RegExp(`\\b${example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
-        highlightedText = highlightedText.replace(regex, 
-          `<span class="${tagClass}" title="${tooltipText}" data-excel-header="${excelHeader || ''}">${example}</span>`
-        );
+        if (excelHeader) {
+          const headerColor = headerColors[excelHeader];
+          const uniqueId = `tag-${index}-${Date.now()}`;
+          
+          // Create visual mapping element with badge and connector
+          const visualMapping = `
+            <span class="visual-mapping-container" data-excel-header="${excelHeader}">
+              <span class="mapped-term" 
+                    style="background-color: ${headerColor}15; border-color: ${headerColor}; color: ${headerColor}" 
+                    data-tag-id="${uniqueId}">
+                ${example}
+              </span>
+              <span class="excel-badge" 
+                    style="background-color: ${headerColor}; border-color: ${headerColor}"
+                    data-header="${excelHeader}">
+                📊 ${excelHeader}
+              </span>
+            </span>
+          `;
+          
+          // Replace with highlighted version (case-insensitive, whole word)
+          const regex = new RegExp(`\\b${example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+          highlightedText = highlightedText.replace(regex, visualMapping);
+        }
       }
     });
     
@@ -333,29 +365,120 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           border-color: #1d4ed8;
         }
         
-        /* TAGS MAPEJATS - Estil destacat */
-        .mapped-tag {
-          background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%);
-          border: 2px solid #10b981;
-          border-radius: 4px;
-          padding: 2px 6px;
-          margin: 0 2px;
-          font-weight: 600;
-          box-shadow: 0 1px 3px rgba(16, 185, 129, 0.2);
+        /* SISTEMA VISUAL DE MAPATGES */
+        .visual-mapping-container {
           position: relative;
+          display: inline-block;
+          margin: 0 4px;
         }
         
-        .mapped-tag:hover {
-          background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.25) 100%);
-          border-color: #059669;
-          box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+        .mapped-term {
+          display: inline-block;
+          padding: 3px 8px;
+          border: 2px solid;
+          border-radius: 6px;
+          font-weight: 600;
+          position: relative;
+          transition: all 0.3s ease;
+          cursor: pointer;
+          text-decoration: none;
+        }
+        
+        .mapped-term:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .excel-badge {
+          position: absolute;
+          top: -25px;
+          left: 50%;
+          transform: translateX(-50%);
+          background-color: #2563eb;
+          color: white;
+          padding: 2px 8px;
+          border-radius: 12px;
+          font-size: 9pt;
+          font-weight: 600;
+          white-space: nowrap;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+          z-index: 10;
+          opacity: 0;
+          transition: all 0.3s ease;
+          pointer-events: none;
+        }
+        
+        .visual-mapping-container:hover .excel-badge {
+          opacity: 1;
+          transform: translateX(-50%) translateY(-3px);
+        }
+        
+        .excel-badge:before {
+          content: '';
+          position: absolute;
+          top: 100%;
+          left: 50%;
+          margin-left: -4px;
+          border: 4px solid transparent;
+          border-top-color: inherit;
+        }
+        
+        /* LLEGENDA DE MAPATGES */
+        .mapping-legend {
+          margin: 40px 0;
+          padding: 20px;
+          background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+          border: 2px solid #cbd5e0;
+          border-radius: 12px;
+          page-break-inside: avoid;
+        }
+        
+        .legend-items {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 15px;
+        }
+        
+        .legend-item {
+          display: flex;
+          align-items: center;
+          background: white;
+          padding: 8px 12px;
+          border-radius: 8px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          border: 1px solid #e2e8f0;
+          transition: all 0.2s ease;
+        }
+        
+        .legend-item:hover {
+          box-shadow: 0 4px 8px rgba(0,0,0,0.15);
           transform: translateY(-1px);
         }
         
-        .mapped-tag:before {
-          content: "📊";
-          font-size: 10px;
-          margin-right: 2px;
+        .legend-color {
+          width: 16px;
+          height: 16px;
+          border-radius: 4px;
+          margin-right: 8px;
+          border: 2px solid white;
+          box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+        }
+        
+        .legend-text {
+          font-size: 9pt;
+          font-weight: 600;
+          color: #2d3748;
+          margin-right: 6px;
+        }
+        
+        .legend-count {
+          background: #4a5568;
+          color: white;
+          padding: 2px 6px;
+          border-radius: 10px;
+          font-size: 8pt;
+          font-weight: 600;
+          margin-left: auto;
         }
         
         .detected-tag-string {
@@ -550,6 +673,31 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
               </div>
             )}
             
+            {/* Visual Mapping Legend */}
+            {Object.keys(mappedTags).length > 0 && (
+              <div className="mapping-legend">
+                <h4 style={{fontSize: '10pt', fontWeight: '600', marginBottom: '10px', color: '#4a5568'}}>
+                  📊 Mapeig de Dades Excel
+                </h4>
+                <div className="legend-items">
+                  {uniqueHeaders.map((header, index) => (
+                    <div key={header} className="legend-item">
+                      <div 
+                        className="legend-color" 
+                        style={{backgroundColor: headerColors[header]}}
+                      ></div>
+                      <span className="legend-text">{header}</span>
+                      <span className="legend-count">
+                        {Object.values(mappedTags).filter(slug => 
+                          tags.find(t => t.slug === slug && mappedTags[header] === slug)
+                        ).length}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Document Footer */}
             <div className="document-footer">
               Generat amb Textami • {new Date().toLocaleDateString('ca-ES')} • Pàgina 1
