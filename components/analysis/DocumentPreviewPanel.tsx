@@ -194,178 +194,185 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
   }, [onMappingRemove]);
 
   return (
-    <div className="bg-white border-l border-r border-gray-200">
+    <div className="bg-white">
       {/* Styles for tag highlighting and Word-like appearance */}
       <style jsx>{`
         .document-container {
-          font-family: 'Calibri', 'Segoe UI', 'Arial', sans-serif;
-          line-height: 1.5;
-          color: #2d3748;
+          font-family: 'Times New Roman', 'serif';
+          line-height: 1.6;
+          color: #1a1a1a;
+          background: white;
+          min-height: 100vh;
         }
         
         .document-page {
           background: white;
           margin: 0;
-          padding: 10mm 40mm 30mm 0mm; /* Amplada expandida amb més marge dret */
-          min-height: 297mm; /* Altura A4 */
+          padding: 2.54cm 2.54cm 2.54cm 2.54cm; /* Marges Word estàndard: 1 inch */
+          min-height: calc(100vh - 80px);
+          width: 100%;
+          box-sizing: border-box;
         }
         
-        /* TÍTOL PRINCIPAL - Estil informe tècnic */
+        /* TÍTOL PRINCIPAL - Estil tècnic quirúrgic */
         .document-title {
-          font-family: 'Calibri', 'Segoe UI', sans-serif;
-          font-size: 18pt;
+          font-family: 'Times New Roman', serif;
+          font-size: 16pt;
           font-weight: 700;
-          color: #1a202c;
+          color: #000000;
           text-align: center;
-          text-transform: uppercase;
-          margin: 0 0 40px 0;
-          padding-bottom: 15px;
-          border-bottom: 3px solid #2b6cb0;
-          letter-spacing: 1px;
+          text-transform: none;
+          margin: 0 0 24pt 0;
+          padding: 0;
+          border: none;
+          letter-spacing: 0.5pt;
         }
         
-        /* SECCIONS - Estil administratiu */
+        /* SECCIONS - Estil tècnic neutral */
         .document-section {
-          margin-bottom: 30px;
+          margin-bottom: 18pt;
           page-break-inside: avoid;
         }
         
         .document-section h2 {
-          font-family: 'Calibri', 'Segoe UI', sans-serif;
+          font-family: 'Times New Roman', serif;
           font-size: 14pt;
-          font-weight: 600;
-          color: #2b6cb0;
-          margin: 25px 0 15px 0;
-          padding-left: 8px;
-          border-left: 4px solid #2b6cb0;
-          background: linear-gradient(90deg, #ebf8ff 0%, transparent 100%);
-          padding: 8px 12px;
-          text-transform: capitalize;
+          font-weight: 700;
+          color: #000000;
+          margin: 18pt 0 12pt 0;
+          padding: 0;
+          border: none;
+          background: none;
+          text-transform: none;
+          text-align: left;
         }
         
         .document-section h3 {
-          font-family: 'Calibri', 'Segoe UI', sans-serif;
+          font-family: 'Times New Roman', serif;
           font-size: 12pt;
           font-weight: 600;
-          color: #4a5568;
-          margin: 20px 0 10px 0;
-          text-decoration: underline;
-          text-underline-offset: 3px;
+          color: #000000;
+          margin: 12pt 0 6pt 0;
+          text-decoration: none;
         }
         
-        /* CONTINGUT - Estil professional */
+        /* CONTINGUT - Estil tècnic quirúrgic */
         .document-content {
-          font-family: 'Calibri', 'Segoe UI', sans-serif;
-          font-size: 11pt;
-          line-height: 1.6;
-          color: #2d3748;
-          text-align: justify;
-          margin-bottom: 15px;
+          font-family: 'Times New Roman', serif;
+          font-size: 12pt;
+          line-height: 1.5;
+          color: #000000;
+          text-align: left;
+          margin-bottom: 12pt;
           text-indent: 0;
         }
         
-        /* NUMERACIÓ I ELEMENTS AUXILIARS */
+        /* CAPÇALERA DOCUMENT - Estil minimalista */
         .document-header-info {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 30px;
-          padding: 15px 20px;
-          background: linear-gradient(90deg, #edf2f7 0%, #e2e8f0 100%);
-          border-radius: 6px;
+          margin-bottom: 24pt;
+          padding: 6pt 0;
+          background: none;
+          border: none;
+          border-bottom: 1px solid #cccccc;
           font-size: 9pt;
-          color: #4a5568;
+          color: #666666;
+          font-family: 'Times New Roman', serif;
         }
         
         .document-footer {
-          margin-top: 40px;
+          margin-top: 48pt;
           text-align: center;
-          font-size: 9pt;
-          color: #718096;
-          border-top: 1px solid #e2e8f0;
-          padding-top: 15px;
+          font-size: 8pt;
+          color: #999999;
+          border-top: 1px solid #cccccc;
+          padding-top: 12pt;
+          font-family: 'Times New Roman', serif;
         }
         
         .document-content p {
-          margin-bottom: 12px;
+          margin-bottom: 12pt;
         }
         
         .document-content ul, .document-content ol {
-          margin: 10px 0;
-          padding-left: 25px;
+          margin: 6pt 0;
+          padding-left: 24pt;
         }
         
         .document-content li {
-          margin-bottom: 5px;
+          margin-bottom: 3pt;
         }
         
-        /* TAULES - Estil administratiu professional */
+        /* TAULES - Estil tècnic minimalista */
         .document-table {
           width: 100%;
           border-collapse: collapse;
-          margin: 25px 0;
-          font-family: 'Calibri', 'Segoe UI', sans-serif;
-          font-size: 10pt;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          margin: 18pt 0;
+          font-family: 'Times New Roman', serif;
+          font-size: 11pt;
+          box-shadow: none;
         }
         
         .document-table th {
-          background: linear-gradient(135deg, #2b6cb0 0%, #3182ce 100%);
-          color: white;
-          border: 1px solid #2563eb;
-          padding: 12px 15px;
+          background: #f8f8f8;
+          color: #000000;
+          border: 1px solid #666666;
+          padding: 8pt 12pt;
           text-align: left;
-          font-weight: 600;
-          font-size: 10pt;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
+          font-weight: 700;
+          font-size: 11pt;
+          text-transform: none;
+          letter-spacing: 0;
         }
         
         .document-table td {
-          border: 1px solid #cbd5e0;
-          padding: 10px 15px;
-          color: #2d3748;
+          border: 1px solid #cccccc;
+          padding: 6pt 12pt;
+          color: #000000;
           vertical-align: top;
         }
         
         .document-table tr:nth-child(even) {
-          background-color: #f7fafc;
+          background-color: #fafafa;
         }
         
         .document-table tr:hover {
-          background-color: #edf2f7;
+          background-color: transparent;
         }
         
-        /* SIGNATURA - Estil oficial */
+        /* SIGNATURA - Estil tècnic minimalista */
         .document-signature {
-          margin-top: 60px;
-          padding: 30px;
-          background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-          border: 2px solid #e2e8f0;
-          border-radius: 8px;
+          margin-top: 48pt;
+          padding: 18pt;
+          background: none;
+          border: 1px solid #cccccc;
+          border-radius: 0;
           text-align: center;
           page-break-inside: avoid;
+          font-family: 'Times New Roman', serif;
         }
         
         .document-signature-name {
-          font-size: 14pt;
+          font-size: 12pt;
           font-weight: 700;
-          color: #2d3748;
-          margin-bottom: 8px;
-          text-transform: uppercase;
+          color: #000000;
+          margin-bottom: 6pt;
+          text-transform: none;
         }
         
         .document-signature-title {
-          font-size: 12pt;
-          font-weight: 500;
-          color: #4a5568;
-          margin-bottom: 6px;
+          font-size: 11pt;
+          font-weight: 400;
+          color: #000000;
+          margin-bottom: 6pt;
         }
         
         .document-signature-date {
           font-size: 10pt;
-          color: #718096;
-          font-style: italic;
+          color: #666666;
+          font-style: normal;
         }
         
         /* TAGS DETECTATS - Estil bàsic */
@@ -444,14 +451,15 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           border-top-color: inherit;
         }
         
-        /* LLEGENDA DE MAPATGES */
+        /* LLEGENDA DE MAPATGES - Estil tècnic */
         .mapping-legend {
-          margin: 40px 0;
-          padding: 20px;
-          background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-          border: 2px solid #cbd5e0;
-          border-radius: 12px;
+          margin: 24pt 0;
+          padding: 12pt;
+          background: #fafafa;
+          border: 1px solid #cccccc;
+          border-radius: 0;
           page-break-inside: avoid;
+          font-family: 'Times New Roman', serif;
         }
         
         .legend-items {
@@ -523,8 +531,8 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         }
       `}</style>
       
-      {/* Document Header with template name and actions - modern office style */}
-      <div className="bg-gray-50 border-b border-gray-400 px-4 py-4 rounded-t-2xl">
+      {/* Document Header - Clean technical style */}
+      <div className="bg-white border-b border-gray-300 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {isProcessing ? (
@@ -588,8 +596,8 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         </div>
       </div>
 
-      {/* Word-like Document Container */}
-      <div className="bg-transparent min-h-screen relative rounded-b-2xl overflow-hidden">
+      {/* Document Container - Technical Clean */}
+      <div className="bg-white min-h-screen relative">
         {/* Processing overlay */}
         {isProcessing && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
@@ -602,9 +610,9 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           </div>
         )}
         
-        {/* Document Page - Professional report appearance */}
-        <div className="document-container bg-gray-50 rounded-b-2xl">
-          <div className="document-page bg-white border border-gray-300 shadow-lg" style={{width: '280mm', margin: '0'}}>
+        {/* Document Page - Technical surgical report appearance */}
+        <div className="document-container bg-transparent">
+          <div className="document-page bg-white" style={{width: '100%', maxWidth: '100%', margin: '0', boxShadow: 'none', border: 'none'}}>
             {/* Document Title */}
             {finalDisplayTitle && (
               <h1 className="document-title">
