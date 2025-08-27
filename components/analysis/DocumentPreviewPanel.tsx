@@ -37,6 +37,16 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
   onClose
 }) => {
   
+  // DEBUG: Log title and filename values
+  console.log('🔍 DocumentPreviewPanel DEBUG:', {
+    title,
+    fileName,
+    titleExists: !!title,
+    fileNameExists: !!fileName,
+    templateName: fileName ? fileName.replace(/\.[^/.]+$/, '') : title,
+    markdownStart: markdown.substring(0, 200)
+  });
+  
   // Function to remove document title from content to avoid duplication
   const removeDocumentTitle = (text: string): string => {
     // Get template name from fileName (remove extension)
@@ -287,6 +297,12 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
 
             {/* Document Content */}
             <div>
+              {/* DEBUG: Log sections */}
+              {console.log('🔍 Sections DEBUG:', {
+                sectionsCount: sections.length,
+                sections: sections.map(s => ({title: s.title, hasMarkdown: !!s.markdown})),
+                hasMainMarkdown: !!markdown
+              })}
               {sections.length > 0 ? (
                 sections.map((section, index) => (
                   <div key={section.id || index} className="document-section">
@@ -305,6 +321,12 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
                   dangerouslySetInnerHTML={{ __html: highlightTags(markdown) }}
                 />
               )}
+              {/* DEBUG: Log final processed markdown */}
+              {console.log('🔍 Final markdown DEBUG:', {
+                originalMarkdown: markdown.substring(0, 200),
+                processedMarkdown: highlightTags(markdown).substring(0, 200),
+                afterRemoveTitle: removeDocumentTitle(markdown).substring(0, 200)
+              })}
             </div>
 
             {/* Tables */}
