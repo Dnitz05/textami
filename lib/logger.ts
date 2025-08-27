@@ -22,6 +22,7 @@ class Logger {
 
   private constructor() {
     this.isDevelopment = process.env.NODE_ENV === 'development';
+    // YOLO MODE: Always log everything in development for full visibility
     this.logLevel = this.isDevelopment ? LogLevel.DEBUG : LogLevel.WARN;
   }
 
@@ -77,6 +78,13 @@ class Logger {
   success(message: string, data?: any): void {
     this.info(`✅ ${message}`, data);
   }
+
+  // YOLO MODE: High visibility logging for aggressive development
+  yolo(message: string, data?: any): void {
+    if (this.isDevelopment) {
+      console.log(`🚀 YOLO: ${message}`, data ? data : '');
+    }
+  }
 }
 
 // Export singleton instance
@@ -91,4 +99,5 @@ export const log = {
   ultrathink: (message: string, data?: any) => logger.ultrathink(message, data),
   mapping: (message: string, data?: any) => logger.mapping(message, data),
   success: (message: string, data?: any) => logger.success(message, data),
+  yolo: (message: string, data?: any) => logger.yolo(message, data),
 };
