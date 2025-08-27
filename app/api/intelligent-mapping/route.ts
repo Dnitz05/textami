@@ -130,6 +130,15 @@ PROCÉS DE RAONAMENT PER CADA CAPÇALERA:
 5. Si múltiples opcions, tria la més específica i contextual
 6. Si cap opció és perfecta, tria la millor aproximació disponible
 
+EXEMPLES OBLIGATORIS DE MAPATGE EVIDENTS:
+- "NOM" → "nom_solicitant" (100% segur)
+- "CLIENTE" → "nom_solicitant" (100% segur)
+- "SOLICITANTE" → "nom_solicitant" (100% segur)
+- "DATA" → tags amb tipus "date" (100% segur)
+- "FECHA" → tags amb tipus "date" (100% segur)
+- "IMPORT" → tags amb tipus "currency" (100% segur)
+- "DIRECCIÓ" → tags de tipus "address" (100% segur)
+
 RESPOSTA OBLIGATÒRIA EN JSON:
 {
   "headerMappings": [
@@ -185,6 +194,8 @@ RESPOSTA OBLIGATÒRIA EN JSON:
 
     console.log('🤖 AI mapping response length:', aiResponse.length);
     console.log('🧠 Raw AI response:', aiResponse);
+    console.log('🔍 DEBUGGING ESPECÍFIC - Headers esperats:', excelHeaders);
+    console.log('🔍 DEBUGGING ESPECÍFIC - Tags disponibles:', tags.map(t => `${t.name} (${t.slug}) - exemple: ${t.example}`));
 
     let parsedResponse;
     try {
