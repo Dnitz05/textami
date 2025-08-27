@@ -159,17 +159,12 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           const headerColor = headerColors[excelHeader];
           const uniqueId = `tag-${index}-${Date.now()}`;
           
-          // Create visual mapping element with badge and connector
+          // Create visual mapping element - show only Excel header value
           const visualMapping = `
             <span class="visual-mapping-container" data-excel-header="${excelHeader}">
               <span class="mapped-term" 
                     style="background-color: ${headerColor}15; border-color: ${headerColor}; color: ${headerColor}" 
                     data-tag-id="${uniqueId}">
-                ${example}
-              </span>
-              <span class="excel-badge" 
-                    style="background-color: ${headerColor}; border-color: ${headerColor}"
-                    data-header="${excelHeader}">
                 ${excelHeader}
               </span>
             </span>
@@ -509,39 +504,6 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
         
-        .excel-badge {
-          position: absolute;
-          top: -25px;
-          left: 50%;
-          transform: translateX(-50%);
-          background-color: #2563eb;
-          color: white;
-          padding: 2px 8px;
-          border-radius: 12px;
-          font-size: 9pt;
-          font-weight: 600;
-          white-space: nowrap;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-          z-index: 10;
-          opacity: 0;
-          transition: all 0.3s ease;
-          pointer-events: none;
-        }
-        
-        .visual-mapping-container:hover .excel-badge {
-          opacity: 1;
-          transform: translateX(-50%) translateY(-3px);
-        }
-        
-        .excel-badge:before {
-          content: '';
-          position: absolute;
-          top: 100%;
-          left: 50%;
-          margin-left: -4px;
-          border: 4px solid transparent;
-          border-top-color: inherit;
-        }
         
         /* LLEGENDA DE MAPATGES - Estil modern */
         .mapping-legend {
