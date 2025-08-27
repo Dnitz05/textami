@@ -54,7 +54,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
   
   // Get the final title to display
   const getDisplayTitle = (): string => {
-    if (fileName) return fileName.replace(/\.[^/.]+$/, '');
+    if (fileName) return fileName; // Show complete filename with extension
     if (title) return title;
     
     // Extract from markdown if no title/fileName provided
