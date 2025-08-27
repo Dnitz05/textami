@@ -45,6 +45,9 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
   
   // ULTRATHINK: Store manual text mappings separately from tag mappings
   const [manualTextMappings, setManualTextMappings] = useState<Record<string, string>>({});
+  
+  // ULTRATHINK: Store original tag info for manual mappings to preserve colors
+  const [manualTagInfo, setManualTagInfo] = useState<Record<string, {selectedText: string, originalTag?: any}>>({});
 
   // Load intelligent AI mapping suggestions
   useEffect(() => {
@@ -78,28 +81,49 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
         
         // Find if this header had a previous manual text mapping
         const wasManuallMapped = Object.keys(newManualTextMappings).find(header => header === activeManualHeader);
+        const newManualTagInfo = { ...manualTagInfo };
         if (wasManuallMapped) {
           console.log('🔄 ULTRATHINK - Removing previous manual mapping for header:', wasManuallMapped);
           delete newManualTextMappings[wasManuallMapped];
+          delete newManualTagInfo[wasManuallMapped]; // Also remove tag info
         }
         
-        // STEP 2: Create new manual text mapping
+        // STEP 2: Find the original tag that matches the selected text (to preserve its color)
+        const originalTag = tags.find(tag => 
+          tag.example === selectedText || 
+          tag.name.toLowerCase().includes(selectedText.toLowerCase()) ||
+          selectedText.toLowerCase().includes(tag.name.toLowerCase())
+        );
+        
+        // STEP 3: Create new manual text mapping
         newManualTextMappings[activeManualHeader] = selectedText;
+        
+        // STEP 4: Store tag info for color preservation
+        const newManualTagInfo = { ...manualTagInfo };
+        newManualTagInfo[activeManualHeader] = {
+          selectedText,
+          originalTag: originalTag || null
+        };
         
         console.log('✅ ULTRATHINK - New manual mapping created:', {
           header: activeManualHeader,
           selectedText,
+          originalTag: originalTag ? {name: originalTag.name, example: originalTag.example} : 'No matching tag found',
           allManualMappings: Object.entries(newManualTextMappings)
         });
         
-        // STEP 3: Update states
+        // STEP 5: Update states
         setMappings(newMappings);
         setManualTextMappings(newManualTextMappings);
+        setManualTagInfo(newManualTagInfo);
         onMappingUpdate?.(newMappings);
         
-        // STEP 4: Notify DocumentPreviewPanel about manual text mappings
+        // STEP 6: Notify DocumentPreviewPanel about manual text mappings with tag info
         document.dispatchEvent(new CustomEvent('manualTextMappingsUpdated', {
-          detail: { manualTextMappings: newManualTextMappings }
+          detail: { 
+            manualTextMappings: newManualTextMappings,
+            manualTagInfo: newManualTagInfo
+          }
         }));
         
         // Deactivate manual mapping after selection

@@ -47,6 +47,9 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
   // ULTRATHINK: Manual text mappings separate from tag mappings
   const [manualTextMappings, setManualTextMappings] = useState<Record<string, string>>({});
   
+  // ULTRATHINK: Store original tag info for color preservation
+  const [manualTagInfo, setManualTagInfo] = useState<Record<string, {selectedText: string, originalTag?: any}>>({});
+  
   // Listen for manual mapping events
   useEffect(() => {
     const handleManualMappingActivated = (event: any) => {
@@ -63,9 +66,13 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
     };
 
     const handleManualTextMappingsUpdated = (event: any) => {
-      const { manualTextMappings: newManualTextMappings } = event.detail;
-      console.log('🧠 ULTRATHINK - Manual text mappings updated:', newManualTextMappings);
+      const { manualTextMappings: newManualTextMappings, manualTagInfo: newManualTagInfo } = event.detail;
+      console.log('🧠 ULTRATHINK - Manual text mappings updated:', {
+        newManualTextMappings,
+        newManualTagInfo
+      });
       setManualTextMappings(newManualTextMappings);
+      setManualTagInfo(newManualTagInfo);
     };
 
     document.addEventListener('manualMappingActivated', handleManualMappingActivated);
@@ -150,6 +157,17 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
     ];
     return colors[index % colors.length];
   };
+
+  // ULTRATHINK: Get original tag color based on tag properties
+  const getOriginalTagColor = (tag: any): string => {
+    // Use a consistent color based on tag name/type
+    const tagColors = [
+      '#059669', '#DC2626', '#7C2D12', '#1D4ED8', '#7C3AED',
+      '#C2410C', '#BE185D', '#4338CA', '#0891B2', '#65A30D'
+    ];
+    const hash = tag.name.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
+    return tagColors[hash % tagColors.length];
+  };
   
   // Get unique Excel headers and assign colors
   const uniqueHeaders = [...new Set(Object.keys(mappedTags))];
@@ -170,12 +188,16 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
     
     // STEP 1: Process manual text mappings first (highest priority)
     Object.entries(manualTextMappings).forEach(([header, selectedText]) => {
-      const headerColor = getHeaderColor(header, Object.keys(manualTextMappings).indexOf(header));
+      // ULTRATHINK: Use original tag color if available, otherwise fallback to header color
+      const tagInfo = manualTagInfo[header];
+      const originalTag = tagInfo?.originalTag;
+      const tagColor = originalTag ? getOriginalTagColor(originalTag) : getHeaderColor(header, Object.keys(manualTextMappings).indexOf(header));
       
-      console.log('🎯 ULTRATHINK - Processing manual mapping:', {
+      console.log('🎯 ULTRATHINK - Processing manual mapping with original tag color:', {
         header,
         selectedText,
-        headerColor,
+        originalTag: originalTag ? {name: originalTag.name, example: originalTag.example} : 'None',
+        tagColor,
         textContains: highlightedText.includes(selectedText)
       });
       
@@ -183,7 +205,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         const visualMapping = `
           <span class="visual-mapping-container" data-excel-header="${header}">
             <span class="mapped-term" 
-                  style="background-color: ${headerColor}15; border-color: ${headerColor}; color: ${headerColor}" 
+                  style="background-color: ${tagColor}15; border-color: ${tagColor}; color: ${tagColor}" 
                   data-manual-mapping="true">
               ${header}
             </span>
@@ -199,7 +221,8 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           header,
           selectedText,
           replacements,
-          visualMapping: `Shows "${header}" with color ${headerColor}`
+          tagColor,
+          visualMapping: `Shows "${header}" with original tag color ${tagColor}`
         });
       }
     });
