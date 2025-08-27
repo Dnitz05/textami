@@ -70,10 +70,15 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
   try {
     const { tags, excelHeaders, documentContent = '' }: IntelligentMappingRequest = await request.json();
     
+    // Clean headers: remove leading/trailing spaces
+    const cleanHeaders = excelHeaders.map(header => header.trim());
+    
     console.log('🔍 AI Mapping request:', {
       tagsCount: tags.length,
-      headersCount: excelHeaders.length,
-      hasContext: documentContent.length > 0
+      headersCount: cleanHeaders.length,
+      hasContext: documentContent.length > 0,
+      originalHeaders: excelHeaders,
+      cleanHeaders: cleanHeaders
     });
 
     if (!tags || !Array.isArray(tags) || tags.length === 0) {
@@ -83,7 +88,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       );
     }
 
-    if (!excelHeaders || !Array.isArray(excelHeaders) || excelHeaders.length === 0) {
+    if (!cleanHeaders || !Array.isArray(cleanHeaders) || cleanHeaders.length === 0) {
       return NextResponse.json(
         { success: false, error: 'No Excel headers provided for mapping' },
         { status: 400 }
@@ -99,7 +104,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const prompt = `Ets un expert en mapping intel·ligent entre capçaleres d'Excel i tags detectats en documents municipals/administratius.
 
 CAPÇALERES EXCEL DISPONIBLES:
-${excelHeaders.map((header, i) => `${i + 1}. "${header}"`).join('\n')}
+${cleanHeaders.map((header, i) => `${i + 1}. "${header}"`).join('\n')}
 
 TAGS DETECTATS EN EL DOCUMENT:
 ${tags.map(tag => `- ${tag.name} (slug: ${tag.slug})
@@ -154,7 +159,7 @@ RESPOSTA OBLIGATÒRIA EN JSON:
 }
 
 ⚠️ REGLES ABSOLUTES - CAP EXCEPCIÓ PERMESA:
-1. OBLIGATORI: ${excelHeaders.length} capçaleres = ${excelHeaders.length} assignacions exactes
+1. OBLIGATORI: ${cleanHeaders.length} capçaleres = ${cleanHeaders.length} assignacions exactes
 2. CAP capçalera pot quedar sense tag - és inacceptable
 3. Si dubtes entre opcions, tria la que tingui millor exemple contextual
 4. Si cap tag sembla perfecte, usa el més genèric però SEMPRE assigna
@@ -194,7 +199,7 @@ RESPOSTA OBLIGATÒRIA EN JSON:
 
     console.log('🤖 AI mapping response length:', aiResponse.length);
     console.log('🧠 Raw AI response:', aiResponse);
-    console.log('🔍 DEBUGGING ESPECÍFIC - Headers esperats:', excelHeaders);
+    console.log('🔍 DEBUGGING ESPECÍFIC - Headers esperats:', cleanHeaders);
     console.log('🔍 DEBUGGING ESPECÍFIC - Tags disponibles:', tags.map(t => `${t.name} (${t.slug}) - exemple: ${t.example}`));
 
     let parsedResponse;
@@ -211,15 +216,22 @@ RESPOSTA OBLIGATÒRIA EN JSON:
     console.log('📋 Expected headers:', excelHeaders);
     
     // Transform AI header mappings to our suggestion format
-    const suggestions: IntelligentMappingSuggestion[] = aiHeaderMappings.map((mapping: any) => ({
-      tagSlug: mapping.assignedTagSlug,
-      tagName: mapping.assignedTagName,
-      tagExample: mapping.assignedTagExample || tags.find(t => t.slug === mapping.assignedTagSlug)?.example || '',
-      suggestedHeader: mapping.excelHeader,
-      confidence: Math.max(0, Math.min(1, mapping.confidence || 0.5)),
-      reasoning: mapping.reasoning || 'AI suggestion',
-      alternativeHeaders: [] // Not needed in new format
-    }));
+    // Map clean headers back to original headers to maintain compatibility
+    const suggestions: IntelligentMappingSuggestion[] = aiHeaderMappings.map((mapping: any) => {
+      // Find the original header that corresponds to this clean header
+      const originalHeaderIndex = cleanHeaders.findIndex(cleanHeader => cleanHeader === mapping.excelHeader);
+      const originalHeader = originalHeaderIndex !== -1 ? excelHeaders[originalHeaderIndex] : mapping.excelHeader;
+      
+      return {
+        tagSlug: mapping.assignedTagSlug,
+        tagName: mapping.assignedTagName,
+        tagExample: mapping.assignedTagExample || tags.find(t => t.slug === mapping.assignedTagSlug)?.example || '',
+        suggestedHeader: originalHeader, // Use original header with spaces
+        confidence: Math.max(0, Math.min(1, mapping.confidence || 0.5)),
+        reasoning: mapping.reasoning || 'AI suggestion',
+        alternativeHeaders: [] // Not needed in new format
+      };
+    });
 
     // Ensure ALL headers have a mapping - if AI missed any, create fallback mappings
     const mappedHeaders = new Set(suggestions.map(s => s.suggestedHeader));
