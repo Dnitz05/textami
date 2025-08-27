@@ -6,6 +6,7 @@ import DocumentPreviewPanel from './analysis/DocumentPreviewPanel';
 import ExcelMappingPanel from './analysis/ExcelMappingPanel';
 import AIPromptsPanel from './analysis/AIPromptsPanel';
 import { MappingProvider } from '../contexts/MappingContext';
+import { log } from '../lib/logger';
 // Knowledge moved to its own page - /knowledge
 
 interface AIAnalysisInterfaceProps {
