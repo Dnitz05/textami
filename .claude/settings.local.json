@@ -8,7 +8,8 @@
       "Bash(npm install:*)"
     ],
     "additionalDirectories": [
-      "C:\\c\\projects\\textami"
+      "C:\\c\\projects\\textami",
+      "C:\\"
     ]
   }
 }
