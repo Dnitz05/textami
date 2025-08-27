@@ -2,6 +2,7 @@
 // Panel 1: Document Preview with markdown content
 import React, { useState, useEffect } from 'react';
 import { ParsedSection, ParsedTable } from '../../lib/types';
+import { log } from '../../lib/logger';
 
 interface DocumentSignature {
   nom: string;
@@ -54,20 +55,20 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
   useEffect(() => {
     const handleManualMappingActivated = (event: any) => {
       const { header } = event.detail;
-      console.log('📍 Manual mapping activated in DocumentPreview:', header);
+      log.debug('Manual mapping activated in DocumentPreview', { header });
       setIsManualMappingActive(true);
       setActiveManualHeader(header);
     };
 
     const handleManualMappingDeactivated = () => {
-      console.log('📍 Manual mapping deactivated in DocumentPreview');
+      log.debug('Manual mapping deactivated in DocumentPreview');
       setIsManualMappingActive(false);
       setActiveManualHeader(null);
     };
 
     const handleManualTextMappingsUpdated = (event: any) => {
       const { manualTextMappings: newManualTextMappings, manualTagInfo: newManualTagInfo } = event.detail;
-      console.log('🧠 ULTRATHINK - Manual text mappings updated:', {
+      log.ultrathink('Manual text mappings updated', {
         newManualTextMappings,
         newManualTagInfo
       });
@@ -93,7 +94,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
       const selectedText = selection?.toString()?.trim();
       
       if (selectedText && selectedText.length > 0) {
-        console.log('🎯 ULTRATHINK - Text selected for mapping:', { 
+        log.ultrathink('Text selected for mapping', { 
           header: activeManualHeader, 
           selectedText,
           previousMappings: Object.entries(mappedTags)
@@ -180,10 +181,9 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
   const highlightTags = (text: string): string => {
     let highlightedText = removeDocumentTitle(text);
     
-    console.log('🧠 ULTRATHINK - Starting highlight process:', {
-      mappedTags: Object.entries(mappedTags),
-      manualTextMappings: Object.entries(manualTextMappings),
-      textPreview: highlightedText.substring(0, 200)
+    log.ultrathink('Starting highlight process', {
+      mappedTagsCount: Object.keys(mappedTags).length,
+      manualMappingsCount: Object.keys(manualTextMappings).length
     });
     
     // STEP 1: Process manual text mappings first (highest priority)
@@ -193,12 +193,10 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
       const originalTag = tagInfo?.originalTag;
       const tagColor = originalTag ? getOriginalTagColor(originalTag) : getHeaderColor(header, Object.keys(manualTextMappings).indexOf(header));
       
-      console.log('🎯 ULTRATHINK - Processing manual mapping with original tag color:', {
+      log.mapping('Processing manual mapping with original tag color', {
         header,
-        selectedText,
-        originalTag: originalTag ? {name: originalTag.name, example: originalTag.example} : 'None',
-        tagColor,
-        textContains: highlightedText.includes(selectedText)
+        hasOriginalTag: !!originalTag,
+        tagColor
       });
       
       if (selectedText && selectedText.trim()) {
@@ -217,13 +215,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         const replacements = (highlightedText.match(regex) || []).length;
         highlightedText = highlightedText.replace(regex, visualMapping);
         
-        console.log('✅ ULTRATHINK - Manual mapping applied:', {
-          header,
-          selectedText,
-          replacements,
-          tagColor,
-          visualMapping: `Shows "${header}" with original tag color ${tagColor}`
-        });
+        log.success(`Manual mapping applied: ${header}`, { replacements });
       }
     });
     
@@ -235,51 +227,26 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
     const tagsToHighlight = tags.filter(tag => mappedTagSlugs.has(tag.slug));
     const sortedTags = tagsToHighlight.sort((a, b) => (b.example?.length || 0) - (a.example?.length || 0));
     
-    console.log('🔍 ULTRATHINK - Tag mapping system:', {
+    log.debug('Tag mapping system initialized', {
       totalTags: tags.length,
-      mappedTagSlugs: Array.from(mappedTagSlugs),
-      tagsToHighlight: tagsToHighlight.map(t => ({ name: t.name, example: t.example, slug: t.slug })),
-      headerColors
+      tagsToHighlight: tagsToHighlight.length
     });
     
     sortedTags.forEach((tag, index) => {
-      console.log(`🏷️ Processing tag ${index + 1}/${sortedTags.length}:`, { 
-        name: tag.name, 
-        example: tag.example, 
-        slug: tag.slug,
-        hasPressupost: tag.name.toUpperCase().includes('PRESSUPOST') || tag.example?.toUpperCase().includes('PRESSUPOST')
-      });
-
       if (tag.example && tag.example.trim()) {
         const example = tag.example.trim();
         
         // Find which Excel header this tag is mapped to
         const excelHeader = Object.keys(mappedTags).find(header => mappedTags[header] === tag.slug);
         
-        // ULTRATHINK DEBUG per PRESSUPOST
-        const isPressuposto = example.toUpperCase().includes('PRESSUPOST') || tag.name.toUpperCase().includes('PRESSUPOST') || (excelHeader && excelHeader.toUpperCase().includes('PRESSUPOST'));
-        
-        if (isPressuposto) {
-          console.log('🔍 ULTRATHINK DEBUG PRESSUPOST:', {
+        // Debug specific problematic tags if needed
+        const isProblematicTag = example.toUpperCase().includes('PRESSUPOST');
+        if (isProblematicTag) {
+          log.debug('Processing problematic tag', {
             tagName: tag.name,
-            tagSlug: tag.slug,
-            example: `"${example}"`,
+            example,
             excelHeader,
-            exampleLength: example.length,
-            exampleBytes: new TextEncoder().encode(example),
-            textContainsExample: highlightedText.includes(example),
-            textContainsExampleCI: highlightedText.toLowerCase().includes(example.toLowerCase()),
-            exampleCharCodes: Array.from<string>(example).map(c => ({ char: c, code: c.charCodeAt(0) })),
-            regexEscaped: example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
-            textPreview: highlightedText.substring(0, 500),
-            // Més debugging específic
-            mappedTagsEntries: Object.entries(mappedTags),
-            tagFoundInMappings: excelHeader ? 'SÍ' : 'NO',
-            allPossibleMatches: [
-              highlightedText.match(new RegExp(example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')),
-              highlightedText.match(new RegExp(example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')),
-              highlightedText.match(new RegExp(`\\b${example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi'))
-            ]
+            textContains: highlightedText.includes(example)
           });
         }
         
@@ -287,9 +254,8 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           // ULTRATHINK: Skip if this header has a manual text mapping
           const hasManualMapping = manualTextMappings[excelHeader];
           if (hasManualMapping) {
-            console.log('🚫 ULTRATHINK - Skipping tag mapping, header has manual mapping:', {
+            log.debug('Skipping tag mapping, header has manual mapping', {
               excelHeader,
-              manualText: hasManualMapping,
               tagExample: example
             });
             return; // Skip this tag mapping
@@ -316,7 +282,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           const exactRegex = new RegExp(example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
           highlightedText = highlightedText.replace(exactRegex, (match) => {
             replacements++;
-            if (isPressuposto) console.log('✅ PRESSUPOST Strategy 1 success:', match);
+            if (isProblematicTag) log.debug('Strategy 1 success', { match });
             return visualMapping;
           });
           
@@ -325,7 +291,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
             const ciRegex = new RegExp(example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
             highlightedText = highlightedText.replace(ciRegex, (match) => {
               replacements++;
-              if (isPressuposto) console.log('✅ PRESSUPOST Strategy 2 success:', match);
+              if (isProblematicTag) log.debug('Strategy 2 success', { match });
               return visualMapping;
             });
           }
@@ -335,7 +301,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
             const wbRegex = new RegExp(`\\b${example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
             highlightedText = highlightedText.replace(wbRegex, (match) => {
               replacements++;
-              if (isPressuposto) console.log('✅ PRESSUPOST Strategy 3 success:', match);
+              if (isProblematicTag) log.debug('Strategy 3 success', { match });
               return visualMapping;
             });
           }
@@ -345,15 +311,14 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
             const flexRegex = new RegExp(example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
             highlightedText = highlightedText.replace(flexRegex, (match) => {
               replacements++;
-              if (isPressuposto) console.log('✅ PRESSUPOST Strategy 4 success:', match);
+              if (isProblematicTag) log.debug('Strategy 4 success', { match });
               return visualMapping;
             });
           }
           
-          if (isPressuposto) {
-            console.log('🔍 PRESSUPOST Final result:', {
+          if (isProblematicTag) {
+            log.debug('Final result for problematic tag', {
               replacements,
-              finalTextContains: highlightedText.includes('visual-mapping-container'),
               mappingCreated: replacements > 0
             });
           }
@@ -367,23 +332,13 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
   // Get final display title
   const finalDisplayTitle = getDisplayTitle();
   
-  // DEBUG: Log title and filename values
-  console.log('🔍 DocumentPreviewPanel DEBUG:', {
+  // Development-only debugging
+  log.debug('DocumentPreviewPanel initialized', {
     title,
     fileName,
-    titleExists: !!title,
-    fileNameExists: !!fileName,
     finalDisplayTitle,
-    mappedTags,
     mappedTagsCount: Object.keys(mappedTags).length,
-    markdownStart: markdown.substring(0, 200)
-  });
-
-  // DEBUG: Log sections
-  console.log('🔍 Sections DEBUG:', {
-    sectionsCount: sections.length,
-    sections: sections.map(s => ({title: s.title, hasMarkdown: !!s.markdown})),
-    hasMainMarkdown: !!markdown
+    sectionsCount: sections.length
   });
 
   // DEBUG: Log final processed markdown
@@ -401,7 +356,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
       if (mappedTerm && onMappingRemove) {
         const excelHeader = mappedTerm.parentElement?.getAttribute('data-excel-header');
         if (excelHeader) {
-          console.log('🗑️ Removing mapping for header:', excelHeader);
+          log.debug('Removing mapping for header', { excelHeader });
           onMappingRemove(excelHeader);
         }
       }

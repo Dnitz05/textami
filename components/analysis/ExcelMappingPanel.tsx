@@ -2,6 +2,7 @@
 // Panel 3: Excel mapping with fuzzy matching
 import React, { useState, useEffect, useRef } from 'react';
 import { ParsedTag } from '../../lib/types';
+import { log } from '../../lib/logger';
 
 interface ExcelMappingPanelProps {
   tags: ParsedTag[];
@@ -62,10 +63,9 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
       if (isManualMappingActive && activeManualHeader) {
         const { selectedText, currentMappings } = event.detail;
         
-        console.log('🧠 ULTRATHINK - Processing text selection:', { 
+        log.ultrathink('Processing text selection', { 
           header: activeManualHeader, 
-          selectedText,
-          currentMappings: Object.entries(currentMappings || {})
+          selectedText: selectedText.substring(0, 50) + '...'
         });
         
         // STEP 1: Remove this header from previous mappings (if exists)
