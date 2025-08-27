@@ -78,227 +78,13 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
     }
   };
   
-  // Extract title from markdown if title/fileName are not provided
-  const extractTitleFromMarkdown = (text: string): { extractedTitle: string, cleanedText: string } => {
-    const lines = text.split('\n');
-    if (lines.length > 0 && lines[0].startsWith('# ')) {
-      const extractedTitle = lines[0].replace('# ', '').trim();
-      const cleanedText = lines.slice(1).join('\n').replace(/^\n+/, '');
-      return { extractedTitle, cleanedText };
-    }
-    return { extractedTitle: '', cleanedText: text };
-  };
-  
-  // Get the final title to display
-  const getDisplayTitle = (): string => {
-    if (fileName) return fileName; // Show complete filename with extension
-    if (title) return title;
-    
-    // Extract from markdown if no title/fileName provided
-    const { extractedTitle } = extractTitleFromMarkdown(markdown);
-    return extractedTitle;
-  };
-  
-  // Function to remove document title from content to avoid duplication
-  const removeDocumentTitle = (text: string): string => {
-    const displayTitle = getDisplayTitle();
-    if (!displayTitle) return text;
-    
-    const lines = text.split('\n');
-    // Remove the first H1 header if it matches the display title
-    if (lines.length > 0 && lines[0].trim() === `# ${displayTitle}`) {
-      return lines.slice(1).join('\n').replace(/^\n+/, ''); // Remove leading newlines
-    }
-    return text;
-  };
+  // Note: All complex logic moved to custom hooks for better separation of concerns
 
-  // Generate a unique color for each Excel header
-  const getHeaderColor = (header: string, index: number): string => {
-    const colors = [
-      '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', 
-      '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6366F1'
-    ];
-    return colors[index % colors.length];
-  };
-
-  // ULTRATHINK: Get original tag color based on tag properties
-  const getOriginalTagColor = (tag: any): string => {
-    // Use a consistent color based on tag name/type
-    const tagColors = [
-      '#059669', '#DC2626', '#7C2D12', '#1D4ED8', '#7C3AED',
-      '#C2410C', '#BE185D', '#4338CA', '#0891B2', '#65A30D'
-    ];
-    const hash = tag.name.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
-    return tagColors[hash % tagColors.length];
-  };
-  
-  // Get unique Excel headers and assign colors
-  const uniqueHeaders = [...new Set(Object.keys(mappedTags))];
-  const headerColors = uniqueHeaders.reduce((acc, header, index) => {
-    acc[header] = getHeaderColor(header, index);
-    return acc;
-  }, {} as Record<string, string>);
-
-  // ULTRATHINK: Function to highlight detected tags in text with visual mapping system + manual text mappings
-  const highlightTags = (text: string): string => {
-    let highlightedText = removeDocumentTitle(text);
-    
-    log.ultrathink('Starting highlight process', {
-      mappedTagsCount: Object.keys(mappedTags).length,
-      manualMappingsCount: Object.keys(manualTextMappings).length
-    });
-    
-    // STEP 1: Process manual text mappings first (highest priority)
-    Object.entries(manualTextMappings).forEach(([header, selectedText]) => {
-      // ULTRATHINK: Use original tag color if available, otherwise fallback to header color
-      const tagInfo = manualTagInfo[header];
-      const originalTag = tagInfo?.originalTag;
-      const tagColor = originalTag ? getOriginalTagColor(originalTag) : getHeaderColor(header, Object.keys(manualTextMappings).indexOf(header));
-      
-      log.mapping('Processing manual mapping with original tag color', {
-        header,
-        hasOriginalTag: !!originalTag,
-        tagColor
-      });
-      
-      if (selectedText && selectedText.trim()) {
-        const visualMapping = `
-          <span class="visual-mapping-container" data-excel-header="${header}">
-            <span class="mapped-term" 
-                  style="background-color: ${tagColor}15; border-color: ${tagColor}; color: ${tagColor}" 
-                  data-manual-mapping="true">
-              ${header}
-            </span>
-          </span>
-        `;
-        
-        // Replace ALL occurrences of the selected text with header name and color
-        const regex = new RegExp(selectedText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-        const replacements = (highlightedText.match(regex) || []).length;
-        highlightedText = highlightedText.replace(regex, visualMapping);
-        
-        log.success(`Manual mapping applied: ${header}`, { replacements });
-      }
-    });
-    
-    // STEP 2: Process tag mappings (lower priority, won't override manual mappings)
-    // Get mapped tags (tags that have been assigned to Excel headers)
-    const mappedTagSlugs = new Set(Object.values(mappedTags));
-    
-    // Filter to only highlight mapped tags and sort by example length
-    const tagsToHighlight = tags.filter(tag => mappedTagSlugs.has(tag.slug));
-    const sortedTags = tagsToHighlight.sort((a, b) => (b.example?.length || 0) - (a.example?.length || 0));
-    
-    log.debug('Tag mapping system initialized', {
-      totalTags: tags.length,
-      tagsToHighlight: tagsToHighlight.length
-    });
-    
-    sortedTags.forEach((tag, index) => {
-      if (tag.example && tag.example.trim()) {
-        const example = tag.example.trim();
-        
-        // Find which Excel header this tag is mapped to
-        const excelHeader = Object.keys(mappedTags).find(header => mappedTags[header] === tag.slug);
-        
-        // Debug specific problematic tags if needed
-        const isProblematicTag = example.toUpperCase().includes('PRESSUPOST');
-        if (isProblematicTag) {
-          log.debug('Processing problematic tag', {
-            tagName: tag.name,
-            example,
-            excelHeader,
-            textContains: highlightedText.includes(example)
-          });
-        }
-        
-        if (excelHeader) {
-          // ULTRATHINK: Skip if this header has a manual text mapping
-          const hasManualMapping = manualTextMappings[excelHeader];
-          if (hasManualMapping) {
-            log.debug('Skipping tag mapping, header has manual mapping', {
-              excelHeader,
-              tagExample: example
-            });
-            return; // Skip this tag mapping
-          }
-          
-          const headerColor = headerColors[excelHeader];
-          const uniqueId = `tag-${index}-${Date.now()}`;
-          
-          // Create visual mapping element - show only Excel header value
-          const visualMapping = `
-            <span class="visual-mapping-container" data-excel-header="${excelHeader}">
-              <span class="mapped-term" 
-                    style="background-color: ${headerColor}15; border-color: ${headerColor}; color: ${headerColor}" 
-                    data-tag-id="${uniqueId}">
-                ${excelHeader}
-              </span>
-            </span>
-          `;
-          
-          // Try multiple replacement strategies for better matching
-          let replacements = 0;
-          
-          // Strategy 1: Exact match (case sensitive)
-          const exactRegex = new RegExp(example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-          highlightedText = highlightedText.replace(exactRegex, (match) => {
-            replacements++;
-            if (isProblematicTag) log.debug('Strategy 1 success', { match });
-            return visualMapping;
-          });
-          
-          // Strategy 2: Case insensitive exact
-          if (replacements === 0) {
-            const ciRegex = new RegExp(example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-            highlightedText = highlightedText.replace(ciRegex, (match) => {
-              replacements++;
-              if (isProblematicTag) log.debug('Strategy 2 success', { match });
-              return visualMapping;
-            });
-          }
-          
-          // Strategy 3: Word boundary (original)
-          if (replacements === 0) {
-            const wbRegex = new RegExp(`\\b${example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
-            highlightedText = highlightedText.replace(wbRegex, (match) => {
-              replacements++;
-              if (isProblematicTag) log.debug('Strategy 3 success', { match });
-              return visualMapping;
-            });
-          }
-          
-          // Strategy 4: Flexible match (remove word boundaries for numbers/special chars)
-          if (replacements === 0 && /[\d€$.,]/.test(example)) {
-            const flexRegex = new RegExp(example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-            highlightedText = highlightedText.replace(flexRegex, (match) => {
-              replacements++;
-              if (isProblematicTag) log.debug('Strategy 4 success', { match });
-              return visualMapping;
-            });
-          }
-          
-          if (isProblematicTag) {
-            log.debug('Final result for problematic tag', {
-              replacements,
-              mappingCreated: replacements > 0
-            });
-          }
-        }
-      }
-    });
-    
-    return highlightedText;
-  };
-
-  // Get final display title
-  const finalDisplayTitle = getDisplayTitle();
-  
   // Development-only debugging
   log.debug('DocumentPreviewPanel initialized', {
     title,
     fileName,
-    finalDisplayTitle,
+    displayTitle,
     mappedTagsCount: Object.keys(mappedTags).length,
     sectionsCount: sections.length
   });
@@ -749,9 +535,9 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
             )}
             
             {/* Document Title */}
-            {finalDisplayTitle && (
+            {displayTitle && (
               <h1 className="document-title">
-                {finalDisplayTitle}
+                {displayTitle}
               </h1>
             )}
             
@@ -773,7 +559,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
               ) : (
                 <div 
                   className="document-content"
-                  dangerouslySetInnerHTML={{ __html: highlightTags(markdown) }}
+                  dangerouslySetInnerHTML={{ __html: highlightTags(cleanedText) }}
                 />
               )}
             </div>
