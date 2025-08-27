@@ -61,6 +61,9 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
     description: string;
   }>>([]);
   
+  // State for section-specific instruction form
+  const [selectedSectionForInstruction, setSelectedSectionForInstruction] = useState<string | null>(null);
+  
   // Update current markdown when analysis data changes
   React.useEffect(() => {
     if (analysisData?.markdown) {
@@ -218,8 +221,15 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
     // Show the left sidebar (AI prompts panel) if hidden
     setShowLeftSidebar(true);
     
-    // The AIPromptsPanel will handle creating the section-specific instruction
-    // with knowledge context via its own form
+    // Set the section to open the form with pre-selected section
+    const sectionId = section.id || section.title;
+    setSelectedSectionForInstruction(sectionId);
+    
+    // Clear the selection after a short delay to reset the trigger
+    setTimeout(() => {
+      setSelectedSectionForInstruction(null);
+    }, 100);
+    
     log.success(`Panel AI obert per crear instrucció específica de: ${section.title || `Secció ${index + 1}`}`);
   };
 
@@ -291,6 +301,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                       isExecuting={isExecutingInstruction}
                       executingInstructionId={executingInstructionId}
                       documentSections={analysisData?.sections?.map(s => ({id: s.id || s.title, title: s.title})) || []}
+                      openFormWithSection={selectedSectionForInstruction}
                     />
                   </div>
                 </div>

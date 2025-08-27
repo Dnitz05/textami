@@ -17,6 +17,7 @@ interface AIPromptsPanelProps {
   executingInstructionId?: string | null;
   documentSections?: Array<{id: string; title: string;}>;
   // Removed: sectionSpecificInstructions (no longer needed)
+  openFormWithSection?: string | null; // Section ID to auto-open form with
 }
 
 const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
@@ -24,7 +25,8 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
   onInstructionExecute,
   isExecuting = false,
   executingInstructionId = null,
-  documentSections = []
+  documentSections = [],
+  openFormWithSection = null
 }) => {
   const [knowledgeFiles, setKnowledgeFiles] = useState<Array<{
     id: string;
@@ -93,6 +95,18 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
   });
 
   const [showAddForm, setShowAddForm] = useState(false);
+
+  // Auto-open form when openFormWithSection is provided
+  React.useEffect(() => {
+    if (openFormWithSection) {
+      setShowAddForm(true);
+      // Pre-select the section in the dropdown
+      setNewInstruction(prev => ({
+        ...prev,
+        type: openFormWithSection
+      }));
+    }
+  }, [openFormWithSection]);
 
   const handleAddInstruction = () => {
     if (newInstruction.knowledgeFileId && newInstruction.instruction) {
