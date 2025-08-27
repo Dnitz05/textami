@@ -99,7 +99,6 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
         newManualTextMappings[activeManualHeader] = selectedText;
         
         // STEP 4: Store tag info for color preservation
-        const newManualTagInfo = { ...manualTagInfo };
         newManualTagInfo[activeManualHeader] = {
           selectedText,
           originalTag: originalTag || null
