@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 import { ApiResponse } from '../../../lib/types';
+import pdfParse from 'pdf-parse';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -69,12 +70,74 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
     const startTime = Date.now();
 
-    // Prepare knowledge context if available
+    // Extract and prepare knowledge context if available
     let knowledgeContext = '';
     if (knowledgeDocuments.length > 0) {
-      knowledgeContext = `\n\nCONTEXT DE REFERÈNCIA DISPONIBLE:\n${knowledgeDocuments.map(doc => 
-        `- ${doc.filename} (${doc.type}): ${doc.description}`
-      ).join('\n')}\n\nUtilitza aquest context quan sigui rellevant per la instrucció.`;
+      console.log('📚 Extracting content from knowledge documents...');
+      
+      const knowledgeContents = await Promise.all(
+        knowledgeDocuments.map(async (doc) => {
+          try {
+            console.log(`📄 Reading content from: ${doc.filename}`);
+            
+            // Get signed URL and fetch PDF content
+            const { data: urlData } = await supabase.storage
+              .from('knowledge-base')
+              .createSignedUrl(doc.storagePath, 3600);
+              
+            if (!urlData?.signedUrl) {
+              console.error(`❌ Failed to get signed URL for ${doc.filename}`);
+              return null;
+            }
+            
+            // Fetch PDF and extract text content
+            const pdfResponse = await fetch(urlData.signedUrl);
+            if (!pdfResponse.ok) {
+              console.error(`❌ Failed to fetch ${doc.filename}`);
+              return null;
+            }
+            
+            // Extract PDF content using pdf-parse
+            const pdfBuffer = Buffer.from(await pdfResponse.arrayBuffer());
+            const pdfData = await pdfParse(pdfBuffer);
+            
+            const extractedText = pdfData.text.trim();
+            console.log(`✅ Successfully extracted ${extractedText.length} characters from ${doc.filename}`);
+            
+            // Truncate content if too long to fit within token limits
+            const maxContentLength = 8000; // Approximate token limit for context
+            const truncatedText = extractedText.length > maxContentLength 
+              ? extractedText.substring(0, maxContentLength) + '\n\n[CONTINGUT TRUNCAT - DOCUMENT MÉS LLARG]'
+              : extractedText;
+            
+            return {
+              filename: doc.filename,
+              type: doc.type,
+              content: `[DOCUMENT DE REFERÈNCIA: ${doc.filename.toUpperCase()}]\n\n` +
+                      `Tipus: ${doc.type}\n` +
+                      `Descripció: ${doc.description}\n\n` +
+                      `CONTINGUT:\n${truncatedText}\n\n` +
+                      `[FI DEL DOCUMENT ${doc.filename.toUpperCase()}]`
+            };
+            
+          } catch (error) {
+            console.error(`❌ Error processing ${doc.filename}:`, error);
+            return null;
+          }
+        })
+      );
+      
+      const validContents = knowledgeContents.filter(Boolean);
+      
+      if (validContents.length > 0) {
+        knowledgeContext = `\n\nDOCUMENTS DE REFERÈNCIA DISPONIBLES:\n\n` +
+          validContents.map(doc => 
+            `### ${doc.filename} (${doc.type})\n${doc.content}\n`
+          ).join('\n---\n\n') +
+          `\n\nUtilitza aquests documents com a context quan executes la instrucció.`;
+          
+        console.log(`✅ Knowledge context prepared with ${validContents.length} documents`);
+      }
     }
 
     // Build the AI prompt based on instruction type
