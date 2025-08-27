@@ -199,7 +199,7 @@ RESPOSTA OBLIGATÒRIA EN JSON:
     }
 
     const aiHeaderMappings = parsedResponse.headerMappings || [];
-    console.log('📋 AI returned mappings for headers:', aiHeaderMappings.map(m => m.excelHeader));
+    console.log('📋 AI returned mappings for headers:', aiHeaderMappings.map((m: any) => m.excelHeader));
     console.log('📋 Expected headers:', excelHeaders);
     
     // Transform AI header mappings to our suggestion format
