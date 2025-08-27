@@ -71,6 +71,14 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
     onMappingUpdate?.(newMappings);
   };
 
+  const handleMappingRemove = (header: string) => {
+    console.log('🗑️ Removing mapping for header:', header);
+    const newMappings = { ...mappings };
+    delete newMappings[header];
+    setMappings(newMappings);
+    onMappingUpdate?.(newMappings);
+  };
+
   const getMappedCount = () => {
     return Object.keys(mappings).length;
   };
@@ -269,6 +277,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                 onSaveAs={onSaveAs}
                 onClose={onClose}
                 mappedTags={mappings}
+                onMappingRemove={handleMappingRemove}
               />
             </div>
           </div>

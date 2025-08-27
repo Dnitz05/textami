@@ -22,6 +22,7 @@ interface DocumentPreviewPanelProps {
   onSaveAs?: () => void;
   onClose?: () => void;
   mappedTags?: Record<string, string>; // header -> tagSlug mappings
+  onMappingRemove?: (header: string) => void; // Callback to remove mapping
 }
 
 const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
@@ -36,7 +37,8 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
   onSave,
   onSaveAs,
   onClose,
-  mappedTags = {}
+  mappedTags = {},
+  onMappingRemove
 }) => {
   
   // Extract title from markdown if title/fileName are not provided
@@ -129,7 +131,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
               <span class="excel-badge" 
                     style="background-color: ${headerColor}; border-color: ${headerColor}"
                     data-header="${excelHeader}">
-                📊 ${excelHeader}
+                ${excelHeader}
               </span>
             </span>
           `;
@@ -172,6 +174,24 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
     processedMarkdown: highlightTags(markdown).substring(0, 200),
     afterRemoveTitle: removeDocumentTitle(markdown).substring(0, 200)
   });
+
+  // Handle clicks on mapped terms to remove them
+  React.useEffect(() => {
+    const handleMappedTermClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      const mappedTerm = target.closest('.mapped-term');
+      if (mappedTerm && onMappingRemove) {
+        const excelHeader = mappedTerm.parentElement?.getAttribute('data-excel-header');
+        if (excelHeader) {
+          console.log('🗑️ Removing mapping for header:', excelHeader);
+          onMappingRemove(excelHeader);
+        }
+      }
+    };
+
+    document.addEventListener('click', handleMappedTermClick);
+    return () => document.removeEventListener('click', handleMappedTermClick);
+  }, [onMappingRemove]);
 
   return (
     <div className="bg-white border-l border-r border-gray-200">
@@ -385,8 +405,9 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         }
         
         .mapped-term:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          opacity: 0.7;
+          transform: scale(0.95);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
         
         .excel-badge {
@@ -677,7 +698,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
             {Object.keys(mappedTags).length > 0 && (
               <div className="mapping-legend">
                 <h4 style={{fontSize: '10pt', fontWeight: '600', marginBottom: '10px', color: '#4a5568'}}>
-                  📊 Mapeig de Dades Excel
+                  Mapeig de Dades Excel
                 </h4>
                 <div className="legend-items">
                   {uniqueHeaders.map((header, index) => (
