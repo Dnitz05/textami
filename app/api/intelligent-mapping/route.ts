@@ -175,7 +175,7 @@ RESPOSTA OBLIGATÒRIA EN JSON:
       response_format: {
         type: "json_object"
       },
-      max_tokens: 6000, // Més tokens per raonament profund
+      max_completion_tokens: 6000, // Més tokens per raonament profund
       temperature: 0.05, // Més baixa per màxima consistència i precisió
       presence_penalty: 0,
       frequency_penalty: 0
