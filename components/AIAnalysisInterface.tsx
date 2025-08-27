@@ -268,6 +268,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                 onSave={onSave}
                 onSaveAs={onSaveAs}
                 onClose={onClose}
+                mappedTags={mappings}
               />
             </div>
           </div>

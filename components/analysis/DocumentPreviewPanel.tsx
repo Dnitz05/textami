@@ -21,6 +21,7 @@ interface DocumentPreviewPanelProps {
   onSave?: () => void;
   onSaveAs?: () => void;
   onClose?: () => void;
+  mappedTags?: Record<string, string>; // header -> tagSlug mappings
 }
 
 const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
@@ -34,7 +35,8 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
   fileName = 'Document.pdf',
   onSave,
   onSaveAs,
-  onClose
+  onClose,
+  mappedTags = {}
 }) => {
   
   // Extract title from markdown if title/fileName are not provided
@@ -71,22 +73,39 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
     return text;
   };
 
-  // Function to highlight detected tags in text
+  // Function to highlight detected tags in text - prioritizing mapped tags
   const highlightTags = (text: string): string => {
     let highlightedText = removeDocumentTitle(text);
     
-    // Sort tags by example length (longest first to avoid partial replacements)
-    const sortedTags = [...tags].sort((a, b) => (b.example?.length || 0) - (a.example?.length || 0));
+    // Get mapped tags (tags that have been assigned to Excel headers)
+    const mappedTagSlugs = new Set(Object.values(mappedTags));
+    
+    // Filter to only highlight mapped tags and sort by example length
+    const tagsToHighlight = tags.filter(tag => mappedTagSlugs.has(tag.slug));
+    const sortedTags = tagsToHighlight.sort((a, b) => (b.example?.length || 0) - (a.example?.length || 0));
+    
+    console.log('🔍 Highlighting mapped tags:', {
+      totalTags: tags.length,
+      mappedTagSlugs: Array.from(mappedTagSlugs),
+      tagsToHighlight: tagsToHighlight.map(t => ({ name: t.name, example: t.example, slug: t.slug }))
+    });
     
     sortedTags.forEach((tag, index) => {
       if (tag.example && tag.example.trim()) {
         const example = tag.example.trim();
-        // Create a unique class for each tag type
-        const tagClass = `detected-tag detected-tag-${tag.type} detected-tag-${index}`;
+        
+        // Find which Excel header this tag is mapped to
+        const excelHeader = Object.keys(mappedTags).find(header => mappedTags[header] === tag.slug);
+        
+        // Create enhanced class for mapped tags
+        const tagClass = `detected-tag mapped-tag mapped-tag-${tag.type} detected-tag-${index}`;
+        const tooltipText = `${tag.name} (${tag.type})${excelHeader ? ` → Mapejat amb "${excelHeader}"` : ''}`;
         
         // Replace with highlighted version (case-insensitive, whole word)
         const regex = new RegExp(`\\b${example.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
-        highlightedText = highlightedText.replace(regex, `<span class="${tagClass}" title="${tag.name} (${tag.type})">${example}</span>`);
+        highlightedText = highlightedText.replace(regex, 
+          `<span class="${tagClass}" title="${tooltipText}" data-excel-header="${excelHeader || ''}">${example}</span>`
+        );
       }
     });
     
@@ -103,6 +122,8 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
     titleExists: !!title,
     fileNameExists: !!fileName,
     finalDisplayTitle,
+    mappedTags,
+    mappedTagsCount: Object.keys(mappedTags).length,
     markdownStart: markdown.substring(0, 200)
   });
 
@@ -295,6 +316,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           font-style: italic;
         }
         
+        /* TAGS DETECTATS - Estil bàsic */
         .detected-tag {
           background: rgba(59, 130, 246, 0.08);
           border: 1px dotted #3b82f6;
@@ -309,6 +331,31 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         .detected-tag:hover {
           background: rgba(59, 130, 246, 0.12);
           border-color: #1d4ed8;
+        }
+        
+        /* TAGS MAPEJATS - Estil destacat */
+        .mapped-tag {
+          background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%);
+          border: 2px solid #10b981;
+          border-radius: 4px;
+          padding: 2px 6px;
+          margin: 0 2px;
+          font-weight: 600;
+          box-shadow: 0 1px 3px rgba(16, 185, 129, 0.2);
+          position: relative;
+        }
+        
+        .mapped-tag:hover {
+          background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.25) 100%);
+          border-color: #059669;
+          box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+          transform: translateY(-1px);
+        }
+        
+        .mapped-tag:before {
+          content: "📊";
+          font-size: 10px;
+          margin-right: 2px;
         }
         
         .detected-tag-string {
