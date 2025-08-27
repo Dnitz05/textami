@@ -38,6 +38,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
         limit: 100,
         sortBy: { column: 'created_at', order: 'desc' }
       });
+      
+    console.log('📁 Debug - Storage path searched:', `${userId}/`);
+    console.log('📄 Debug - Files found:', files?.length || 0, files);
 
     if (error) {
       console.error('❌ Error fetching knowledge base:', error);
@@ -64,6 +67,21 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
       }));
 
     console.log('✅ Retrieved knowledge base:', documents.length, 'documents');
+    
+    // DEBUG: Also check if there are documents in the root or other folders
+    if (documents.length === 0) {
+      console.log('🔍 Debug - No documents found for user, checking root folder...');
+      const { data: rootFiles } = await supabase.storage
+        .from('knowledge-base')
+        .list('', { limit: 50 });
+      console.log('📁 Debug - Root folder contents:', rootFiles?.length || 0, rootFiles?.map(f => f.name));
+      
+      // Check anonymous folder too
+      const { data: anonymousFiles } = await supabase.storage
+        .from('knowledge-base')
+        .list('anonymous/', { limit: 50 });
+      console.log('📁 Debug - Anonymous folder contents:', anonymousFiles?.length || 0, anonymousFiles?.map(f => f.name));
+    }
     
     return NextResponse.json({
       success: true,
