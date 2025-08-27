@@ -50,10 +50,15 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
     setIsLoadingSuggestions(true);
     try {
       console.log('🧠 Loading intelligent AI mappings...');
+      
+      // Clean headers at frontend level to prevent space issues
+      const cleanedHeaders = excelHeaders.map(header => header.trim()).filter(header => header.length > 0);
+      
       console.log('📊 Input data:', {
         tagsCount: tags.length,
-        excelHeaders: excelHeaders,
-        headersCount: excelHeaders.length
+        originalHeaders: excelHeaders,
+        cleanedHeaders: cleanedHeaders,
+        headersCount: cleanedHeaders.length
       });
       
       const response = await fetch('/api/intelligent-mapping', {
@@ -63,7 +68,7 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
         },
         body: JSON.stringify({
           tags: tags,
-          excelHeaders: excelHeaders,
+          excelHeaders: cleanedHeaders, // Use cleaned headers
           documentContent: documentMarkdown || '' // Pass document content for better context
         })
       });
@@ -98,8 +103,9 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
         // Auto-apply ALL AI suggestions by default - reversed mapping: header -> tag
         const autoMappings: Record<string, string> = {};
         aiSuggestions.forEach((suggestion) => {
-          // Auto-apply all suggestions, not just high confidence ones
-          autoMappings[suggestion.suggestedHeader] = suggestion.tagSlug;
+          // Use cleaned header for consistent mapping
+          const cleanHeader = suggestion.suggestedHeader.trim();
+          autoMappings[cleanHeader] = suggestion.tagSlug;
         });
         
         setMappings(autoMappings);
@@ -295,8 +301,10 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
             )}
 
             {excelHeaders.map((header, index) => {
-              const currentMapping = mappings[header] || '';
-              const suggestedTag = getSuggestedTagForHeader(header);
+              // Use cleaned header for consistent lookups
+              const cleanHeader = header.trim();
+              const currentMapping = mappings[cleanHeader] || '';
+              const suggestedTag = getSuggestedTagForHeader(cleanHeader);
               
               // Find the selected tag to show its name and example
               const selectedTag = tags.find(tag => tag.slug === currentMapping);
@@ -315,7 +323,7 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
                   <div className="space-y-2">
                     <select
                       value={currentMapping}
-                      onChange={(e) => handleHeaderMappingChange(header, e.target.value)}
+                      onChange={(e) => handleHeaderMappingChange(cleanHeader, e.target.value)}
                       className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}
                     >
@@ -352,7 +360,7 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
                             )}
                           </div>
                           <button
-                            onClick={() => applySuggestionForHeader(header, suggestedTag)}
+                            onClick={() => applySuggestionForHeader(cleanHeader, suggestedTag)}
                             className="ml-3 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex-shrink-0"
                           >
                             Aplicar
