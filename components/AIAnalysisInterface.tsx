@@ -237,6 +237,17 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
     log.success(`Nova instrucció creada per: ${newInstruction.sectionTitle}`);
   };
 
+  const handleSectionEdit = (section: any, index: number) => {
+    log.yolo('Section edit clicked', { 
+      section: section.title || `Section ${index + 1}`, 
+      index 
+    });
+    
+    // TODO: Implement inline editing functionality
+    // For now, show a notification
+    alert(`Funcionalitat d'edició per "${section.title || `Secció ${index + 1}`}" - Pròximament disponible!`);
+  };
+
   return (
     <MappingProvider 
       tags={analysisData?.tags || []} 
@@ -344,6 +355,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                 mappedTags={mappings}
                 onMappingRemove={handleMappingRemove}
                 onSectionClick={handleSectionClick}
+                onSectionEdit={handleSectionEdit}
               />
             </div>
           </div>

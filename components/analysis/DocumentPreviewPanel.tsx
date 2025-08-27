@@ -28,6 +28,7 @@ interface DocumentPreviewPanelProps {
   mappedTags?: Record<string, string>; // header -> tagSlug mappings
   onMappingRemove?: (header: string) => void; // Callback to remove mapping
   onSectionClick?: (section: ParsedSection, index: number) => void; // Callback when section clicked
+  onSectionEdit?: (section: ParsedSection, index: number) => void; // Callback when section edit clicked
 }
 
 const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
@@ -44,7 +45,8 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
   onClose,
   mappedTags = {},
   onMappingRemove,
-  onSectionClick
+  onSectionClick,
+  onSectionEdit
 }) => {
   // Use mapping context instead of local state
   const {
@@ -163,31 +165,54 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         }
         
         .document-section:hover {
-          background: rgba(59, 130, 246, 0.08);
-          border-color: rgba(59, 130, 246, 0.3);
-          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-          transform: translateY(-2px);
+          background: rgba(59, 130, 246, 0.03);
+          border-color: rgba(59, 130, 246, 0.2);
+          box-shadow: 0 2px 6px rgba(59, 130, 246, 0.1);
         }
         
-        .document-section:hover::after {
-          content: '+ Crear Instrucció per aquesta secció';
+        .section-actions {
           position: absolute;
-          top: 12px;
-          right: 16px;
-          background: rgba(59, 130, 246, 0.95);
-          color: white;
-          padding: 6px 12px;
-          font-size: 11px;
-          font-weight: 500;
-          border-radius: 0px;
+          top: 8px;
+          right: 8px;
           opacity: 0;
-          animation: fadeInPrompt 0.3s ease forwards;
-          z-index: 10;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          transition: opacity 0.2s ease;
+          display: flex;
+          gap: 4px;
         }
         
-        @keyframes fadeInPrompt {
-          to { opacity: 1; }
+        .document-section:hover .section-actions {
+          opacity: 1;
+        }
+        
+        .section-action-btn {
+          padding: 4px 8px;
+          font-size: 10px;
+          font-weight: 500;
+          border: 1px solid;
+          background: rgba(255, 255, 255, 0.95);
+          cursor: pointer;
+          transition: all 0.2s ease;
+          backdrop-filter: blur(4px);
+        }
+        
+        .btn-edit {
+          color: #059669;
+          border-color: #059669;
+        }
+        
+        .btn-edit:hover {
+          background: #059669;
+          color: white;
+        }
+        
+        .btn-instruction {
+          color: #3B82F6;
+          border-color: #3B82F6;
+        }
+        
+        .btn-instruction:hover {
+          background: #3B82F6;
+          color: white;
         }
         
         .document-section h2 {
@@ -576,9 +601,31 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
                   <div 
                     key={section.id || index} 
                     className="document-section"
-                    onClick={() => onSectionClick?.(section, index)}
-                    title="Clica per crear una instrucció específica per aquesta secció"
                   >
+                    {/* Section Action Buttons */}
+                    <div className="section-actions">
+                      <button
+                        className="section-action-btn btn-edit"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSectionEdit?.(section, index);
+                        }}
+                        title="Editar aquesta secció"
+                      >
+                        ✏️ Editar
+                      </button>
+                      <button
+                        className="section-action-btn btn-instruction"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSectionClick?.(section, index);
+                        }}
+                        title="Crear instrucció per aquesta secció"
+                      >
+                        🤖 Instrucció
+                      </button>
+                    </div>
+                    
                     {section.title && (
                       <h2>{section.title}</h2>
                     )}
