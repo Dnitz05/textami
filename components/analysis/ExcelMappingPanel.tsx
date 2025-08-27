@@ -42,6 +42,9 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
   // Manual mapping state
   const [isManualMappingActive, setIsManualMappingActive] = useState(false);
   const [activeManualHeader, setActiveManualHeader] = useState<string | null>(null);
+  
+  // ULTRATHINK: Store manual text mappings separately from tag mappings
+  const [manualTextMappings, setManualTextMappings] = useState<Record<string, string>>({});
 
   // Load intelligent AI mapping suggestions
   useEffect(() => {
@@ -50,30 +53,54 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
     }
   }, [tags, excelHeaders]);
 
-  // Listen for manual text selection events from DocumentPreviewPanel
+  // ULTRATHINK: Listen for manual text selection events from DocumentPreviewPanel
   useEffect(() => {
     const handleTextSelection = (event: any) => {
       if (isManualMappingActive && activeManualHeader) {
-        const { selectedText } = event.detail;
-        console.log('📝 Text selected for manual mapping:', { 
+        const { selectedText, currentMappings } = event.detail;
+        
+        console.log('🧠 ULTRATHINK - Processing text selection:', { 
           header: activeManualHeader, 
-          selectedText 
+          selectedText,
+          currentMappings: Object.entries(currentMappings || {})
         });
         
-        // Create a manual mapping entry - find the tag that matches the selected text
-        const matchingTag = tags.find(tag => 
-          tag.example === selectedText || 
-          tag.name.toLowerCase().includes(selectedText.toLowerCase())
-        );
+        // STEP 1: Remove this header from previous mappings (if exists)
+        const newMappings = { ...mappings };
+        const newManualTextMappings = { ...manualTextMappings };
         
-        if (matchingTag) {
-          handleHeaderMappingChange(activeManualHeader, matchingTag.slug);
-          console.log('✅ Manual mapping created:', { 
-            header: activeManualHeader, 
-            tagSlug: matchingTag.slug,
-            tagName: matchingTag.name
-          });
+        // Find if this header was previously mapped to a tag
+        const wasTagMapped = Object.keys(newMappings).find(header => newMappings[header] && header === activeManualHeader);
+        if (wasTagMapped) {
+          console.log('🔄 ULTRATHINK - Removing previous tag mapping for header:', wasTagMapped);
+          delete newMappings[wasTagMapped];
         }
+        
+        // Find if this header had a previous manual text mapping
+        const wasManuallMapped = Object.keys(newManualTextMappings).find(header => header === activeManualHeader);
+        if (wasManuallMapped) {
+          console.log('🔄 ULTRATHINK - Removing previous manual mapping for header:', wasManuallMapped);
+          delete newManualTextMappings[wasManuallMapped];
+        }
+        
+        // STEP 2: Create new manual text mapping
+        newManualTextMappings[activeManualHeader] = selectedText;
+        
+        console.log('✅ ULTRATHINK - New manual mapping created:', {
+          header: activeManualHeader,
+          selectedText,
+          allManualMappings: Object.entries(newManualTextMappings)
+        });
+        
+        // STEP 3: Update states
+        setMappings(newMappings);
+        setManualTextMappings(newManualTextMappings);
+        onMappingUpdate?.(newMappings);
+        
+        // STEP 4: Notify DocumentPreviewPanel about manual text mappings
+        document.dispatchEvent(new CustomEvent('manualTextMappingsUpdated', {
+          detail: { manualTextMappings: newManualTextMappings }
+        }));
         
         // Deactivate manual mapping after selection
         deactivateManualMapping();
@@ -82,7 +109,7 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
 
     document.addEventListener('textSelected', handleTextSelection);
     return () => document.removeEventListener('textSelected', handleTextSelection);
-  }, [isManualMappingActive, activeManualHeader, tags]);
+  }, [isManualMappingActive, activeManualHeader, tags, mappings, manualTextMappings]);
 
   const loadIntelligentMappings = async () => {
     setIsLoadingSuggestions(true);

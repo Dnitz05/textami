@@ -44,6 +44,9 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
   const [isManualMappingActive, setIsManualMappingActive] = useState(false);
   const [activeManualHeader, setActiveManualHeader] = useState<string | null>(null);
   
+  // ULTRATHINK: Manual text mappings separate from tag mappings
+  const [manualTextMappings, setManualTextMappings] = useState<Record<string, string>>({});
+  
   // Listen for manual mapping events
   useEffect(() => {
     const handleManualMappingActivated = (event: any) => {
@@ -59,12 +62,20 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
       setActiveManualHeader(null);
     };
 
+    const handleManualTextMappingsUpdated = (event: any) => {
+      const { manualTextMappings: newManualTextMappings } = event.detail;
+      console.log('🧠 ULTRATHINK - Manual text mappings updated:', newManualTextMappings);
+      setManualTextMappings(newManualTextMappings);
+    };
+
     document.addEventListener('manualMappingActivated', handleManualMappingActivated);
     document.addEventListener('manualMappingDeactivated', handleManualMappingDeactivated);
+    document.addEventListener('manualTextMappingsUpdated', handleManualTextMappingsUpdated);
 
     return () => {
       document.removeEventListener('manualMappingActivated', handleManualMappingActivated);
       document.removeEventListener('manualMappingDeactivated', handleManualMappingDeactivated);
+      document.removeEventListener('manualTextMappingsUpdated', handleManualTextMappingsUpdated);
     };
   }, []);
 
@@ -75,14 +86,20 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
       const selectedText = selection?.toString()?.trim();
       
       if (selectedText && selectedText.length > 0) {
-        console.log('🎯 Text selected for mapping:', { 
+        console.log('🎯 ULTRATHINK - Text selected for mapping:', { 
           header: activeManualHeader, 
-          selectedText 
+          selectedText,
+          previousMappings: Object.entries(mappedTags)
         });
         
-        // Dispatch event to ExcelMappingPanel
+        // Dispatch event to ExcelMappingPanel with ULTRATHINK reassignment logic
         document.dispatchEvent(new CustomEvent('textSelected', {
-          detail: { selectedText, header: activeManualHeader }
+          detail: { 
+            selectedText, 
+            header: activeManualHeader,
+            // Send current mappings so we can revert previous locations
+            currentMappings: mappedTags
+          }
         }));
         
         // Clear selection
@@ -141,10 +158,53 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
     return acc;
   }, {} as Record<string, string>);
 
-  // Function to highlight detected tags in text with visual mapping system
+  // ULTRATHINK: Function to highlight detected tags in text with visual mapping system + manual text mappings
   const highlightTags = (text: string): string => {
     let highlightedText = removeDocumentTitle(text);
     
+    console.log('🧠 ULTRATHINK - Starting highlight process:', {
+      mappedTags: Object.entries(mappedTags),
+      manualTextMappings: Object.entries(manualTextMappings),
+      textPreview: highlightedText.substring(0, 200)
+    });
+    
+    // STEP 1: Process manual text mappings first (highest priority)
+    Object.entries(manualTextMappings).forEach(([header, selectedText]) => {
+      const headerColor = getHeaderColor(header, Object.keys(manualTextMappings).indexOf(header));
+      
+      console.log('🎯 ULTRATHINK - Processing manual mapping:', {
+        header,
+        selectedText,
+        headerColor,
+        textContains: highlightedText.includes(selectedText)
+      });
+      
+      if (selectedText && selectedText.trim()) {
+        const visualMapping = `
+          <span class="visual-mapping-container" data-excel-header="${header}">
+            <span class="mapped-term" 
+                  style="background-color: ${headerColor}15; border-color: ${headerColor}; color: ${headerColor}" 
+                  data-manual-mapping="true">
+              ${header}
+            </span>
+          </span>
+        `;
+        
+        // Replace ALL occurrences of the selected text with header name and color
+        const regex = new RegExp(selectedText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+        const replacements = (highlightedText.match(regex) || []).length;
+        highlightedText = highlightedText.replace(regex, visualMapping);
+        
+        console.log('✅ ULTRATHINK - Manual mapping applied:', {
+          header,
+          selectedText,
+          replacements,
+          visualMapping: `Shows "${header}" with color ${headerColor}`
+        });
+      }
+    });
+    
+    // STEP 2: Process tag mappings (lower priority, won't override manual mappings)
     // Get mapped tags (tags that have been assigned to Excel headers)
     const mappedTagSlugs = new Set(Object.values(mappedTags));
     
@@ -152,16 +212,11 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
     const tagsToHighlight = tags.filter(tag => mappedTagSlugs.has(tag.slug));
     const sortedTags = tagsToHighlight.sort((a, b) => (b.example?.length || 0) - (a.example?.length || 0));
     
-    console.log('🔍 Visual mapping system:', {
+    console.log('🔍 ULTRATHINK - Tag mapping system:', {
       totalTags: tags.length,
       mappedTagSlugs: Array.from(mappedTagSlugs),
       tagsToHighlight: tagsToHighlight.map(t => ({ name: t.name, example: t.example, slug: t.slug })),
-      headerColors,
-      mappedTagsComplete: Object.entries(mappedTags).map(([header, slug]) => ({ 
-        header, 
-        slug, 
-        tagData: tags.find(t => t.slug === slug) 
-      }))
+      headerColors
     });
     
     sortedTags.forEach((tag, index) => {
@@ -206,6 +261,17 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         }
         
         if (excelHeader) {
+          // ULTRATHINK: Skip if this header has a manual text mapping
+          const hasManualMapping = manualTextMappings[excelHeader];
+          if (hasManualMapping) {
+            console.log('🚫 ULTRATHINK - Skipping tag mapping, header has manual mapping:', {
+              excelHeader,
+              manualText: hasManualMapping,
+              tagExample: example
+            });
+            return; // Skip this tag mapping
+          }
+          
           const headerColor = headerColors[excelHeader];
           const uniqueId = `tag-${index}-${Date.now()}`;
           
