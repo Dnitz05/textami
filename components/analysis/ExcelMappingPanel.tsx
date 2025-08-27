@@ -50,6 +50,11 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
     setIsLoadingSuggestions(true);
     try {
       console.log('🧠 Loading intelligent AI mappings...');
+      console.log('📊 Input data:', {
+        tagsCount: tags.length,
+        excelHeaders: excelHeaders,
+        headersCount: excelHeaders.length
+      });
       
       const response = await fetch('/api/intelligent-mapping', {
         method: 'POST',
@@ -66,6 +71,15 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
       const result = await response.json();
       
       if (result.success && result.data.suggestions) {
+        console.log('✅ AI API response:', {
+          suggestionsCount: result.data.suggestions.length,
+          suggestions: result.data.suggestions.map((s: any) => ({
+            header: s.suggestedHeader,
+            tag: s.tagName,
+            confidence: s.confidence
+          }))
+        });
+        
         // Convert AI suggestions to header-based mapping format
         const aiSuggestions: MappingSuggestion[] = result.data.suggestions.map((aiSugg: any) => ({
           tagSlug: aiSugg.tagSlug,
@@ -93,7 +107,12 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
         
         console.log('✅ AI mappings loaded:', {
           total: aiSuggestions.length,
-          autoApplied: Object.keys(autoMappings).length
+          autoApplied: Object.keys(autoMappings).length,
+          mappingDetails: Object.entries(autoMappings).map(([header, tagSlug]) => ({
+            header,
+            tagSlug,
+            tagName: aiSuggestions.find(s => s.tagSlug === tagSlug)?.tagName
+          }))
         });
       } else {
         throw new Error(result.error || 'Failed to get AI suggestions');

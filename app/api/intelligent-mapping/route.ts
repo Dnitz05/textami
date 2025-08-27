@@ -187,16 +187,20 @@ RESPOSTA OBLIGATÒRIA EN JSON:
     }
 
     console.log('🤖 AI mapping response length:', aiResponse.length);
+    console.log('🧠 Raw AI response:', aiResponse);
 
     let parsedResponse;
     try {
       parsedResponse = JSON.parse(aiResponse);
     } catch (parseError) {
       console.error('❌ Failed to parse AI response:', parseError);
+      console.log('💥 Problematic response:', aiResponse);
       throw new Error('Invalid JSON response from AI');
     }
 
     const aiHeaderMappings = parsedResponse.headerMappings || [];
+    console.log('📋 AI returned mappings for headers:', aiHeaderMappings.map(m => m.excelHeader));
+    console.log('📋 Expected headers:', excelHeaders);
     
     // Transform AI header mappings to our suggestion format
     const suggestions: IntelligentMappingSuggestion[] = aiHeaderMappings.map((mapping: any) => ({
