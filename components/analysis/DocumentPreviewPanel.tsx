@@ -612,7 +612,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
                   Mapeig de Dades Excel
                 </h4>
                 <div className="legend-items">
-                  {uniqueHeaders.map((header, index) => (
+                  {Object.keys(mappedTags).map((header, index) => (
                     <div key={header} className="legend-item">
                       <div 
                         className="legend-color" 
