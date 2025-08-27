@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { ParsedSection, ParsedTable } from '../../lib/types';
 import { log } from '../../lib/logger';
 import { useMapping } from '../../contexts/MappingContext';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useTagHighlighting } from '../../hooks/useTagHighlighting';
 
 interface DocumentSignature {
   nom: string;
@@ -50,8 +52,15 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
     manualTagInfo,
     handleTextSelection: contextHandleTextSelection
   } = useMapping();
-  
-  // Note: Manual mapping events now handled via Context API
+
+  // Use custom hooks for complex logic
+  const { displayTitle, cleanedText } = useDocumentTitle({ title, fileName, markdown });
+  const { highlightTags } = useTagHighlighting({ 
+    tags, 
+    mappedTags, 
+    manualTextMappings, 
+    manualTagInfo 
+  });
 
   // Handle text selection for manual mapping
   const handleTextSelection = () => {
