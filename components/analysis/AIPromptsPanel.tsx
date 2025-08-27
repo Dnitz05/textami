@@ -103,7 +103,7 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
       // Pre-select the section in the dropdown
       setNewInstruction(prev => ({
         ...prev,
-        type: openFormWithSection
+        type: openFormWithSection as 'global' | 'section' | 'paragraph'
       }));
     }
   }, [openFormWithSection]);
