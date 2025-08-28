@@ -129,17 +129,21 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
       const instruction: AIInstruction = {
         id: Date.now().toString(),
         type: isSection ? 'section' : newInstruction.type,
-        title: selectedKnowledge ? `Context: ${selectedKnowledge.title}` : 'Instrucció general',
+        title: selectedKnowledge 
+          ? `${newInstruction.instruction} (amb ${selectedKnowledge.title})`
+          : newInstruction.instruction,
         instruction: selectedKnowledge 
           ? `Utilitza el document "${selectedKnowledge.filename}" com a context per: ${newInstruction.instruction}`
           : newInstruction.instruction,
         target: isSection ? newInstruction.type : undefined,
-        isActive: false // New instructions start inactive
+        isActive: false // Will be overridden to true below
       };
-      setInstructions([...instructions, instruction]);
+      const newInstructionWithActive = { ...instruction, isActive: true }; // Auto-activate new instructions
+      setInstructions([...instructions, newInstructionWithActive]);
       setNewInstruction({ type: 'global', knowledgeFileId: '', instruction: '' });
       setShowAddForm(false);
-      // Don't auto-execute - user must manually activate
+      // Auto-execute immediately
+      onInstructionExecute && onInstructionExecute(newInstructionWithActive);
     }
   };
 
@@ -262,6 +266,15 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
                     <div className="flex-1">
                       <div className="text-sm font-medium text-gray-800">{instruction.title}</div>
                       <div className="text-xs text-gray-600 mt-1">{instruction.instruction}</div>
+                      
+                      {/* Show knowledge context if available */}
+                      {instruction.title.includes(' (amb ') && (
+                        <div className="mt-2 px-2 py-1 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                          📚 <span className="font-medium text-yellow-800">
+                            Context: {instruction.title.match(/\(amb (.+)\)/)?.[1] || 'Document de coneixement'}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center space-x-2 ml-3">
                       {/* Toggle Active/Inactive */}
@@ -281,13 +294,17 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
                   {/* Scope and Action Buttons */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-1 text-xs rounded-full ${getInstructionTypeColor(instruction.type)}`}>
-                        {instruction.type === 'global' ? '🌐 Global' : 
-                         instruction.type === 'section' ? '📋 Secció' : '📝 Paràgraf'}
-                      </span>
-                      {instruction.target && (
-                        <span className="text-xs text-blue-600">
-                          → {documentSections.find(s => s.id === instruction.target)?.title || instruction.target}
+                      {instruction.type === 'global' ? (
+                        <span className={`px-2 py-1 text-xs rounded-full ${getInstructionTypeColor(instruction.type)}`}>
+                          🌐 Tot el document
+                        </span>
+                      ) : instruction.target ? (
+                        <span className={`px-2 py-1 text-xs rounded-full ${getInstructionTypeColor(instruction.type)}`}>
+                          📋 {documentSections.find(s => s.id === instruction.target)?.title || instruction.target}
+                        </span>
+                      ) : (
+                        <span className={`px-2 py-1 text-xs rounded-full ${getInstructionTypeColor(instruction.type)}`}>
+                          📝 Paràgraf específic
                         </span>
                       )}
                     </div>
