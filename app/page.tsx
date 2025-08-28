@@ -50,7 +50,7 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col overflow-hidden">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -83,15 +83,15 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <div className="pt-24 pb-12 px-4">
+      <div className="pt-16 pb-8 px-4 flex-1 flex flex-col justify-center">
         <div className="max-w-6xl mx-auto text-center">
-          <h1 className="text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
             🧠 Intel·ligència Artificial
             <br />
             <span className="text-blue-600">per a Documents</span>
           </h1>
           
-          <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-lg lg:text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
             Transforma plantilles Word i dades Excel en documents personalitzats amb 
             <strong className="text-blue-600"> zero configuració manual</strong>. 
             La nostra IA analitza, mapeja i genera documents automàticament.
@@ -100,7 +100,7 @@ export default function LandingPage() {
           {/* CTA Button */}
           <button
             onClick={() => setShowAuthForm(true)}
-            className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-lg rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105"
+            className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-lg rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 mb-4"
           >
             <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -108,60 +108,51 @@ export default function LandingPage() {
             Començar Ara - És Gratis
           </button>
 
-          <p className="text-sm text-gray-500 mt-4">
+          <p className="text-sm text-gray-500">
             ✅ Sense targeta de crèdit • ✅ Configuració instantània • ✅ Powered by GPT-5
           </p>
         </div>
-      </div>
 
-      {/* Features Section */}
-      <div className="py-16 bg-white">
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center text-gray-900 mb-16">
-            Característiques Intel·ligents
-          </h2>
-          
-          <div className="grid md:grid-cols-3 gap-8">
+        {/* Features Section - Compactada */}
+        <div className="max-w-5xl mx-auto px-4 mt-12">
+          <div className="grid md:grid-cols-3 gap-6">
             {/* Feature 1 */}
-            <div className="text-center p-8 rounded-xl bg-blue-50 border border-blue-100 hover:shadow-lg transition-shadow">
-              <div className="text-6xl mb-6">📄</div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Anàlisi Automàtic</h3>
-              <p className="text-gray-600">
-                Puja documents PDF i deixa que la IA detecti automàticament variables, 
-                estructura i camps de dades sense configuració manual.
+            <div className="text-center p-4 rounded-xl bg-blue-50 border border-blue-100 hover:shadow-lg transition-shadow">
+              <div className="text-4xl mb-3">📄</div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Anàlisi Automàtic</h3>
+              <p className="text-sm text-gray-600">
+                Puja documents PDF i deixa que la IA detecti automàticament variables i estructura.
               </p>
             </div>
 
             {/* Feature 2 */}
-            <div className="text-center p-8 rounded-xl bg-green-50 border border-green-100 hover:shadow-lg transition-shadow">
-              <div className="text-6xl mb-6">🤖</div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Mapping Intel·ligent</h3>
-              <p className="text-gray-600">
-                Conecta dades Excel amb plantilles de forma automàtica. 
-                La IA proposa mappings intel·ligents amb alta precisió.
+            <div className="text-center p-4 rounded-xl bg-green-50 border border-green-100 hover:shadow-lg transition-shadow">
+              <div className="text-4xl mb-3">🤖</div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Mapping Intel·ligent</h3>
+              <p className="text-sm text-gray-600">
+                Conecta dades Excel amb plantilles de forma automàtica amb alta precisió.
               </p>
             </div>
 
             {/* Feature 3 */}
-            <div className="text-center p-8 rounded-xl bg-purple-50 border border-purple-100 hover:shadow-lg transition-shadow">
-              <div className="text-6xl mb-6">⚡</div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Generació Massiva</h3>
-              <p className="text-gray-600">
-                Genera centenars de documents personalitzats en minuts, 
-                mantenint format professional i consistència perfecta.
+            <div className="text-center p-4 rounded-xl bg-purple-50 border border-purple-100 hover:shadow-lg transition-shadow">
+              <div className="text-4xl mb-3">⚡</div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Generació Massiva</h3>
+              <p className="text-sm text-gray-600">
+                Genera centenars de documents personalitzats mantenint format professional.
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Social Proof */}
-      <div className="py-12 bg-gray-50">
+      {/* Social Proof - Simplified */}
+      <div className="py-6">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <div className="inline-flex items-center gap-4 bg-white rounded-lg p-4 shadow-sm">
-            <span className="text-blue-600 font-medium">🧠 Powered by GPT-5</span>
-            <span className="text-purple-600 font-medium">⚡ Zero Configuration</span>
-            <span className="text-green-600 font-medium">🚀 AI-First Platform</span>
+          <div className="inline-flex items-center gap-4 bg-white rounded-lg p-3 shadow-sm">
+            <span className="text-blue-600 font-medium text-sm">🧠 Powered by GPT-5</span>
+            <span className="text-purple-600 font-medium text-sm">⚡ Zero Configuration</span>
+            <span className="text-green-600 font-medium text-sm">🚀 AI-First Platform</span>
           </div>
         </div>
       </div>
