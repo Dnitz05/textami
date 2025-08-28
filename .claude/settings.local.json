@@ -9,7 +9,8 @@
     ],
     "additionalDirectories": [
       "C:\\c\\projects\\textami",
-      "C:\\"
+      "C:\\",
+      "C:\\c\\projects"
     ]
   }
 }
