@@ -9,6 +9,7 @@ interface AIInstruction {
   title: string;
   instruction: string;
   target?: string; // For section/paragraph specific instructions
+  isActive: boolean; // New: whether instruction is active/enabled
 }
 
 interface AIPromptsPanelProps {
@@ -72,25 +73,29 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
       id: '1',
       type: 'global',
       title: 'To més formal',
-      instruction: 'Reescriu tot el document amb un to més formal i professional, mantenint el contingut tècnic i les estructures existents.'
+      instruction: 'Reescriu tot el document amb un to més formal i professional, mantenint el contingut tècnic i les estructures existents.',
+      isActive: false
     },
     {
       id: '2', 
       type: 'global',
       title: 'Simplificar vocabulari',
-      instruction: 'Simplifica el llenguatge tècnic i especialitzat per fer el document més accessible, mantenint la precisió del contingut.'
+      instruction: 'Simplifica el llenguatge tècnic i especialitzat per fer el document més accessible, mantenint la precisió del contingut.',
+      isActive: false
     },
     {
       id: '3',
       type: 'section',
       title: 'Resumir secció',
-      instruction: 'Genera un resum executiu concís de la secció seleccionada, destacant els punts clau en màxim 3 paràgrafs.'
+      instruction: 'Genera un resum executiu concís de la secció seleccionada, destacant els punts clau en màxim 3 paràgrafs.',
+      isActive: false
     },
     {
       id: '4',
       type: 'global',
       title: 'Verificar compliment normatiu',
-      instruction: 'Analitza si el document compleix amb les normatives i regulacions carregades a la base de coneixement i proporciona recomanacions.'
+      instruction: 'Analitza si el document compleix amb les normatives i regulacions carregades a la base de coneixement i proporciona recomanacions.',
+      isActive: false
     }
   ]);
 
@@ -101,6 +106,8 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
   });
 
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingInstructionId, setEditingInstructionId] = useState<string | null>(null);
+  const [editingInstruction, setEditingInstruction] = useState({ title: '', instruction: '' });
 
   // Auto-open form when openFormWithSection is provided
   React.useEffect(() => {
@@ -126,17 +133,50 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
         instruction: selectedKnowledge 
           ? `Utilitza el document "${selectedKnowledge.filename}" com a context per: ${newInstruction.instruction}`
           : newInstruction.instruction,
-        target: isSection ? newInstruction.type : undefined
+        target: isSection ? newInstruction.type : undefined,
+        isActive: false // New instructions start inactive
       };
       setInstructions([...instructions, instruction]);
       setNewInstruction({ type: 'global', knowledgeFileId: '', instruction: '' });
       setShowAddForm(false);
-      onInstructionExecute && onInstructionExecute(instruction);
+      // Don't auto-execute - user must manually activate
     }
   };
 
   const executeInstruction = (instruction: AIInstruction) => {
     onInstructionExecute?.(instruction);
+  };
+
+  const toggleInstructionActive = (id: string) => {
+    setInstructions(instructions.map(inst => 
+      inst.id === id ? { ...inst, isActive: !inst.isActive } : inst
+    ));
+  };
+
+  const deleteInstruction = (id: string) => {
+    setInstructions(instructions.filter(inst => inst.id !== id));
+  };
+
+  const startEditing = (instruction: AIInstruction) => {
+    setEditingInstructionId(instruction.id);
+    setEditingInstruction({ title: instruction.title, instruction: instruction.instruction });
+  };
+
+  const saveEdit = () => {
+    if (editingInstructionId) {
+      setInstructions(instructions.map(inst => 
+        inst.id === editingInstructionId 
+          ? { ...inst, title: editingInstruction.title, instruction: editingInstruction.instruction }
+          : inst
+      ));
+      setEditingInstructionId(null);
+      setEditingInstruction({ title: '', instruction: '' });
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingInstructionId(null);
+    setEditingInstruction({ title: '', instruction: '' });
   };
 
   const getInstructionTypeColor = (type: AIInstruction['type']) => {
@@ -177,25 +217,119 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
         <div className="space-y-3">
           {instructions.map((instruction) => (
             <div key={instruction.id} 
-                 className="px-4 py-3 hover:bg-blue-50 rounded-lg cursor-pointer border border-gray-200 bg-white shadow-sm hover:shadow-md transition-all duration-200"
-                 onClick={() => executeInstruction(instruction)}>
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="text-sm font-medium text-gray-800">{instruction.title}</div>
-                  {instruction.target && (
-                    <div className="text-xs text-blue-600 mt-1">📋 {documentSections.find(s => s.id === instruction.target)?.title || instruction.target}</div>
-                  )}
+                 className={`px-4 py-3 rounded-lg border transition-all duration-200 ${
+                   instruction.isActive 
+                     ? 'border-green-300 bg-green-50 shadow-md' 
+                     : 'border-gray-200 bg-white hover:bg-gray-50'
+                 }`}>
+              
+              {editingInstructionId === instruction.id ? (
+                // Edit Mode
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    value={editingInstruction.title}
+                    onChange={(e) => setEditingInstruction({...editingInstruction, title: e.target.value})}
+                    className="w-full text-sm font-medium border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Títol de la instrucció"
+                  />
+                  <textarea
+                    value={editingInstruction.instruction}
+                    onChange={(e) => setEditingInstruction({...editingInstruction, instruction: e.target.value})}
+                    className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows={3}
+                    placeholder="Descripció de la instrucció"
+                  />
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={saveEdit}
+                      className="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                    >
+                      Guardar
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      className="text-xs bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600"
+                    >
+                      Cancel·lar
+                    </button>
+                  </div>
                 </div>
-                <div className="ml-2 flex-shrink-0">
-                  {isExecuting && executingInstructionId === instruction.id ? (
-                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  )}
+              ) : (
+                // View Mode
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-800">{instruction.title}</div>
+                      <div className="text-xs text-gray-600 mt-1">{instruction.instruction}</div>
+                    </div>
+                    <div className="flex items-center space-x-2 ml-3">
+                      {/* Toggle Active/Inactive */}
+                      <button
+                        onClick={() => toggleInstructionActive(instruction.id)}
+                        className={`w-8 h-5 rounded-full flex items-center transition-colors ${
+                          instruction.isActive ? 'bg-green-500' : 'bg-gray-300'
+                        }`}
+                      >
+                        <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${
+                          instruction.isActive ? 'translate-x-3' : 'translate-x-0.5'
+                        }`} />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Scope and Action Buttons */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <span className={`px-2 py-1 text-xs rounded-full ${getInstructionTypeColor(instruction.type)}`}>
+                        {instruction.type === 'global' ? '🌐 Global' : 
+                         instruction.type === 'section' ? '📋 Secció' : '📝 Paràgraf'}
+                      </span>
+                      {instruction.target && (
+                        <span className="text-xs text-blue-600">
+                          → {documentSections.find(s => s.id === instruction.target)?.title || instruction.target}
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center space-x-1">
+                      {/* Execute Button */}
+                      {instruction.isActive && (
+                        <button
+                          onClick={() => executeInstruction(instruction)}
+                          disabled={isExecuting}
+                          className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 disabled:opacity-50"
+                        >
+                          {isExecuting && executingInstructionId === instruction.id ? (
+                            <div className="flex items-center">
+                              <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin mr-1"></div>
+                              Executant...
+                            </div>
+                          ) : (
+                            'Executar'
+                          )}
+                        </button>
+                      )}
+                      
+                      {/* Edit Button */}
+                      <button
+                        onClick={() => startEditing(instruction)}
+                        className="text-xs text-gray-600 hover:text-blue-600 px-2 py-1"
+                      >
+                        ✏️
+                      </button>
+                      
+                      {/* Delete Button */}
+                      <button
+                        onClick={() => deleteInstruction(instruction.id)}
+                        className="text-xs text-gray-600 hover:text-red-600 px-2 py-1"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           ))}
         </div>
