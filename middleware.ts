@@ -37,7 +37,16 @@ export async function middleware(req: NextRequest) {
 
   const {
     data: { user },
+    error: authError
   } = await supabase.auth.getUser()
+
+  console.log(`🔍 Middleware Debug:`, {
+    pathname: req.nextUrl.pathname,
+    hasUser: !!user,
+    userEmail: user?.email,
+    authError: authError?.message,
+    cookies: req.cookies.getAll().map(c => c.name)
+  })
 
   // Protected routes
   const protectedPaths = ['/dashboard', '/analyze', '/templates', '/knowledge', '/generator']
@@ -45,6 +54,7 @@ export async function middleware(req: NextRequest) {
 
   // Redirect unauthenticated users trying to access protected routes
   if (isProtectedPath && !user) {
+    console.log(`🚫 Redirecting unauthenticated user from protected route: ${req.nextUrl.pathname}`)
     const redirectUrl = req.nextUrl.clone()
     redirectUrl.pathname = '/'
     redirectUrl.searchParams.set('redirected', 'true')
@@ -53,12 +63,13 @@ export async function middleware(req: NextRequest) {
 
   // Redirect authenticated users away from landing page
   if (req.nextUrl.pathname === '/' && user) {
+    console.log(`✅ Redirecting authenticated user to dashboard: ${user.email}`)
     const redirectUrl = req.nextUrl.clone()
     redirectUrl.pathname = '/dashboard'
     return NextResponse.redirect(redirectUrl)
   }
 
-  console.log(`🔐 Auth check: ${req.nextUrl.pathname} - User: ${user ? '✅' : '❌'}`)
+  console.log(`🔐 Auth check: ${req.nextUrl.pathname} - User: ${user ? '✅ ' + user.email : '❌'}`)
 
   // IMPORTANT: You must return the supabaseResponse object as it is.
   // If you're creating a new response object with NextResponse.next()
