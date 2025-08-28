@@ -3,7 +3,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import TopNavBar from '../../components/TopNavBar';
+import { useUser } from '@/hooks/useUser';
 
 interface KnowledgeDocument {
   id: string;
@@ -19,17 +21,28 @@ interface KnowledgeDocument {
 }
 
 const KnowledgePage: React.FC = () => {
+  const router = useRouter();
+  const { user, isAuthenticated, loading: authLoading } = useUser();
   const [knowledgeDocuments, setKnowledgeDocuments] = useState<KnowledgeDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   
-  // For now, using a simple user identifier - would be replaced with proper auth
-  const userId = 'user-001';
+  // Use authenticated user ID, fallback to 'anonymous' for unauthenticated users
+  const userId = isAuthenticated && user ? user.id : 'anonymous';
 
-  // Load user's knowledge base on component mount
+  // Redirect if not authenticated
   useEffect(() => {
-    loadKnowledgeBase();
-  }, []);
+    if (!authLoading && !isAuthenticated) {
+      router.push('/');
+    }
+  }, [isAuthenticated, authLoading, router]);
+
+  // Load user's knowledge base when user changes
+  useEffect(() => {
+    if (!authLoading && userId) {
+      loadKnowledgeBase();
+    }
+  }, [userId, authLoading]); // Reload when userId changes
 
   const loadKnowledgeBase = async () => {
     try {
@@ -154,8 +167,17 @@ const KnowledgePage: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
                 Base de Coneixement
+                {isAuthenticated && user && (
+                  <span className="ml-3 text-lg font-normal text-amber-600">
+                    - {user.email?.split('@')[0]}
+                  </span>
+                )}
               </h1>
-              <p className="text-gray-600 mt-2">Gestiona els teus documents PDF de referència per proporcionar contexte a la IA</p>
+              <p className="text-gray-600 mt-2">
+                {isAuthenticated 
+                  ? 'Gestiona els teus documents PDF de referència per proporcionar contexte a la IA' 
+                  : 'Carregant informació d\'usuari...'}
+              </p>
             </div>
 
             {/* Upload Button */}

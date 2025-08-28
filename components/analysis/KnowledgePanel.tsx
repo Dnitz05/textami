@@ -1,6 +1,7 @@
 // components/analysis/KnowledgePanel.tsx
 // Left sidebar panel for knowledge base with uploaded PDFs for AI context
 import React, { useState, useEffect } from 'react';
+import { useUser } from '@/hooks/useUser';
 
 interface KnowledgeDocument {
   id: string;
@@ -24,17 +25,18 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({
   pipelineStatus = 'uploaded',
   onDocumentUpload
 }) => {
+  const { user, isAuthenticated } = useUser();
   const [knowledgeDocuments, setKnowledgeDocuments] = useState<KnowledgeDocument[]>([]);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   
-  // For now, using a simple user identifier - would be replaced with proper auth
-  const userId = 'user-001';
+  // Use authenticated user ID, fallback to 'anonymous' for unauthenticated users
+  const userId = isAuthenticated && user ? user.id : 'anonymous';
 
-  // Load user's knowledge base on component mount
+  // Load user's knowledge base when user changes or component mounts
   useEffect(() => {
     loadKnowledgeBase();
-  }, []);
+  }, [userId]); // Reload when userId changes
 
   const loadKnowledgeBase = async () => {
     try {
@@ -234,6 +236,7 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({
         <div className="mt-6 p-3 bg-gray-50 rounded-lg">
           <h4 className="text-sm font-medium text-gray-900 mb-2">Session Info</h4>
           <div className="text-xs text-gray-600 space-y-1">
+            <div>User: {isAuthenticated ? (user?.email?.split('@')[0] || 'Authenticated') : 'Anonymous'}</div>
             <div>Status: {pipelineStatus}</div>
             <div>Documents: {knowledgeDocuments.length}</div>
             <div>Model: GPT-5 Vision</div>

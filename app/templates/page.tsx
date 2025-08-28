@@ -5,6 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import TopNavBar from '../../components/TopNavBar';
+import { useUser } from '@/hooks/useUser';
 
 interface SavedTemplate {
   id: string;
@@ -31,6 +32,7 @@ interface SavedTemplate {
 
 const TemplatesPage: React.FC = () => {
   const router = useRouter();
+  const { user, isAuthenticated, loading: authLoading } = useUser();
   const [templates, setTemplates] = useState<SavedTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTemplate, setSelectedTemplate] = useState<SavedTemplate | null>(null);
@@ -38,12 +40,22 @@ const TemplatesPage: React.FC = () => {
   const [folderFilter, setFolderFilter] = useState<string>('all');
   const [folders, setFolders] = useState<string[]>(['Personal', 'Treball', 'Clients']);
   
-  // For now, using a simple user identifier - would be replaced with proper auth
-  const userId = 'user-001';
+  // Use authenticated user ID, fallback to 'anonymous' for unauthenticated users
+  const userId = isAuthenticated && user ? user.id : 'anonymous';
 
+  // Redirect if not authenticated
   useEffect(() => {
-    loadTemplates();
-  }, []);
+    if (!authLoading && !isAuthenticated) {
+      router.push('/');
+    }
+  }, [isAuthenticated, authLoading, router]);
+
+  // Load templates when user changes
+  useEffect(() => {
+    if (!authLoading && userId) {
+      loadTemplates();
+    }
+  }, [userId, authLoading]);
 
   const loadTemplates = async () => {
     try {

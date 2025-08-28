@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AIAnalysisInterface from '../../components/AIAnalysisInterface';
 import TopNavBar from '../../components/TopNavBar';
+import { useUser } from '@/hooks/useUser';
 import { parseExcelHeaders, validateExcelFile } from '../../lib/excel-parser';
 import { 
   AnalysisData, 
@@ -17,6 +18,7 @@ import {
 
 export default function AnalyzePage() {
   const router = useRouter();
+  const { user, isAuthenticated, loading: authLoading } = useUser();
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [excelHeaders, setExcelHeaders] = useState<string[]>([]);
   const [pipelineStatus, setPipelineStatus] = useState<PipelineStatus>('uploaded');
@@ -28,6 +30,13 @@ export default function AnalyzePage() {
   const [showSaveTemplateDialog, setShowSaveTemplateDialog] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [templateDescription, setTemplateDescription] = useState('');
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/');
+    }
+  }, [isAuthenticated, authLoading, router]);
   const [originalFileName, setOriginalFileName] = useState('');
 
   // Mock data disabled - enable real PDF upload
@@ -115,7 +124,7 @@ export default function AnalyzePage() {
       const templateData = {
         name: templateName.trim(),
         description: templateDescription.trim(),
-        userId: 'user-001', // Would be from auth
+        userId: isAuthenticated && user ? user.id : 'anonymous',
         originalDocument: '', // Would be the storage path of original document
         analysisData,
         excelHeaders,
