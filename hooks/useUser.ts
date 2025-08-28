@@ -213,7 +213,7 @@ export function useUser(): UseUserReturn {
 
       // Fetch profile in background (non-blocking)
       fetchProfile(user.id).then(profile => {
-        updateState(prevState => ({
+        updateState((prevState: UserState) => ({
           ...prevState,
           profile,
           isProfileComplete: checkProfileComplete(profile)
