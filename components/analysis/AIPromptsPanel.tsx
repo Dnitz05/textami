@@ -44,7 +44,7 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
     const loadKnowledgeFiles = async () => {
       setLoadingKnowledge(true);
       try {
-        const userId = user.id || 'anonymous';
+        const userId = user?.id || 'anonymous';
         console.log('🔍 Debug - Loading knowledge for userId:', userId);
         const response = await fetch(`/api/knowledge?userId=${userId}`);
         const result = await response.json();

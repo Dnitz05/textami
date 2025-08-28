@@ -78,7 +78,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
     // Don't wait for user - load immediately with fallback
     const loadKnowledgeDocuments = async () => {
       try {
-        const userId = user.id || 'anonymous';
+        const userId = user?.id || 'anonymous';
         const response = await fetch(`/api/knowledge?userId=${userId}`);
         const result = await response.json();
         if (result.success) {
