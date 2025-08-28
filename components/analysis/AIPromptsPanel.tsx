@@ -115,19 +115,23 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
   }, [openFormWithSection]);
 
   const handleAddInstruction = () => {
-    if (newInstruction.knowledgeFileId && newInstruction.instruction) {
+    if (newInstruction.instruction) {
       const selectedKnowledge = knowledgeFiles.find(f => f.id === newInstruction.knowledgeFileId);
       const isSection = documentSections.some(s => s.id === newInstruction.type);
+      
       const instruction: AIInstruction = {
         id: Date.now().toString(),
         type: isSection ? 'section' : newInstruction.type,
-        title: `Context: ${selectedKnowledge?.title || 'Document de coneixement'}`,
-        instruction: `Utilitza el document "${selectedKnowledge?.filename}" com a context per: ${newInstruction.instruction}`,
+        title: selectedKnowledge ? `Context: ${selectedKnowledge.title}` : 'Instrucció general',
+        instruction: selectedKnowledge 
+          ? `Utilitza el document "${selectedKnowledge.filename}" com a context per: ${newInstruction.instruction}`
+          : newInstruction.instruction,
         target: isSection ? newInstruction.type : undefined
       };
       setInstructions([...instructions, instruction]);
       setNewInstruction({ type: 'global', knowledgeFileId: '', instruction: '' });
       setShowAddForm(false);
+      onInstructionExecute && onInstructionExecute(instruction);
     }
   };
 
@@ -223,7 +227,7 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
                 className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}
               >
-                <option value="">📚 Selecciona document de coneixement...</option>
+                <option value="">context</option>
                 {loadingKnowledge ? (
                   <option value="" disabled>⏳ Carregant documents...</option>
                 ) : knowledgeFiles.length === 0 ? (
@@ -249,11 +253,11 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
               <div className="flex space-x-2">
                 <button
                   onClick={handleAddInstruction}
-                  disabled={!newInstruction.knowledgeFileId || !newInstruction.instruction}
+                  disabled={!newInstruction.instruction}
                   className="text-sm bg-blue-600 text-white px-4 py-2 rounded border border-blue-600 hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                   style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}
                 >
-                  Crear amb Context
+                  crear
                 </button>
                 <button
                   onClick={() => setShowAddForm(false)}
