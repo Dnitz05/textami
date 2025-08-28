@@ -1,137 +1,160 @@
 'use client';
-import { useRef } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import TopNavBar from '@/components/TopNavBar';
+import { useUser } from '@/hooks/useUser';
+import AuthForm from '@/components/AuthForm';
+import { useEffect } from 'react';
 
-export default function Home() {
+export default function LandingPage() {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user, isAuthenticated } = useUser();
+  const [showAuthForm, setShowAuthForm] = useState(false);
 
-  const handleNovaPlantillaClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Store the selected file in sessionStorage to pass to analyze page
-      const fileData = {
-        file: {
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          lastModified: file.lastModified
-        }
-      };
-      sessionStorage.setItem('selectedFile', JSON.stringify(fileData));
-      sessionStorage.setItem('templateName', file.name.replace('.pdf', ''));
-      
-      // Create FileReader to store file content
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const arrayBuffer = e.target?.result as ArrayBuffer;
-        const uint8Array = new Uint8Array(arrayBuffer);
-        const base64String = btoa(String.fromCharCode(...uint8Array));
-        
-        sessionStorage.setItem('selectedFileContent', base64String);
-        
-        // Navigate to analyze page
-        router.push('/analyze');
-      };
-      reader.readAsArrayBuffer(file);
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/dashboard');
     }
-  };
+  }, [isAuthenticated, router]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <TopNavBar />
-      
-      {/* Hero Section */}
-      <div className="container mx-auto px-4 py-16 text-center">
-        <h1 className="text-5xl font-bold text-gray-900 mb-6">
-          🧠 Textami
-        </h1>
-        <p className="text-xl text-gray-600 mb-16 max-w-2xl mx-auto">
-          Plataforma intel·ligent per a l'anàlisi i generació de documents amb IA
-        </p>
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-lg">T</span>
+              </div>
+              <span className="text-2xl font-bold text-blue-600">textami</span>
+            </div>
 
-        {/* Main Navigation Cards */}
-        <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-          
-          {/* Nova Plantilla */}
-          <div 
-            onClick={handleNovaPlantillaClick}
-            className="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-105 border-2 border-transparent hover:border-blue-200"
-          >
-            <div className="text-6xl mb-6">📄</div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Nova Plantilla</h2>
-            <p className="text-gray-600 mb-6">
-              Puja un document PDF i deixa que la IA analitzi automàticament les variables i l'estructura
-            </p>
-            <div className="flex items-center justify-center space-x-2 text-blue-600 font-medium">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              <span>Començar Anàlisi</span>
+            {/* Auth Buttons */}
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setShowAuthForm(true)}
+                className="px-6 py-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+              >
+                Entrar
+              </button>
+              <button
+                onClick={() => setShowAuthForm(true)}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors shadow-md hover:shadow-lg"
+              >
+                Començar Gratis
+              </button>
             </div>
           </div>
-
-          {/* Plantilles */}
-          <div 
-            onClick={() => router.push('/templates')}
-            className="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-105 border-2 border-transparent hover:border-green-200"
-          >
-            <div className="text-6xl mb-6">📋</div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Plantilles</h2>
-            <p className="text-gray-600 mb-6">
-              Gestiona les teves plantilles desades, carrega plantilles anteriors i reutilitza configuracions
-            </p>
-            <div className="flex items-center justify-center space-x-2 text-green-600 font-medium">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-              <span>Veure Plantilles</span>
-            </div>
-          </div>
-
-          {/* Knowledge */}
-          <div 
-            onClick={() => router.push('/knowledge')}
-            className="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-105 border-2 border-transparent hover:border-amber-200"
-          >
-            <div className="text-6xl mb-6">📚</div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Knowledge</h2>
-            <p className="text-gray-600 mb-6">
-              Base de coneixement amb documents de referència per millorar l'anàlisi i les instruccions de la IA
-            </p>
-            <div className="flex items-center justify-center space-x-2 text-amber-600 font-medium">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-              <span>Gestionar Knowledge</span>
-            </div>
-          </div>
-
         </div>
+      </nav>
 
-        {/* Hidden file input for Nova Plantilla */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".pdf,.docx"
-          onChange={handleFileSelect}
-          className="hidden"
-        />
+      {/* Hero Section */}
+      <div className="pt-24 pb-12 px-4">
+        <div className="max-w-6xl mx-auto text-center">
+          <h1 className="text-6xl font-bold text-gray-900 mb-6">
+            🧠 Intel·ligència Artificial
+            <br />
+            <span className="text-blue-600">per a Documents</span>
+          </h1>
+          
+          <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
+            Transforma plantilles Word i dades Excel en documents personalitzats amb 
+            <strong className="text-blue-600"> zero configuració manual</strong>. 
+            La nostra IA analitza, mapeja i genera documents automàticament.
+          </p>
 
-        {/* Footer */}
-        <footer className="mt-16 text-center text-gray-500">
+          {/* CTA Button */}
+          <button
+            onClick={() => setShowAuthForm(true)}
+            className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-lg rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105"
+          >
+            <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Començar Ara - És Gratis
+          </button>
+
+          <p className="text-sm text-gray-500 mt-4">
+            ✅ Sense targeta de crèdit • ✅ Configuració instantània • ✅ Powered by GPT-5
+          </p>
+        </div>
+      </div>
+
+      {/* Features Section */}
+      <div className="py-16 bg-white">
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-4xl font-bold text-center text-gray-900 mb-16">
+            Característiques Intel·ligents
+          </h2>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Feature 1 */}
+            <div className="text-center p-8 rounded-xl bg-blue-50 border border-blue-100 hover:shadow-lg transition-shadow">
+              <div className="text-6xl mb-6">📄</div>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Anàlisi Automàtic</h3>
+              <p className="text-gray-600">
+                Puja documents PDF i deixa que la IA detecti automàticament variables, 
+                estructura i camps de dades sense configuració manual.
+              </p>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="text-center p-8 rounded-xl bg-green-50 border border-green-100 hover:shadow-lg transition-shadow">
+              <div className="text-6xl mb-6">🤖</div>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Mapping Intel·ligent</h3>
+              <p className="text-gray-600">
+                Conecta dades Excel amb plantilles de forma automàtica. 
+                La IA proposa mappings intel·ligents amb alta precisió.
+              </p>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="text-center p-8 rounded-xl bg-purple-50 border border-purple-100 hover:shadow-lg transition-shadow">
+              <div className="text-6xl mb-6">⚡</div>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Generació Massiva</h3>
+              <p className="text-gray-600">
+                Genera centenars de documents personalitzats en minuts, 
+                mantenint format professional i consistència perfecta.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Social Proof */}
+      <div className="py-12 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 text-center">
           <div className="inline-flex items-center gap-4 bg-white rounded-lg p-4 shadow-sm">
             <span className="text-blue-600 font-medium">🧠 Powered by GPT-5</span>
             <span className="text-purple-600 font-medium">⚡ Zero Configuration</span>
+            <span className="text-green-600 font-medium">🚀 AI-First Platform</span>
           </div>
-          <p className="mt-4">© 2025 Textami - Document Intelligence Platform</p>
-        </footer>
+        </div>
       </div>
+
+      {/* Auth Form Modal */}
+      {showAuthForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4">
+            <div className="flex justify-between items-center p-6 border-b">
+              <h2 className="text-xl font-semibold text-gray-900">Comença amb Textami</h2>
+              <button
+                onClick={() => setShowAuthForm(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6">
+              <AuthForm />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
