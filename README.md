@@ -83,6 +83,32 @@ npm run dev
 - White-label AI platform
 - API ecosystem
 
+## 🚀 Deployment a Vercel
+
+### Variables d'Entorn Requerides
+
+Configura aquestes variables a Vercel Dashboard → Project → Settings → Environment Variables:
+
+```bash
+# OpenAI Configuration
+OPENAI_API_KEY=sk-your-openai-api-key-here
+
+# Supabase Configuration  
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+
+# Optional: OpenAI Organization ID
+OPENAI_ORG_ID=your-org-id-here
+```
+
+### Configuració de Branques
+
+- **Production**: `main` branch (recomanat)
+- **Preview**: `master` branch 
+
+**Important**: Configura totes les variables d'entorn abans del primer deployment per evitar errors de build.
+
 ## 📄 Llicència
 
 © 2025 Aitor Gilabert Juan. Tots els drets reservats.
