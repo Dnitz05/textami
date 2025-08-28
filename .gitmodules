@@ -1,0 +1,4 @@
+[submodule "textami"]
+	path = textami
+	url = https://github.com/Dnitz05/textami.git
+	branch = main
