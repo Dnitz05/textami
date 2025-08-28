@@ -63,7 +63,10 @@ function checkProfileComplete(profile: UserProfile | null): boolean {
 // Main useUser hook
 export function useUser(): UseUserReturn {
   const [state, setState] = useState<UserState>(initialState)
-  const [supabase] = useState<SupabaseClient>(() => createBrowserSupabaseClient())
+  const [supabase] = useState<SupabaseClient>(() => {
+    console.log('🔧 Creating unified Supabase client with proper SSR configuration')
+    return createBrowserSupabaseClient()
+  })
 
   // Update state helper with proper typing
   const updateState = useCallback((updates: Partial<UserState>) => {
@@ -554,43 +557,73 @@ export function useUser(): UseUserReturn {
 
   // Initialize user on mount and set up auth listener
   useEffect(() => {
-    initializeUser()
+    let isMounted = true
+    let authSubscription: any = null
 
-    const {
-      data: { subscription }
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // Initialize user session
+    const initialize = async () => {
+      if (!isMounted) return
+      
+      console.log('🚀 Initializing user session with enhanced SSR support')
+      
       try {
-        if (event === 'SIGNED_IN' && session?.user) {
-          const profile = await fetchProfile(session.user.id)
-          updateState({
-            user: session.user,
-            profile,
-            loading: false,
-            error: null,
-            isAuthenticated: true,
-            isProfileComplete: checkProfileComplete(profile)
-          })
-        } else if (event === 'SIGNED_OUT') {
-          updateState({
-            user: null,
-            profile: null,
-            loading: false,
-            error: null,
-            isAuthenticated: false,
-            isProfileComplete: false
-          })
-        }
-      } catch (error) {
-        logError(error instanceof Error ? error : new Error('Auth state change error'), {
-          component: 'useUser',
-          event,
-          userId: session?.user?.id
+        // First, set up the auth listener to avoid race conditions
+        const {
+          data: { subscription }
+        } = supabase.auth.onAuthStateChange(async (event, session) => {
+          if (!isMounted) return
+
+          console.log(`🔐 Auth state change: ${event}`, session?.user ? 'User present' : 'No user')
+          
+          try {
+            if (event === 'SIGNED_IN' && session?.user) {
+              const profile = await fetchProfile(session.user.id)
+              updateState({
+                user: session.user,
+                profile,
+                loading: false,
+                error: null,
+                isAuthenticated: true,
+                isProfileComplete: checkProfileComplete(profile)
+              })
+            } else if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+              if (event === 'SIGNED_OUT') {
+                updateState({
+                  user: null,
+                  profile: null,
+                  loading: false,
+                  error: null,
+                  isAuthenticated: false,
+                  isProfileComplete: false
+                })
+              }
+            }
+          } catch (error) {
+            console.error('🔥 Auth state change error:', error)
+            logError(error instanceof Error ? error : new Error('Auth state change error'), {
+              component: 'useUser',
+              event,
+              userId: session?.user?.id
+            })
+          }
         })
+
+        authSubscription = subscription
+
+        // Then initialize the current session
+        await initializeUser()
+        
+      } catch (error) {
+        console.error('🔥 Auth initialization error:', error)
       }
-    })
+    }
+
+    initialize()
 
     return () => {
-      subscription.unsubscribe()
+      console.log('🧹 Cleaning up auth subscription')
+      isMounted = false
+      authSubscription?.unsubscribe()
     }
   }, [supabase.auth, fetchProfile, updateState, initializeUser])
 
