@@ -77,7 +77,7 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <div className="pt-16 pb-8 px-4 flex-1 flex flex-col justify-center">
+      <div className="pt-20 pb-8 px-4 flex-1 flex flex-col justify-center">
         <div className="max-w-6xl mx-auto text-center">
           <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
             🧠 Intel·ligència Artificial

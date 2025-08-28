@@ -69,7 +69,7 @@ export default function Dashboard() {
       <TopNavBar />
       
       {/* Welcome Section */}
-      <div className="container mx-auto px-4 py-16 text-center">
+      <div className="container mx-auto px-4 pt-20 pb-16 text-center">
         <h1 className="text-5xl font-bold text-gray-900 mb-4">
           Benvingut, {user?.email?.split('@')[0] || 'Usuari'}! 👋
         </h1>
