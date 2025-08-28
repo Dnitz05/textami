@@ -30,9 +30,11 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
         await signIn(email, password);
         setMessage('Sessió iniciada correctament!');
         
-        // Close modal and redirect will be handled by middleware
+        // Close modal and force page refresh to trigger middleware redirect
         setTimeout(() => {
           onSuccess?.();
+          // Force a page refresh to ensure middleware detects auth state
+          window.location.reload();
         }, 500);
         
       } else {
