@@ -2,10 +2,5 @@
   "buildCommand": "cd textami && npm run build",
   "outputDirectory": "textami/.next",
   "installCommand": "cd textami && npm install",
-  "framework": "nextjs",
-  "functions": {
-    "textami/app/api/**/*.ts": {
-      "runtime": "@vercel/node"
-    }
-  }
+  "framework": "nextjs"
 }
