@@ -90,28 +90,6 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
                 </div>
                 <span className="text-2xl font-bold text-blue-600">textami</span>
               </div>
-              {pathname === '/analyze' && templateName && (
-                <div className="flex flex-col">
-                  {isEditingName ? (
-                    <input
-                      type="text"
-                      value={templateName}
-                      onChange={(e) => handleNameChange(e.target.value)}
-                      onBlur={() => setIsEditingName(false)}
-                      onKeyDown={(e) => e.key === 'Enter' && setIsEditingName(false)}
-                      className="text-xl font-bold text-gray-900 bg-transparent border-b border-gray-300 focus:outline-none focus:border-blue-500"
-                      autoFocus
-                    />
-                  ) : (
-                    <span 
-                      className="text-xl font-bold text-gray-900 cursor-pointer hover:text-blue-600"
-                      onClick={() => setIsEditingName(true)}
-                    >
-                      {templateName}
-                    </span>
-                  )}
-                </div>
-              )}
             </Link>
           </div>
 

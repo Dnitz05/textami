@@ -586,12 +586,6 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
               </div>
             )}
             
-            {/* Document Title */}
-            {displayTitle && (
-              <h1 className="document-title">
-                {displayTitle}
-              </h1>
-            )}
             
 
             {/* Document Content */}
