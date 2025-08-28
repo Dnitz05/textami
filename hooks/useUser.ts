@@ -90,13 +90,29 @@ export function useUser(): UseUserReturn {
   // Fetch user profile from database
   const fetchProfile = useCallback(async (userId: string): Promise<UserProfile | null> => {
     try {
-      const { data: profile, error } = await supabase
+      console.log('🔥 USEUSER DEBUG: Fetching profile for userId:', userId)
+      
+      // First try to get a single profile
+      const { data: profiles, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single()
+
+      console.log('🔥 USEUSER DEBUG: Profile query result:', { 
+        profilesCount: profiles?.length, 
+        hasError: !!error,
+        errorMessage: error?.message 
+      })
 
       if (error) {
+        console.log('🔥 USEUSER DEBUG: Profile query error:', error)
+        
+        // If it's just a "no rows" error, that's OK - we'll create a profile
+        if (error.message.includes('no rows') || error.code === 'PGRST116') {
+          console.log('🔥 USEUSER DEBUG: No profile found, will create one or continue without')
+          return null
+        }
+        
         throw new DatabaseError(
           'Failed to fetch user profile',
           ErrorCode.DB_QUERY_FAILED,
@@ -114,8 +130,22 @@ export function useUser(): UseUserReturn {
         )
       }
 
+      if (!profiles || profiles.length === 0) {
+        console.log('🔥 USEUSER DEBUG: No profiles returned, user profile does not exist')
+        return null
+      }
+
+      if (profiles.length > 1) {
+        console.log('🔥 USEUSER DEBUG: Multiple profiles found, taking the first one:', profiles.length)
+      }
+
+      const profile = profiles[0]
+      console.log('🔥 USEUSER DEBUG: Profile fetched successfully:', { email: profile.email, fullName: profile.full_name })
       return profile
+
     } catch (error) {
+      console.log('🔥 USEUSER DEBUG: Profile fetch error in catch block:', error)
+      
       if (error instanceof DatabaseError) {
         throw error
       }
@@ -206,8 +236,10 @@ export function useUser(): UseUserReturn {
 
   // Sign in action
   const signIn = useCallback(async (email: string, password: string): Promise<void> => {
+    console.log('🔥 USEUSER DEBUG: signIn called', { email })
     try {
       updateState({ loading: true, error: null })
+      console.log('🔥 USEUSER DEBUG: State updated to loading=true')
 
       // Validate inputs
       if (!email) {
@@ -229,10 +261,12 @@ export function useUser(): UseUserReturn {
         })
       }
 
+      console.log('🔥 USEUSER DEBUG: Calling supabase.auth.signInWithPassword...')
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password
       })
+      console.log('🔥 USEUSER DEBUG: signInWithPassword completed', { hasData: !!data, hasUser: !!data?.user, hasError: !!signInError })
 
       if (signInError) {
         // Handle specific Supabase auth errors
@@ -573,21 +607,44 @@ export function useUser(): UseUserReturn {
         } = supabase.auth.onAuthStateChange(async (event, session) => {
           if (!isMounted) return
 
-          console.log(`🔐 Auth state change: ${event}`, session?.user ? 'User present' : 'No user')
+          console.log(`🔥 USEUSER DEBUG: Auth state change: ${event}`, {
+            hasSession: !!session,
+            hasUser: !!session?.user,
+            userEmail: session?.user?.email,
+            timestamp: new Date().toISOString()
+          })
           
           try {
             if (event === 'SIGNED_IN' && session?.user) {
-              const profile = await fetchProfile(session.user.id)
-              updateState({
-                user: session.user,
-                profile,
-                loading: false,
-                error: null,
-                isAuthenticated: true,
-                isProfileComplete: checkProfileComplete(profile)
-              })
+              console.log('🔥 USEUSER DEBUG: Processing SIGNED_IN event, fetching profile...')
+              try {
+                const profile = await fetchProfile(session.user.id)
+                console.log('🔥 USEUSER DEBUG: Profile fetched successfully, updating state to authenticated')
+                updateState({
+                  user: session.user,
+                  profile,
+                  loading: false,
+                  error: null,
+                  isAuthenticated: true,
+                  isProfileComplete: checkProfileComplete(profile)
+                })
+                console.log('🔥 USEUSER DEBUG: State updated with profile - user should now be authenticated')
+              } catch (profileError) {
+                console.log('🔥 USEUSER DEBUG: Profile fetch failed, but continuing with authentication anyway:', profileError)
+                // Even if profile fetch fails, we can still authenticate the user
+                updateState({
+                  user: session.user,
+                  profile: null, // No profile for now
+                  loading: false,
+                  error: null,
+                  isAuthenticated: true,
+                  isProfileComplete: false // Profile incomplete since we don't have one
+                })
+                console.log('🔥 USEUSER DEBUG: State updated without profile - user should now be authenticated')
+              }
             } else if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
               if (event === 'SIGNED_OUT') {
+                console.log('🔥 USEUSER DEBUG: Processing SIGNED_OUT event')
                 updateState({
                   user: null,
                   profile: null,
@@ -597,6 +654,8 @@ export function useUser(): UseUserReturn {
                   isProfileComplete: false
                 })
               }
+            } else {
+              console.log('🔥 USEUSER DEBUG: Unhandled auth state change:', { event, hasSession: !!session })
             }
           } catch (error) {
             console.error('🔥 Auth state change error:', error)

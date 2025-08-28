@@ -13,15 +13,31 @@ export default function LandingPage() {
 
   // Redirect authenticated users to dashboard
   useEffect(() => {
+    console.log('🔥 LANDING DEBUG: Auth state changed', { 
+      isAuthenticated, 
+      hasUser: !!user, 
+      userEmail: user?.email, 
+      loading, 
+      redirecting 
+    });
+
     if (isAuthenticated && user && !loading) {
-      console.log('🎯 Authenticated user detected, redirecting to dashboard...', { 
+      console.log('🎯 LANDING DEBUG: All conditions met for redirect - redirecting to dashboard...', { 
         user: user.email, 
         isAuthenticated, 
-        loading 
+        loading,
+        redirecting 
       });
       setRedirecting(true);
       // Use Next.js router for proper navigation
       router.push('/dashboard');
+    } else {
+      console.log('🔥 LANDING DEBUG: Redirect conditions not met:', {
+        isAuthenticated_check: isAuthenticated,
+        hasUser_check: !!user,
+        loading_check: !loading,
+        allConditions: isAuthenticated && user && !loading
+      });
     }
   }, [isAuthenticated, user, loading, router]);
 

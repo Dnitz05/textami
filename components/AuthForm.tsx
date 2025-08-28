@@ -24,33 +24,41 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
     setError(null);
     setMessage(null);
 
+    console.log('🔥 AUTHFORM DEBUG: Starting auth process', { mode, email });
+
     try {
       if (mode === 'login') {
-        console.log('Intentant iniciar sessió amb:', { email, passwordLength: password.length });
+        console.log('🔥 AUTHFORM DEBUG: Attempting sign in with:', { email, passwordLength: password.length });
         await signIn(email, password);
+        console.log('🔥 AUTHFORM DEBUG: Sign in completed successfully');
         setMessage('Sessió iniciada correctament!');
         
-        // Close modal and let the auth state change handle the redirect
+        // Don't close modal immediately - let auth state propagate first
+        console.log('🔥 AUTHFORM DEBUG: Waiting for auth state to propagate...');
         setTimeout(() => {
+          console.log('🔥 AUTHFORM DEBUG: Closing modal after successful login');
           onSuccess?.();
-        }, 500);
+        }, 1000); // Increased timeout to allow auth state to update
         
       } else {
-        console.log('Intentant registrar usuari amb:', { email, passwordLength: password.length });
+        console.log('🔥 AUTHFORM DEBUG: Attempting sign up with:', { email, passwordLength: password.length });
         await signUp(email, password);
+        console.log('🔥 AUTHFORM DEBUG: Sign up completed successfully');
         setMessage('Compte creat correctament! Comprova el teu email per verificar el compte.');
         
         // For signup, also close modal after a moment
         setTimeout(() => {
+          console.log('🔥 AUTHFORM DEBUG: Closing modal after successful signup');
           onSuccess?.();
         }, 2000);
       }
     } catch (err) {
-      console.error('Error d\'autenticació:', err);
+      console.error('🔥 AUTHFORM DEBUG: Auth error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Error desconegut';
       setError(errorMessage);
     } finally {
       setLoading(false);
+      console.log('🔥 AUTHFORM DEBUG: Auth process completed, loading set to false');
     }
   };
 

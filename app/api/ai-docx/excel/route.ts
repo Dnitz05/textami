@@ -2,11 +2,7 @@
 // AI-First Excel Analysis and Column Intelligence
 import { NextRequest, NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
+import { getOpenAI } from '@/lib/openai';
 
 interface ColumnAnalysis {
   column: string;
@@ -70,7 +66,7 @@ export async function POST(request: NextRequest) {
     };
 
     // GPT-5 Column Intelligence Analysis  
-    const completion = await openai.chat.completions.create({
+    const completion = await getOpenAI().chat.completions.create({
       model: "gpt-5-mini", // GPT-5 Mini for cost efficiency on simple tasks
       messages: [
         {
