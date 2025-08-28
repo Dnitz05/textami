@@ -5,7 +5,11 @@ import { useUser } from '@/hooks/useUser';
 
 type AuthMode = 'login' | 'signup';
 
-const AuthForm: React.FC = () => {
+interface AuthFormProps {
+  onSuccess?: () => void;
+}
+
+const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
   const { signIn, signUp, user, loading: authLoading } = useUser();
   const [mode, setMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState('');
@@ -25,10 +29,21 @@ const AuthForm: React.FC = () => {
         console.log('Intentant iniciar sessió amb:', { email, passwordLength: password.length });
         await signIn(email, password);
         setMessage('Sessió iniciada correctament!');
+        
+        // Close modal and redirect will be handled by middleware
+        setTimeout(() => {
+          onSuccess?.();
+        }, 500);
+        
       } else {
         console.log('Intentant registrar usuari amb:', { email, passwordLength: password.length });
         await signUp(email, password);
         setMessage('Compte creat correctament! Comprova el teu email per verificar el compte.');
+        
+        // For signup, also close modal after a moment
+        setTimeout(() => {
+          onSuccess?.();
+        }, 2000);
       }
     } catch (err) {
       console.error('Error d\'autenticació:', err);

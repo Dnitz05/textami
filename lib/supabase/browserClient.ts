@@ -9,6 +9,8 @@ export const createBrowserSupabaseClient = () => {
     {
       cookies: {
         getAll() {
+          if (typeof window === 'undefined') return []
+          
           return document.cookie
             .split(';')
             .map(c => c.trim())
@@ -19,6 +21,8 @@ export const createBrowserSupabaseClient = () => {
             })
         },
         setAll(cookiesToSet) {
+          if (typeof window === 'undefined') return
+          
           cookiesToSet.forEach(({ name, value, options }) => {
             const cookieOptions = {
               ...options,

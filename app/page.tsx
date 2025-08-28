@@ -150,7 +150,7 @@ export default function LandingPage() {
               </button>
             </div>
             <div className="p-6">
-              <AuthForm />
+              <AuthForm onSuccess={() => setShowAuthForm(false)} />
             </div>
           </div>
         </div>
