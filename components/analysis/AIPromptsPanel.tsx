@@ -147,9 +147,7 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
       const instruction: AIInstruction = {
         id: Date.now().toString(),
         type: isSection ? 'section' : newInstruction.type,
-        title: selectedKnowledge 
-          ? `${newInstruction.instruction} (amb ${selectedKnowledge.title})`
-          : newInstruction.instruction,
+        title: newInstruction.instruction, // Use instruction text as title
         instruction: selectedKnowledge 
           ? `Utilitza el document "${selectedKnowledge.filename}" com a context per: ${newInstruction.instruction}`
           : newInstruction.instruction,
@@ -203,17 +201,20 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
   const startEditing = (instruction: AIInstruction) => {
     setEditingInstructionId(instruction.id);
     
-    // Extract knowledge file ID from title if present
-    const knowledgeMatch = instruction.title.match(/\(amb (.+)\)/);
-    const knowledgeFileName = knowledgeMatch?.[1];
-    const knowledgeFile = knowledgeFiles.find(f => f.title === knowledgeFileName);
+    // Extract knowledge file ID from instruction if present
+    const hasKnowledgeContext = instruction.instruction.startsWith('Utilitza el document');
+    const knowledgeFile = hasKnowledgeContext ? 
+      knowledgeFiles.find(f => instruction.instruction.includes(`"${f.filename}"`)) : 
+      null;
     
     setEditingInstruction({ 
-      title: instruction.title.replace(/ \(amb .+\)/, ''), // Remove knowledge context from title
-      instruction: instruction.instruction.replace(/^Utilitza el document ".+" com a context per: /, ''), // Clean instruction
+      title: '', // No more title field needed
+      instruction: hasKnowledgeContext ? 
+        instruction.instruction.replace(/^Utilitza el document ".+" com a context per: /, '') : 
+        instruction.instruction,
       type: instruction.type === 'section' ? 
         (instruction.target || 'global') as 'global' | 'section' | 'paragraph' : 
-        instruction.type, // Use target for sections
+        instruction.type,
       knowledgeFileId: knowledgeFile?.id || ''
     });
   };
@@ -224,21 +225,35 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
       // Check if it's a section by both id and title  
       const isSection = documentSections.some(s => s.id === editingInstruction.type || s.title === editingInstruction.type);
       
+      const originalInstruction = instructions.find(inst => inst.id === editingInstructionId)!;
+      
       const updatedInstruction = {
-        ...instructions.find(inst => inst.id === editingInstructionId)!,
+        ...originalInstruction,
         type: isSection ? 'section' : editingInstruction.type,
-        title: selectedKnowledge 
-          ? `${editingInstruction.title} (amb ${selectedKnowledge.title})`
-          : editingInstruction.title,
+        title: editingInstruction.instruction, // Use instruction text as title
         instruction: selectedKnowledge 
           ? `Utilitza el document "${selectedKnowledge.filename}" com a context per: ${editingInstruction.instruction}`
           : editingInstruction.instruction,
         target: isSection ? editingInstruction.type : undefined
       };
       
+      // Check if the instruction has changed
+      const hasChanged = (
+        originalInstruction.instruction !== updatedInstruction.instruction ||
+        originalInstruction.type !== updatedInstruction.type ||
+        originalInstruction.target !== updatedInstruction.target
+      );
+      
       setInstructions(instructions.map(inst => 
         inst.id === editingInstructionId ? updatedInstruction : inst
       ));
+      
+      // If instruction changed and is active, re-execute it
+      if (hasChanged && updatedInstruction.isActive && onInstructionExecute) {
+        console.log('🔄 Instruction changed, re-executing:', updatedInstruction.title);
+        setTimeout(() => onInstructionExecute(updatedInstruction), 100);
+      }
+      
       setEditingInstructionId(null);
       setEditingInstruction({ title: '', instruction: '', type: 'global', knowledgeFileId: '' });
     }
@@ -296,15 +311,6 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
               {editingInstructionId === instruction.id ? (
                 // Edit Mode
                 <div className="space-y-3">
-                  <input
-                    type="text"
-                    value={editingInstruction.title}
-                    onChange={(e) => setEditingInstruction({...editingInstruction, title: e.target.value})}
-                    className="w-full text-sm font-medium border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Títol de la instrucció"
-                    style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}
-                  />
-                  
                   <select
                     value={editingInstruction.type}
                     onChange={(e) => setEditingInstruction({...editingInstruction, type: e.target.value as any})}
