@@ -154,42 +154,13 @@ export function useUser(): UseUserReturn {
     }
   }, [supabase])
 
-  // Initialize user session - optimized for speed
+  // Initialize user session - FAST for landing page
   const initializeUser = useCallback(async () => {
     try {
-      updateState({ loading: true, error: null })
-
       const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-      if (authError) {
-        // Don't throw error for session missing - just set unauthenticated
-        if (authError.message.includes('session missing')) {
-          updateState({
-            user: null,
-            profile: null,
-            loading: false,
-            error: null,
-            isAuthenticated: false,
-            isProfileComplete: false
-          })
-          return
-        }
-        
-        throw new AuthError(
-          'Failed to get authenticated user',
-          ErrorCode.AUTH_INVALID_TOKEN,
-          401,
-          { 
-            metadata: { 
-              supabaseError: authError.message,
-              function: 'initializeUser' 
-            }
-          },
-          authError
-        )
-      }
-
-      if (!user) {
+      // Fast path - just check if user exists, skip profile
+      if (authError || !user) {
         updateState({
           user: null,
           profile: null,
@@ -201,46 +172,27 @@ export function useUser(): UseUserReturn {
         return
       }
 
-      // Skip profile fetch for faster initialization - can be done later
+      // Immediate authentication response
       updateState({
         user,
-        profile: null, // We'll fetch this in background if needed
+        profile: null,
         loading: false,
         error: null,
         isAuthenticated: true,
         isProfileComplete: false
       })
 
-      // Fetch profile in background (non-blocking)
-      fetchProfile(user.id).then(profile => {
-        setState((prevState: UserState) => ({
-          ...prevState,
-          profile,
-          isProfileComplete: checkProfileComplete(profile)
-        }))
-      }).catch(() => {
-        // Ignore profile fetch errors - user is still authenticated
-      })
-
     } catch (error) {
-      if (error instanceof AuthError || error instanceof DatabaseError) {
-        setError(error)
-      } else {
-        setError(new AuthError(
-          'User initialization failed',
-          ErrorCode.SYS_INTERNAL_ERROR,
-          500,
-          { 
-            metadata: { 
-              originalError: error instanceof Error ? error.message : 'Unknown error',
-              function: 'initializeUser' 
-            }
-          },
-          error instanceof Error ? error : undefined
-        ))
-      }
+      updateState({
+        user: null,
+        profile: null,
+        loading: false,
+        error: null,
+        isAuthenticated: false,
+        isProfileComplete: false
+      })
     }
-  }, [supabase.auth, fetchProfile, updateState, setError])
+  }, [supabase.auth, updateState])
 
   // Sign in action
   const signIn = useCallback(async (email: string, password: string): Promise<void> => {
@@ -607,50 +559,26 @@ export function useUser(): UseUserReturn {
         // First, set up the auth listener to avoid race conditions
         const {
           data: { subscription }
-        } = supabase.auth.onAuthStateChange(async (event, session) => {
+        } = supabase.auth.onAuthStateChange((event, session) => {
           if (!isMounted) return
 
-          try {
-            if (event === 'SIGNED_IN' && session?.user) {
-              try {
-                const profile = await fetchProfile(session.user.id)
-                updateState({
-                  user: session.user,
-                  profile,
-                  loading: false,
-                  error: null,
-                  isAuthenticated: true,
-                  isProfileComplete: checkProfileComplete(profile)
-                })
-              } catch (profileError) {
-                // Even if profile fetch fails, we can still authenticate the user
-                updateState({
-                  user: session.user,
-                  profile: null, // No profile for now
-                  loading: false,
-                  error: null,
-                  isAuthenticated: true,
-                  isProfileComplete: false // Profile incomplete since we don't have one
-                })
-              }
-            } else if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
-              if (event === 'SIGNED_OUT') {
-                updateState({
-                  user: null,
-                  profile: null,
-                  loading: false,
-                  error: null,
-                  isAuthenticated: false,
-                  isProfileComplete: false
-                })
-              }
-            }
-          } catch (error) {
-            console.error('🔥 Auth state change error:', error)
-            logError(error instanceof Error ? error : new Error('Auth state change error'), {
-              component: 'useUser',
-              event,
-              userId: session?.user?.id
+          if (event === 'SIGNED_IN' && session?.user) {
+            updateState({
+              user: session.user,
+              profile: null,
+              loading: false,
+              error: null,
+              isAuthenticated: true,
+              isProfileComplete: false
+            })
+          } else if (event === 'SIGNED_OUT') {
+            updateState({
+              user: null,
+              profile: null,
+              loading: false,
+              error: null,
+              isAuthenticated: false,
+              isProfileComplete: false
             })
           }
         })

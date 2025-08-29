@@ -65,11 +65,11 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col">
       <TopNavBar />
       
       {/* Welcome Section */}
-      <div className="container mx-auto px-4 pt-20 pb-16 text-center">
+      <div className="container mx-auto px-4 pt-8 pb-8 text-center flex-1 flex flex-col justify-center overflow-y-auto">
         <h1 className="text-5xl font-bold text-gray-900 mb-4">
           Benvingut, {user?.email?.split('@')[0] || 'Usuari'}! 👋
         </h1>

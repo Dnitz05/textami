@@ -19,8 +19,8 @@ export default function LandingPage() {
     }
   }, [isAuthenticated, user, loading, router]);
 
-  // Show loading state during auth check or redirect
-  if (loading) {
+  // Reduce loading time - only show loading for longer waits
+  if (loading && redirecting) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
         <div className="text-center">
@@ -77,7 +77,7 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <div className="pt-20 pb-8 px-4 flex-1 flex flex-col justify-center">
+      <div className="pt-16 px-4 flex-1 flex flex-col justify-center">
         <div className="max-w-6xl mx-auto text-center">
           <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
             🧠 Intel·ligència Artificial
