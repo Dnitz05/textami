@@ -22,7 +22,9 @@
       "Bash(grep:*)",
       "Bash(git checkout:*)",
       "Bash(find:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(ping:*)",
+      "Bash(curl:*)"
     ],
     "additionalDirectories": [
       "C:\\mnt\\c\\projects",
