@@ -47,6 +47,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
   // State for AI instruction execution
   const [currentMarkdown, setCurrentMarkdown] = useState(analysisData?.markdown || '');
   const [modifiedSections, setModifiedSections] = useState<Record<string, string>>({});
+  const [originalSectionContent, setOriginalSectionContent] = useState<Record<string, string>>({});
   const [isExecutingInstruction, setIsExecutingInstruction] = useState(false);
   const [executingInstructionId, setExecutingInstructionId] = useState<string | null>(null);
   
@@ -138,6 +139,15 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
         if (targetSection) {
           sectionContent = targetSection.markdown;
           console.log('🎯 Found section content for:', instruction.target, 'Length:', sectionContent?.length);
+          
+          // Store original content if not already stored
+          if (!originalSectionContent[instruction.target]) {
+            setOriginalSectionContent(prev => ({
+              ...prev,
+              [instruction.target]: targetSection.markdown
+            }));
+            console.log('💾 Stored original content for section:', instruction.target);
+          }
         } else {
           console.warn('⚠️ Section not found:', instruction.target);
           throw new Error(`Section "${instruction.target}" not found in document`);
@@ -244,6 +254,33 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
     }
   };
 
+  const handleInstructionDeactivate = (instruction: any) => {
+    console.log('🔄 Deactivating instruction:', instruction.title);
+    
+    if (instruction.type === 'section' && instruction.target) {
+      // Restore original section content
+      const originalContent = originalSectionContent[instruction.target];
+      if (originalContent) {
+        // Remove the section from modified sections to show original content
+        setModifiedSections(prev => {
+          const updated = { ...prev };
+          delete updated[instruction.target];
+          return updated;
+        });
+        console.log('✅ Restored original content for section:', instruction.target);
+      } else {
+        console.warn('⚠️ No original content found for section:', instruction.target);
+      }
+    } else if (instruction.type === 'global') {
+      // For global instructions, restore original markdown
+      if (analysisData?.markdown) {
+        setCurrentMarkdown(analysisData.markdown);
+        setModifiedSections({});
+        console.log('✅ Restored original global content');
+      }
+    }
+  };
+
   const handleSectionClick = (section: any, index: number) => {
     log.yolo('Section instruction button clicked - opening AI prompts panel', { 
       section: section.title || `Section ${index + 1}`, 
@@ -330,6 +367,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                     <AIPromptsPanel 
                       pipelineStatus={pipelineStatus}
                       onInstructionExecute={handleInstructionExecute}
+                      onInstructionDeactivate={handleInstructionDeactivate}
                       isExecuting={isExecutingInstruction}
                       executingInstructionId={executingInstructionId}
                       documentSections={analysisData?.sections?.map(s => ({id: s.id || s.title, title: s.title})) || []}

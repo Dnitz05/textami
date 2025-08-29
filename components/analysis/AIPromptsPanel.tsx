@@ -15,6 +15,7 @@ interface AIInstruction {
 interface AIPromptsPanelProps {
   pipelineStatus?: string;
   onInstructionExecute?: (instruction: AIInstruction) => void;
+  onInstructionDeactivate?: (instruction: AIInstruction) => void;
   isExecuting?: boolean;
   executingInstructionId?: string | null;
   documentSections?: Array<{id: string; title: string;}>;
@@ -25,6 +26,7 @@ interface AIPromptsPanelProps {
 const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
   pipelineStatus = 'uploaded',
   onInstructionExecute,
+  onInstructionDeactivate,
   isExecuting = false,
   executingInstructionId = null,
   documentSections = [],
@@ -178,10 +180,15 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
     const updatedInstructions = instructions.map(inst => {
       if (inst.id === id) {
         const newInst = { ...inst, isActive: !inst.isActive };
-        // Auto-execute when toggling to active
+        
         if (newInst.isActive && onInstructionExecute) {
-          setTimeout(() => onInstructionExecute(newInst), 100); // Small delay to ensure state update
+          // Execute when toggling to active
+          setTimeout(() => onInstructionExecute(newInst), 100);
+        } else if (!newInst.isActive && onInstructionDeactivate) {
+          // Deactivate when toggling to inactive
+          setTimeout(() => onInstructionDeactivate(newInst), 100);
         }
+        
         return newInst;
       }
       return inst;
