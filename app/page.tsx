@@ -2,12 +2,19 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthForm from '@/components/AuthForm';
+import { useUser } from '@/hooks/useUser';
 
 export default function LandingPage() {
   const router = useRouter();
   const [showAuthForm, setShowAuthForm] = useState(false);
+  const { isAuthenticated, loading } = useUser();
   
-  // No auth checking on landing page - pure static content
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      router.push('/dashboard');
+    }
+  }, [isAuthenticated, loading, router]);
 
   return (
     <div className="h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col overflow-hidden">

@@ -7,106 +7,7 @@ import { useMapping } from '../../contexts/MappingContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTagHighlighting } from '../../hooks/useTagHighlighting';
 
-// Template Name Header Component
-const TemplateNameHeader: React.FC = () => {
-  const [templateName, setTemplateName] = useState('');
-  const [isEditingName, setIsEditingName] = useState(false);
-
-  // Load template name from sessionStorage
-  useEffect(() => {
-    const storedName = sessionStorage.getItem('templateName') || '';
-    setTemplateName(storedName);
-  }, []);
-
-  // Save template name to sessionStorage when changed
-  const handleNameChange = (newName: string) => {
-    if (typeof window !== 'undefined') {
-      const existingTemplates = Object.keys(sessionStorage)
-        .filter(key => key.startsWith('instructions_'))
-        .map(key => key.replace('instructions_', ''));
-      
-      const currentTemplate = sessionStorage.getItem('templateName') || '';
-      
-      console.log('🔍 Template name validation:', {
-        newName,
-        currentTemplate,
-        existingTemplates,
-        isDuplicate: newName !== currentTemplate && existingTemplates.includes(newName)
-      });
-      
-      // Check if name already exists (excluding current template)
-      if (newName !== currentTemplate && existingTemplates.includes(newName)) {
-        alert(`El nom "${newName}" ja existeix. Si us plau, tria un nom únic.`);
-        return false;
-      }
-      
-      // Additional validation: empty name
-      if (!newName.trim()) {
-        alert('El nom de la plantilla no pot estar buit.');
-        return false;
-      }
-    }
-    
-    setTemplateName(newName);
-    sessionStorage.setItem('templateName', newName);
-    console.log('✅ Template name saved:', newName);
-    return true;
-  };
-
-  return (
-    <div className="mb-6 pb-3 border-b border-gray-100 bg-gray-50 -mx-4 px-4 py-3 rounded-t-lg">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <span className="text-xs text-gray-500 font-medium">Plantilla:</span>
-          {isEditingName ? (
-            <input
-              type="text"
-              value={templateName}
-              onChange={(e) => setTemplateName(e.target.value)}
-              onBlur={() => {
-                const success = handleNameChange(templateName);
-                if (success) setIsEditingName(false);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const success = handleNameChange(templateName);
-                  if (success) setIsEditingName(false);
-                }
-                if (e.key === 'Escape') {
-                  setTemplateName(sessionStorage.getItem('templateName') || '');
-                  setIsEditingName(false);
-                }
-              }}
-              className="text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-48"
-              placeholder="Nom de la plantilla"
-              autoFocus
-            />
-          ) : (
-            <span
-              onClick={() => setIsEditingName(true)}
-              className="text-sm font-medium text-gray-700 cursor-pointer hover:text-blue-600 transition-colors"
-              title="Clica per editar el nom de la plantilla"
-            >
-              {templateName || 'Sense nom'}
-            </span>
-          )}
-        </div>
-        <button
-          onClick={() => setIsEditingName(!isEditingName)}
-          className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100 transition-all"
-          title="Editar nom de plantilla"
-        >
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-          </svg>
-        </button>
-      </div>
-    </div>
-  );
-};
+// Template name editing functionality moved to inline header area
 
 interface DocumentSignature {
   nom: string;
@@ -173,6 +74,51 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
   const [originalMarkdown] = useState(markdown); // Store original to compare
   const isContentModified = markdown !== originalMarkdown;
   const hasSectionModifications = Object.keys(modifiedSections).length > 0;
+  
+  // Template name state for inline editing in header
+  const [templateName, setTemplateName] = useState('');
+  const [isEditingName, setIsEditingName] = useState(false);
+  
+  // Load template name from sessionStorage
+  useEffect(() => {
+    const storedName = sessionStorage.getItem('templateName') || '';
+    setTemplateName(storedName);
+  }, []);
+
+  // Save template name to sessionStorage when changed
+  const handleNameChange = (newName: string) => {
+    if (typeof window !== 'undefined') {
+      const existingTemplates = Object.keys(sessionStorage)
+        .filter(key => key.startsWith('instructions_'))
+        .map(key => key.replace('instructions_', ''));
+      
+      const currentTemplate = sessionStorage.getItem('templateName') || '';
+      
+      console.log('🔍 Template name validation:', {
+        newName,
+        currentTemplate,
+        existingTemplates,
+        isDuplicate: newName !== currentTemplate && existingTemplates.includes(newName)
+      });
+      
+      // Check if name already exists (excluding current template)
+      if (newName !== currentTemplate && existingTemplates.includes(newName)) {
+        alert(`El nom "${newName}" ja existeix. Si us plau, tria un nom únic.`);
+        return false;
+      }
+      
+      // Additional validation: empty name
+      if (!newName.trim()) {
+        alert('El nom de la plantilla no pot estar buit.');
+        return false;
+      }
+    }
+    
+    setTemplateName(newName);
+    sessionStorage.setItem('templateName', newName);
+    console.log('✅ Template name saved:', newName);
+    return true;
+  };
 
   // Handle text selection for manual mapping
   const handleTextSelection = () => {
@@ -615,7 +561,49 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
             )}
             <div className="flex flex-col">
               <span className="text-sm font-medium text-gray-900">{fileName}</span>
-              <span className="text-xs text-gray-500">Plantilla</span>
+              <div className="flex items-center space-x-1">
+                {isEditingName ? (
+                  <input
+                    type="text"
+                    value={templateName}
+                    onChange={(e) => setTemplateName(e.target.value)}
+                    onBlur={() => {
+                      const success = handleNameChange(templateName);
+                      if (success) setIsEditingName(false);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        const success = handleNameChange(templateName);
+                        if (success) setIsEditingName(false);
+                      }
+                      if (e.key === 'Escape') {
+                        setTemplateName(sessionStorage.getItem('templateName') || '');
+                        setIsEditingName(false);
+                      }
+                    }}
+                    className="text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500 min-w-32"
+                    placeholder="Nom plantilla"
+                    autoFocus
+                  />
+                ) : (
+                  <span
+                    onClick={() => setIsEditingName(true)}
+                    className="text-xs text-gray-500 cursor-pointer hover:text-blue-600 transition-colors"
+                    title="Clica per editar el nom de la plantilla"
+                  >
+                    {templateName || 'Plantilla'}
+                  </span>
+                )}
+                <button
+                  onClick={() => setIsEditingName(!isEditingName)}
+                  className="text-gray-400 hover:text-gray-600 p-0.5 rounded hover:bg-gray-100 transition-all"
+                  title="Editar nom de plantilla"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
           
@@ -709,7 +697,6 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
             
 
             {/* Template Name Header */}
-            <TemplateNameHeader />
             
             {/* Document Content */}
             <div>
