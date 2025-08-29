@@ -29,6 +29,7 @@ interface DocumentPreviewPanelProps {
   onMappingRemove?: (header: string) => void; // Callback to remove mapping
   onSectionClick?: (section: ParsedSection, index: number) => void; // Callback when section clicked
   onSectionEdit?: (section: ParsedSection, index: number) => void; // Callback when section edit clicked
+  modifiedSections?: Record<string, string>; // sectionTitle -> modifiedContent
 }
 
 const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
@@ -46,7 +47,8 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
   mappedTags = {},
   onMappingRemove,
   onSectionClick,
-  onSectionEdit
+  onSectionEdit,
+  modifiedSections = {}
 }) => {
   // Use mapping context instead of local state
   const {
@@ -69,6 +71,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
   // Track if content has been modified by AI instructions
   const [originalMarkdown] = useState(markdown); // Store original to compare
   const isContentModified = markdown !== originalMarkdown;
+  const hasSectionModifications = Object.keys(modifiedSections).length > 0;
 
   // Handle text selection for manual mapping
   const handleTextSelection = () => {
@@ -594,8 +597,60 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
 
             {/* Document Content */}
             <div>
-              {isContentModified ? (
-                // Show modified content directly when AI has modified it
+              {hasSectionModifications || sections.length > 0 ? (
+                // Show sections with selective modifications
+                sections.map((section, index) => {
+                  const sectionTitle = section.title || `Section ${index + 1}`;
+                  const isModified = modifiedSections[sectionTitle];
+                  const sectionContent = isModified ? modifiedSections[sectionTitle] : section.markdown;
+                  
+                  return (
+                    <div 
+                      key={section.id || index} 
+                      className="document-section"
+                    >
+                      {/* Section Action Buttons */}
+                      <div className="section-actions">
+                        {isModified && (
+                          <div className="text-xs text-blue-600 font-medium flex items-center mr-2">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full mr-1"></div>
+                            Modificat per IA
+                          </div>
+                        )}
+                        <button
+                          className="section-action-btn btn-edit"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSectionEdit?.(section, index);
+                          }}
+                          title="Editar aquesta secció"
+                        >
+                          ✏️ Editar
+                        </button>
+                        <button
+                          className="section-action-btn btn-instruction"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSectionClick?.(section, index);
+                          }}
+                          title="Crear instrucció per aquesta secció"
+                        >
+                          🤖 Instrucció
+                        </button>
+                      </div>
+                      
+                      {section.title && (
+                        <h2>{section.title}</h2>
+                      )}
+                      <div 
+                        className="document-content"
+                        dangerouslySetInnerHTML={{ __html: highlightTags(sectionContent) }}
+                      />
+                    </div>
+                  );
+                })
+              ) : isContentModified ? (
+                // Show modified content for global changes
                 <div className="document-section">
                   <div className="section-actions">
                     <div className="text-xs text-blue-600 font-medium flex items-center">
@@ -608,47 +663,8 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
                     dangerouslySetInnerHTML={{ __html: highlightTags(markdown) }}
                   />
                 </div>
-              ) : sections.length > 0 ? (
-                // Show original sections when content hasn't been modified
-                sections.map((section, index) => (
-                  <div 
-                    key={section.id || index} 
-                    className="document-section"
-                  >
-                    {/* Section Action Buttons */}
-                    <div className="section-actions">
-                      <button
-                        className="section-action-btn btn-edit"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSectionEdit?.(section, index);
-                        }}
-                        title="Editar aquesta secció"
-                      >
-                        ✏️ Editar
-                      </button>
-                      <button
-                        className="section-action-btn btn-instruction"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSectionClick?.(section, index);
-                        }}
-                        title="Crear instrucció per aquesta secció"
-                      >
-                        🤖 Instrucció
-                      </button>
-                    </div>
-                    
-                    {section.title && (
-                      <h2>{section.title}</h2>
-                    )}
-                    <div 
-                      className="document-content"
-                      dangerouslySetInnerHTML={{ __html: highlightTags(section.markdown) }}
-                    />
-                  </div>
-                ))
               ) : (
+                // Show original clean content
                 <div 
                   className="document-content"
                   dangerouslySetInnerHTML={{ __html: highlightTags(cleanedText) }}

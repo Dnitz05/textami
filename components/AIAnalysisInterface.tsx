@@ -46,6 +46,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
   
   // State for AI instruction execution
   const [currentMarkdown, setCurrentMarkdown] = useState(analysisData?.markdown || '');
+  const [modifiedSections, setModifiedSections] = useState<Record<string, string>>({});
   const [isExecutingInstruction, setIsExecutingInstruction] = useState(false);
   const [executingInstructionId, setExecutingInstructionId] = useState<string | null>(null);
   
@@ -147,12 +148,27 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
       const result = await response.json();
 
       if (result.success) {
-        // Update the document preview with modified content
-        setCurrentMarkdown(result.data.modifiedContent);
-        console.log('✅ Instruction executed successfully:', {
-          instruction: instruction.title,
-          executionTime: result.data.executionTime + 'ms'
-        });
+        // Handle partial updates for section modifications
+        if (result.data.isPartialUpdate && result.data.targetSection && result.data.modifiedSectionContent) {
+          // Update only the specific section
+          setModifiedSections(prev => ({
+            ...prev,
+            [result.data.targetSection]: result.data.modifiedSectionContent
+          }));
+          console.log('✅ Section instruction executed successfully:', {
+            instruction: instruction.title,
+            section: result.data.targetSection,
+            executionTime: result.data.executionTime + 'ms'
+          });
+        } else {
+          // Update the entire document for global instructions
+          setCurrentMarkdown(result.data.modifiedContent);
+          setModifiedSections({}); // Clear section modifications
+          console.log('✅ Global instruction executed successfully:', {
+            instruction: instruction.title,
+            executionTime: result.data.executionTime + 'ms'
+          });
+        }
       } else {
         throw new Error(result.error || 'Failed to execute instruction');
       }
@@ -356,6 +372,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                 onMappingRemove={handleMappingRemove}
                 onSectionClick={handleSectionClick}
                 onSectionEdit={handleSectionEdit}
+                modifiedSections={modifiedSections}
               />
             </div>
           </div>

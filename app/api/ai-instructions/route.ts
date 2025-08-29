@@ -41,6 +41,9 @@ interface ExecuteInstructionResponse {
   modifiedContent: string;
   executionTime: number;
   appliedInstruction: AIInstruction;
+  isPartialUpdate?: boolean;
+  targetSection?: string;
+  modifiedSectionContent?: string;
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<ExecuteInstructionResponse>>> {
@@ -168,22 +171,29 @@ Aplica la instrucció a tot el document i retorna el contingut modificat:`;
         break;
 
       case 'section':
-        systemPrompt = `Ets un expert en processament de documents en format markdown. Modifica NOMÉS el contingut de la secció especificada.
+        // Extract only the target section for processing
+        const sectionMatch = originalContent.match(new RegExp(`## ${instruction.target}([\\s\\S]*?)(?=## |$)`, 'i'));
+        const sectionContent = sectionMatch ? sectionMatch[1].trim() : '';
+        
+        if (!sectionContent) {
+          throw new Error(`Section "${instruction.target}" not found in document`);
+        }
+        
+        systemPrompt = `Ets un expert en processament de contingut de seccions de documents.
 
 REGLES CRÍTIQUES:
-- Mantén EXACTAMENT el mateix format markdown original
-- Conserva TOTS els títols, subtítols i estructura
-- Modifica NOMÉS el text dels paràgrafs dins la secció target
-- NO canviïs capçaleres (##), llistes, o format markdown
-- Preserva salts de línia i estructura exacta
-- Retorna el document markdown complet idèntic excepte la secció modificada${knowledgeContext}`;
-        userPrompt = `SECCIÓ A MODIFICAR: "${instruction.target || 'No especificada'}"
-INSTRUCCIÓ: "${instruction.instruction}"
+- Rebràs NOMÉS el contingut d'una secció específica (sense el títol)
+- Modifica aquest contingut segons la instrucció donada
+- Mantén el format markdown original (paràgrafs, llistes, etc.)
+- Retorna NOMÉS el contingut modificat de la secció (sense títol de secció)
+- NO afegeixis prefixos, explicacions o text adicional${knowledgeContext}`;
+        
+        userPrompt = `INSTRUCCIÓ A APLICAR: "${instruction.instruction}"
 
-DOCUMENT MARKDOWN ORIGINAL:
-${originalContent}
+CONTINGUT ACTUAL DE LA SECCIÓ "${instruction.target}":
+${sectionContent}
 
-Retorna el document markdown complet mantenint EXACTAMENT la mateixa estructura però modificant NOMÉS el contingut de text de la secció "${instruction.target}":`;
+Retorna NOMÉS el contingut modificat d'aquesta secció (sense el títol ##):`;
         break;
 
       case 'paragraph':
@@ -235,9 +245,26 @@ Modifica només el paràgraf indicat i retorna el document complet:`;
       originalLength: originalContent.length,
       modifiedLength: modifiedContent.length,
       executionTimeMs: executionTime,
-      instruction: instruction.title
+      instruction: instruction.title,
+      type: instruction.type
     });
 
+    // For section instructions, return partial update info
+    if (instruction.type === 'section') {
+      return NextResponse.json({
+        success: true,
+        data: {
+          modifiedContent: originalContent, // Keep original for structure
+          modifiedSectionContent: modifiedContent,
+          isPartialUpdate: true,
+          targetSection: instruction.target,
+          executionTime,
+          appliedInstruction: instruction
+        }
+      });
+    }
+
+    // For global instructions, return full content
     return NextResponse.json({
       success: true,
       data: {
