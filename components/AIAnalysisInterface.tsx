@@ -322,7 +322,12 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                       executingInstructionId={executingInstructionId}
                       documentSections={analysisData?.sections?.map(s => ({id: s.id || s.title, title: s.title})) || []}
                       openFormWithSection={selectedSectionForInstruction}
-                      documentId={`${fileName}_${analysisData?.title || 'document'}`}
+                      documentId={(() => {
+                        // Use template name from sessionStorage as the unique identifier
+                        const templateName = typeof window !== 'undefined' ? 
+                          sessionStorage.getItem('templateName') : null;
+                        return templateName || `${fileName}_${analysisData?.title || 'document'}`;
+                      })()}
                     />
                   </div>
                 </div>

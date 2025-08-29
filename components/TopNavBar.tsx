@@ -31,8 +31,24 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
 
   // Save template name to sessionStorage when changed
   const handleNameChange = (newName: string) => {
+    // Validate unique name
+    if (typeof window !== 'undefined') {
+      const existingTemplates = Object.keys(sessionStorage)
+        .filter(key => key.startsWith('instructions_'))
+        .map(key => key.replace('instructions_', ''));
+      
+      const currentTemplate = sessionStorage.getItem('templateName') || '';
+      
+      // Check if name already exists (excluding current template)
+      if (newName !== currentTemplate && existingTemplates.includes(newName)) {
+        alert(`El nom "${newName}" ja existeix. Si us plau, tria un nom únic.`);
+        return false;
+      }
+    }
+    
     setTemplateName(newName);
     sessionStorage.setItem('templateName', newName);
+    return true;
   };
 
   const isActive = (path: string) => {
@@ -59,7 +75,22 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
         }
       };
       sessionStorage.setItem('selectedFile', JSON.stringify(fileData));
-      sessionStorage.setItem('templateName', file.name.replace('.pdf', ''));
+      // Generate unique template name
+      const baseName = file.name.replace(/\.(pdf|docx)$/i, '');
+      let uniqueName = baseName;
+      let counter = 1;
+      
+      // Check for existing templates and add number if needed
+      const existingTemplates = Object.keys(sessionStorage)
+        .filter(key => key.startsWith('instructions_'))
+        .map(key => key.replace('instructions_', ''));
+        
+      while (existingTemplates.includes(uniqueName)) {
+        uniqueName = `${baseName} (${counter})`;
+        counter++;
+      }
+      
+      sessionStorage.setItem('templateName', uniqueName);
       
       // Create FileReader to store file content
       const reader = new FileReader();
@@ -95,6 +126,55 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
 
           {/* Navigation Links - Center */}
           <div className="hidden md:flex items-center space-x-6 flex-1 justify-center">
+            {/* Template Name Editor (only on analyze page) */}
+            {pathname === '/analyze' && (
+              <div className="flex items-center space-x-2 bg-blue-50 px-4 py-2 rounded-lg border border-blue-200">
+                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                {isEditingName ? (
+                  <input
+                    type="text"
+                    value={templateName}
+                    onChange={(e) => setTemplateName(e.target.value)}
+                    onBlur={() => {
+                      const success = handleNameChange(templateName);
+                      if (success) setIsEditingName(false);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        const success = handleNameChange(templateName);
+                        if (success) setIsEditingName(false);
+                      }
+                      if (e.key === 'Escape') {
+                        setTemplateName(sessionStorage.getItem('templateName') || '');
+                        setIsEditingName(false);
+                      }
+                    }}
+                    className="bg-white border border-blue-300 rounded px-2 py-1 text-sm min-w-48 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Nom de la plantilla"
+                    autoFocus
+                  />
+                ) : (
+                  <span 
+                    onClick={() => setIsEditingName(true)}
+                    className="text-sm font-medium text-blue-800 cursor-pointer hover:text-blue-900 min-w-48"
+                    title="Clica per editar el nom"
+                  >
+                    {templateName || 'Plantilla sense nom'}
+                  </span>
+                )}
+                <button
+                  onClick={() => setIsEditingName(!isEditingName)}
+                  className="text-blue-600 hover:text-blue-800 p-1"
+                  title="Editar nom"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </button>
+              </div>
+            )}
             <button
               onClick={handleNovaPlantillaClick}
               className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
