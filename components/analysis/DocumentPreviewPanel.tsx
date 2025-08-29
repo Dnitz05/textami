@@ -66,6 +66,10 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
     manualTagInfo 
   });
 
+  // Track if content has been modified by AI instructions
+  const [originalMarkdown] = useState(markdown); // Store original to compare
+  const isContentModified = markdown !== originalMarkdown;
+
   // Handle text selection for manual mapping
   const handleTextSelection = () => {
     if (isManualMappingActive && activeManualHeader) {
@@ -590,7 +594,22 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
 
             {/* Document Content */}
             <div>
-              {sections.length > 0 ? (
+              {isContentModified ? (
+                // Show modified content directly when AI has modified it
+                <div className="document-section">
+                  <div className="section-actions">
+                    <div className="text-xs text-blue-600 font-medium flex items-center">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+                      Contingut modificat per IA
+                    </div>
+                  </div>
+                  <div 
+                    className="document-content"
+                    dangerouslySetInnerHTML={{ __html: highlightTags(markdown) }}
+                  />
+                </div>
+              ) : sections.length > 0 ? (
+                // Show original sections when content hasn't been modified
                 sections.map((section, index) => (
                   <div 
                     key={section.id || index} 

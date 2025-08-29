@@ -147,14 +147,20 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
     }
   };
 
-  const executeInstruction = (instruction: AIInstruction) => {
-    onInstructionExecute?.(instruction);
-  };
 
   const toggleInstructionActive = (id: string) => {
-    setInstructions(instructions.map(inst => 
-      inst.id === id ? { ...inst, isActive: !inst.isActive } : inst
-    ));
+    const updatedInstructions = instructions.map(inst => {
+      if (inst.id === id) {
+        const newInst = { ...inst, isActive: !inst.isActive };
+        // Auto-execute when toggling to active
+        if (newInst.isActive && onInstructionExecute) {
+          setTimeout(() => onInstructionExecute(newInst), 100); // Small delay to ensure state update
+        }
+        return newInst;
+      }
+      return inst;
+    });
+    setInstructions(updatedInstructions);
   };
 
   const deleteInstruction = (id: string) => {
@@ -310,22 +316,12 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
                     </div>
                     
                     <div className="flex items-center space-x-1">
-                      {/* Execute Button */}
-                      {instruction.isActive && (
-                        <button
-                          onClick={() => executeInstruction(instruction)}
-                          disabled={isExecuting}
-                          className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 disabled:opacity-50"
-                        >
-                          {isExecuting && executingInstructionId === instruction.id ? (
-                            <div className="flex items-center">
-                              <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin mr-1"></div>
-                              Executant...
-                            </div>
-                          ) : (
-                            'Executar'
-                          )}
-                        </button>
+                      {/* Status indicator when executing */}
+                      {isExecuting && executingInstructionId === instruction.id && instruction.isActive && (
+                        <div className="flex items-center text-xs text-blue-600">
+                          <div className="w-3 h-3 border border-blue-600 border-t-transparent rounded-full animate-spin mr-1"></div>
+                          Executant...
+                        </div>
                       )}
                       
                       {/* Edit Button */}
