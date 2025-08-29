@@ -29,6 +29,7 @@ interface AIInstruction {
 interface ExecuteInstructionRequest {
   instruction: AIInstruction;
   originalContent: string;
+  sectionContent?: string; // Specific section content for section instructions
   knowledgeDocuments?: Array<{
     filename: string;
     storagePath: string;
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const requestBody = await request.json();
     console.log('📋 Request body keys:', Object.keys(requestBody));
     
-    const { instruction, originalContent, knowledgeDocuments = [] } = requestBody as ExecuteInstructionRequest;
+    const { instruction, originalContent, sectionContent, knowledgeDocuments = [] } = requestBody as ExecuteInstructionRequest;
     
     console.log('📝 Executing instruction:', {
       type: instruction.type,
@@ -171,18 +172,14 @@ Aplica la instrucció a tot el document i retorna el contingut modificat:`;
         break;
 
       case 'section':
-        // Extract only the target section for processing
-        console.log('🔍 Looking for section:', instruction.target);
-        console.log('📄 Document has sections:', originalContent.match(/## .+/g));
-        
-        const sectionMatch = originalContent.match(new RegExp(`## ${instruction.target}([\\s\\S]*?)(?=## |$)`, 'i'));
-        const sectionContent = sectionMatch ? sectionMatch[1].trim() : '';
-        
-        console.log('✅ Section found:', !!sectionMatch, 'Content length:', sectionContent.length);
+        // Use section content passed from frontend
+        console.log('🔍 Processing section:', instruction.target);
         
         if (!sectionContent) {
-          throw new Error(`Section "${instruction.target}" not found in document`);
+          throw new Error(`Section content not provided for section "${instruction.target}"`);
         }
+        
+        console.log('✅ Section content received, length:', sectionContent.length);
         
         systemPrompt = `Ets un expert en processament de contingut de seccions de documents.
 

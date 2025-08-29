@@ -131,7 +131,18 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
       setIsExecutingInstruction(true);
       setExecutingInstructionId(instruction.id);
 
-      // Use loaded knowledge documents for context
+      // For section instructions, find and extract the specific section content
+      let sectionContent = undefined;
+      if (instruction.type === 'section' && instruction.target && analysisData?.sections) {
+        const targetSection = analysisData.sections.find(s => s.id === instruction.target);
+        if (targetSection) {
+          sectionContent = targetSection.markdown;
+          console.log('🎯 Found section content for:', instruction.target, 'Length:', sectionContent?.length);
+        } else {
+          console.warn('⚠️ Section not found:', instruction.target);
+          throw new Error(`Section "${instruction.target}" not found in document`);
+        }
+      }
 
       const response = await fetch('/api/ai-instructions', {
         method: 'POST',
@@ -141,6 +152,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
         body: JSON.stringify({
           instruction,
           originalContent: currentMarkdown,
+          sectionContent,
           knowledgeDocuments
         }),
       });
@@ -150,7 +162,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
       if (result.success) {
         // Handle partial updates for section modifications
         if (result.data.isPartialUpdate && result.data.targetSection && result.data.modifiedSectionContent) {
-          // Update only the specific section
+          // Update only the specific section using section ID
           setModifiedSections(prev => ({
             ...prev,
             [result.data.targetSection]: result.data.modifiedSectionContent
