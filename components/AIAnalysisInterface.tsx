@@ -335,10 +335,15 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                       documentSections={analysisData?.sections?.map(s => ({id: s.id || s.title, title: s.title})) || []}
                       openFormWithSection={selectedSectionForInstruction}
                       documentId={(() => {
-                        // Use template name from sessionStorage as the unique identifier
-                        const templateName = typeof window !== 'undefined' ? 
-                          sessionStorage.getItem('templateName') : null;
-                        return templateName || `${fileName}_${analysisData?.title || 'document'}`;
+                        // Always use a consistent identifier - prefer templateName but fallback to a stable ID
+                        if (typeof window !== 'undefined') {
+                          const templateName = sessionStorage.getItem('templateName');
+                          if (templateName) {
+                            return templateName;
+                          }
+                        }
+                        // Fallback to a stable identifier based on analysis data
+                        return `doc_${analysisData?.title || fileName || 'untitled'}`.replace(/[^a-zA-Z0-9_]/g, '_');
                       })()}
                     />
                   </div>

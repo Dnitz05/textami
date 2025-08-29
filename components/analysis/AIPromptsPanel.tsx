@@ -71,33 +71,41 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
 
   const [instructions, setInstructions] = useState<AIInstruction[]>([]);
   const currentDocumentId = documentId || 'default';
+  
+  console.log('🔍 AIPromptsPanel Debug:', {
+    documentId,
+    currentDocumentId,
+    instructionsCount: instructions.length
+  });
 
   // Load instructions from storage when component mounts or document changes
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const storageKey = `instructions_${currentDocumentId}`;
       const savedInstructions = sessionStorage.getItem(storageKey);
+      console.log('🔄 Loading instructions for document:', currentDocumentId, 'StorageKey:', storageKey);
       if (savedInstructions) {
         try {
-          setInstructions(JSON.parse(savedInstructions));
-          console.log('📋 Loaded instructions for document:', currentDocumentId);
+          const parsed = JSON.parse(savedInstructions);
+          setInstructions(parsed);
+          console.log('📋 Loaded', parsed.length, 'instructions for document:', currentDocumentId);
         } catch (error) {
-          console.error('Error loading saved instructions:', error);
+          console.error('❌ Error loading saved instructions:', error);
           setInstructions([]); // Reset to empty if error
         }
       } else {
         setInstructions([]); // Start fresh for new documents
-        console.log('📋 New document - starting with empty instructions:', currentDocumentId);
+        console.log('📋 No saved instructions found - starting fresh:', currentDocumentId);
       }
     }
   }, [currentDocumentId]);
 
   // Save instructions to storage whenever they change
   React.useEffect(() => {
-    if (typeof window !== 'undefined' && currentDocumentId !== 'default') {
+    if (typeof window !== 'undefined' && currentDocumentId && instructions.length >= 0) {
       const storageKey = `instructions_${currentDocumentId}`;
       sessionStorage.setItem(storageKey, JSON.stringify(instructions));
-      console.log('💾 Saved instructions for document:', currentDocumentId, instructions.length);
+      console.log('💾 Saved', instructions.length, 'instructions for document:', currentDocumentId, 'StorageKey:', storageKey);
     }
   }, [instructions, currentDocumentId]);
 
