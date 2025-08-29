@@ -194,7 +194,9 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
     setEditingInstruction({ 
       title: instruction.title.replace(/ \(amb .+\)/, ''), // Remove knowledge context from title
       instruction: instruction.instruction.replace(/^Utilitza el document ".+" com a context per: /, ''), // Clean instruction
-      type: instruction.type === 'section' ? (instruction.target || 'global') : instruction.type, // Use target for sections
+      type: instruction.type === 'section' ? 
+        (instruction.target || 'global') as 'global' | 'section' | 'paragraph' : 
+        instruction.type, // Use target for sections
       knowledgeFileId: knowledgeFile?.id || ''
     });
   };
