@@ -139,7 +139,7 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
         isActive: false // Will be overridden to true below
       };
       const newInstructionWithActive = { ...instruction, isActive: true }; // Auto-activate new instructions
-      setInstructions([...instructions, newInstructionWithActive]);
+      setInstructions([newInstructionWithActive, ...instructions]); // Add to beginning of list
       setNewInstruction({ type: 'global', knowledgeFileId: '', instruction: '' });
       setShowAddForm(false);
       // Auto-execute immediately
