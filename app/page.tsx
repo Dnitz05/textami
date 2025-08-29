@@ -47,7 +47,7 @@ export default function LandingPage() {
     <div className="h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col overflow-hidden">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <div className="flex items-center space-x-2">
@@ -101,10 +101,6 @@ export default function LandingPage() {
             </svg>
             Començar Ara - És Gratis
           </button>
-
-          <p className="text-sm text-gray-500">
-            ✅ Sense targeta de crèdit • ✅ Configuració instantània • ✅ Powered by GPT-5
-          </p>
         </div>
 
         {/* Features Section - Compactada */}
@@ -115,7 +111,7 @@ export default function LandingPage() {
               <div className="text-4xl mb-3">📄</div>
               <h3 className="text-lg font-bold text-gray-900 mb-2">Anàlisi Automàtic</h3>
               <p className="text-sm text-gray-600">
-                Puja documents PDF i deixa que la IA detecti automàticament variables i estructura.
+                Modificació i millora dels documents en segons, amb IA.
               </p>
             </div>
 

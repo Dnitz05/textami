@@ -107,7 +107,12 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingInstructionId, setEditingInstructionId] = useState<string | null>(null);
-  const [editingInstruction, setEditingInstruction] = useState({ title: '', instruction: '' });
+  const [editingInstruction, setEditingInstruction] = useState({ 
+    title: '', 
+    instruction: '',
+    type: 'global' as 'global' | 'section' | 'paragraph',
+    knowledgeFileId: ''
+  });
 
   // Auto-open form when openFormWithSection is provided
   React.useEffect(() => {
@@ -169,24 +174,48 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
 
   const startEditing = (instruction: AIInstruction) => {
     setEditingInstructionId(instruction.id);
-    setEditingInstruction({ title: instruction.title, instruction: instruction.instruction });
+    
+    // Extract knowledge file ID from title if present
+    const knowledgeMatch = instruction.title.match(/\(amb (.+)\)/);
+    const knowledgeFileName = knowledgeMatch?.[1];
+    const knowledgeFile = knowledgeFiles.find(f => f.title === knowledgeFileName);
+    
+    setEditingInstruction({ 
+      title: instruction.title.replace(/ \(amb .+\)/, ''), // Remove knowledge context from title
+      instruction: instruction.instruction.replace(/^Utilitza el document ".+" com a context per: /, ''), // Clean instruction
+      type: instruction.type,
+      knowledgeFileId: knowledgeFile?.id || ''
+    });
   };
 
   const saveEdit = () => {
     if (editingInstructionId) {
+      const selectedKnowledge = knowledgeFiles.find(f => f.id === editingInstruction.knowledgeFileId);
+      const isSection = documentSections.some(s => s.id === editingInstruction.type);
+      
+      const updatedInstruction = {
+        ...instructions.find(inst => inst.id === editingInstructionId)!,
+        type: isSection ? 'section' : editingInstruction.type,
+        title: selectedKnowledge 
+          ? `${editingInstruction.title} (amb ${selectedKnowledge.title})`
+          : editingInstruction.title,
+        instruction: selectedKnowledge 
+          ? `Utilitza el document "${selectedKnowledge.filename}" com a context per: ${editingInstruction.instruction}`
+          : editingInstruction.instruction,
+        target: isSection ? editingInstruction.type : undefined
+      };
+      
       setInstructions(instructions.map(inst => 
-        inst.id === editingInstructionId 
-          ? { ...inst, title: editingInstruction.title, instruction: editingInstruction.instruction }
-          : inst
+        inst.id === editingInstructionId ? updatedInstruction : inst
       ));
       setEditingInstructionId(null);
-      setEditingInstruction({ title: '', instruction: '' });
+      setEditingInstruction({ title: '', instruction: '', type: 'global', knowledgeFileId: '' });
     }
   };
 
   const cancelEdit = () => {
     setEditingInstructionId(null);
-    setEditingInstruction({ title: '', instruction: '' });
+    setEditingInstruction({ title: '', instruction: '', type: 'global', knowledgeFileId: '' });
   };
 
   const getInstructionTypeColor = (type: AIInstruction['type']) => {
@@ -242,13 +271,49 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
                     onChange={(e) => setEditingInstruction({...editingInstruction, title: e.target.value})}
                     className="w-full text-sm font-medium border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Títol de la instrucció"
+                    style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}
                   />
+                  
+                  <select
+                    value={editingInstruction.type}
+                    onChange={(e) => setEditingInstruction({...editingInstruction, type: e.target.value as any})}
+                    className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}
+                  >
+                    <option value="global">🌐 Global (tot el document)</option>
+                    {documentSections.map((section) => (
+                      <option key={section.id} value={section.id}>📋 {section.title}</option>
+                    ))}
+                    <option value="paragraph">📝 Paràgraf específic</option>
+                  </select>
+                  
+                  <select
+                    value={editingInstruction.knowledgeFileId}
+                    onChange={(e) => setEditingInstruction({...editingInstruction, knowledgeFileId: e.target.value})}
+                    className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}
+                  >
+                    <option value="">Cap context específic</option>
+                    {loadingKnowledge ? (
+                      <option value="" disabled>⏳ Carregant documents...</option>
+                    ) : knowledgeFiles.length === 0 ? (
+                      <option value="" disabled>❌ Cap document de coneixement disponible</option>
+                    ) : (
+                      knowledgeFiles.map((file) => (
+                        <option key={file.id} value={file.id}>
+                          📄 {file.title} ({file.type})
+                        </option>
+                      ))
+                    )}
+                  </select>
+                  
                   <textarea
                     value={editingInstruction.instruction}
                     onChange={(e) => setEditingInstruction({...editingInstruction, instruction: e.target.value})}
                     className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     rows={3}
                     placeholder="Descripció de la instrucció"
+                    style={{fontFamily: 'Calibri, Segoe UI, Arial, sans-serif'}}
                   />
                   <div className="flex space-x-2">
                     <button
