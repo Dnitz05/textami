@@ -129,7 +129,8 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
   const handleAddInstruction = () => {
     if (newInstruction.instruction) {
       const selectedKnowledge = knowledgeFiles.find(f => f.id === newInstruction.knowledgeFileId);
-      const isSection = documentSections.some(s => s.id === newInstruction.type);
+      // Check if it's a section by both id and title
+      const isSection = documentSections.some(s => s.id === newInstruction.type || s.title === newInstruction.type);
       
       const instruction: AIInstruction = {
         id: Date.now().toString(),
@@ -144,6 +145,16 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
         isActive: false // Will be overridden to true below
       };
       const newInstructionWithActive = { ...instruction, isActive: true }; // Auto-activate new instructions
+      
+      // Debug logging
+      console.log('🔍 Creating instruction:', {
+        originalType: newInstruction.type,
+        isSection,
+        finalType: newInstructionWithActive.type,
+        target: newInstructionWithActive.target,
+        documentSections: documentSections.map(s => ({ id: s.id, title: s.title }))
+      });
+      
       setInstructions([newInstructionWithActive, ...instructions]); // Add to beginning of list
       setNewInstruction({ type: 'global', knowledgeFileId: '', instruction: '' });
       setShowAddForm(false);
@@ -183,7 +194,7 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
     setEditingInstruction({ 
       title: instruction.title.replace(/ \(amb .+\)/, ''), // Remove knowledge context from title
       instruction: instruction.instruction.replace(/^Utilitza el document ".+" com a context per: /, ''), // Clean instruction
-      type: instruction.type,
+      type: instruction.type === 'section' ? (instruction.target || 'global') : instruction.type, // Use target for sections
       knowledgeFileId: knowledgeFile?.id || ''
     });
   };
@@ -191,7 +202,8 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
   const saveEdit = () => {
     if (editingInstructionId) {
       const selectedKnowledge = knowledgeFiles.find(f => f.id === editingInstruction.knowledgeFileId);
-      const isSection = documentSections.some(s => s.id === editingInstruction.type);
+      // Check if it's a section by both id and title  
+      const isSection = documentSections.some(s => s.id === editingInstruction.type || s.title === editingInstruction.type);
       
       const updatedInstruction = {
         ...instructions.find(inst => inst.id === editingInstructionId)!,

@@ -172,8 +172,13 @@ Aplica la instrucció a tot el document i retorna el contingut modificat:`;
 
       case 'section':
         // Extract only the target section for processing
+        console.log('🔍 Looking for section:', instruction.target);
+        console.log('📄 Document has sections:', originalContent.match(/## .+/g));
+        
         const sectionMatch = originalContent.match(new RegExp(`## ${instruction.target}([\\s\\S]*?)(?=## |$)`, 'i'));
         const sectionContent = sectionMatch ? sectionMatch[1].trim() : '';
+        
+        console.log('✅ Section found:', !!sectionMatch, 'Content length:', sectionContent.length);
         
         if (!sectionContent) {
           throw new Error(`Section "${instruction.target}" not found in document`);
