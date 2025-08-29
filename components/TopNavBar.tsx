@@ -20,6 +20,23 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
   const [isEditingName, setIsEditingName] = useState(false);
   const [showAuthForm, setShowAuthForm] = useState(false);
   const { user, isAuthenticated, signOut } = useUser();
+  
+  // Clean up duplicate templates on component mount
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const existingTemplates = Object.keys(sessionStorage)
+        .filter(key => key.startsWith('instructions_'))
+        .map(key => key.replace('instructions_', ''));
+      
+      console.log('🧹 Existing templates found:', existingTemplates);
+      
+      // If there are duplicates, show warning
+      const duplicates = existingTemplates.filter((item, index) => existingTemplates.indexOf(item) !== index);
+      if (duplicates.length > 0) {
+        console.warn('⚠️ Duplicate template names detected:', duplicates);
+      }
+    }
+  }, []);
 
   // Load template name from sessionStorage on analyze page
   useEffect(() => {
@@ -39,15 +56,29 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
       
       const currentTemplate = sessionStorage.getItem('templateName') || '';
       
+      console.log('🔍 Template name validation:', {
+        newName,
+        currentTemplate,
+        existingTemplates,
+        isDuplicate: newName !== currentTemplate && existingTemplates.includes(newName)
+      });
+      
       // Check if name already exists (excluding current template)
       if (newName !== currentTemplate && existingTemplates.includes(newName)) {
         alert(`El nom "${newName}" ja existeix. Si us plau, tria un nom únic.`);
+        return false;
+      }
+      
+      // Additional validation: empty name
+      if (!newName.trim()) {
+        alert('El nom de la plantilla no pot estar buit.');
         return false;
       }
     }
     
     setTemplateName(newName);
     sessionStorage.setItem('templateName', newName);
+    console.log('✅ Template name saved:', newName);
     return true;
   };
 
@@ -84,13 +115,17 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
       const existingTemplates = Object.keys(sessionStorage)
         .filter(key => key.startsWith('instructions_'))
         .map(key => key.replace('instructions_', ''));
-        
+      
+      console.log('🔍 Generating unique name for:', baseName, 'Existing:', existingTemplates);
+      
       while (existingTemplates.includes(uniqueName)) {
         uniqueName = `${baseName} (${counter})`;
         counter++;
+        console.log('📝 Name exists, trying:', uniqueName);
       }
       
       sessionStorage.setItem('templateName', uniqueName);
+      console.log('✅ Generated unique template name:', uniqueName);
       
       // Create FileReader to store file content
       const reader = new FileReader();

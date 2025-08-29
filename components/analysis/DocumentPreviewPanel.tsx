@@ -757,10 +757,6 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
               </div>
             )}
 
-            {/* Document Footer */}
-            <div className="document-footer">
-              Generat amb Textami • {new Date().toLocaleDateString('ca-ES')} • Pàgina 1
-            </div>
           </div>
         </div>
       </div>
