@@ -602,8 +602,8 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
                 // Show sections with selective modifications
                 sections.map((section, index) => {
                   const sectionId = section.id || section.title || `section_${index}`;
-                  const isModified = modifiedSections[sectionId];
-                  const modifiedContent = isModified ? modifiedSections[sectionId] : undefined;
+                  const modifiedContent = modifiedSections[sectionId];
+                  const isModified = Boolean(modifiedContent);
                   
                   return (
                     <DocumentSection
