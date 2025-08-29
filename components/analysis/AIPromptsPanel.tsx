@@ -18,8 +18,8 @@ interface AIPromptsPanelProps {
   isExecuting?: boolean;
   executingInstructionId?: string | null;
   documentSections?: Array<{id: string; title: string;}>;
-  // Removed: sectionSpecificInstructions (no longer needed)
   openFormWithSection?: string | null; // Section ID to auto-open form with
+  documentId?: string; // Unique identifier for the document
 }
 
 const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
@@ -28,7 +28,8 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
   isExecuting = false,
   executingInstructionId = null,
   documentSections = [],
-  openFormWithSection = null
+  openFormWithSection = null,
+  documentId
 }) => {
   const { user } = useUser();
   const [knowledgeFiles, setKnowledgeFiles] = useState<Array<{
@@ -68,36 +69,37 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
     loadKnowledgeFiles();
   }, [user]); // Still depend on user to reload if auth status changes
 
-  const [instructions, setInstructions] = useState<AIInstruction[]>([
-    {
-      id: '1',
-      type: 'global',
-      title: 'To més formal',
-      instruction: 'Reescriu tot el document amb un to més formal i professional, mantenint el contingut tècnic i les estructures existents.',
-      isActive: false
-    },
-    {
-      id: '2', 
-      type: 'global',
-      title: 'Simplificar vocabulari',
-      instruction: 'Simplifica el llenguatge tècnic i especialitzat per fer el document més accessible, mantenint la precisió del contingut.',
-      isActive: false
-    },
-    {
-      id: '3',
-      type: 'section',
-      title: 'Resumir secció',
-      instruction: 'Genera un resum executiu concís de la secció seleccionada, destacant els punts clau en màxim 3 paràgrafs.',
-      isActive: false
-    },
-    {
-      id: '4',
-      type: 'global',
-      title: 'Verificar compliment normatiu',
-      instruction: 'Analitza si el document compleix amb les normatives i regulacions carregades a la base de coneixement i proporciona recomanacions.',
-      isActive: false
+  const [instructions, setInstructions] = useState<AIInstruction[]>([]);
+  const currentDocumentId = documentId || 'default';
+
+  // Load instructions from storage when component mounts or document changes
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storageKey = `instructions_${currentDocumentId}`;
+      const savedInstructions = sessionStorage.getItem(storageKey);
+      if (savedInstructions) {
+        try {
+          setInstructions(JSON.parse(savedInstructions));
+          console.log('📋 Loaded instructions for document:', currentDocumentId);
+        } catch (error) {
+          console.error('Error loading saved instructions:', error);
+          setInstructions([]); // Reset to empty if error
+        }
+      } else {
+        setInstructions([]); // Start fresh for new documents
+        console.log('📋 New document - starting with empty instructions:', currentDocumentId);
+      }
     }
-  ]);
+  }, [currentDocumentId]);
+
+  // Save instructions to storage whenever they change
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && currentDocumentId !== 'default') {
+      const storageKey = `instructions_${currentDocumentId}`;
+      sessionStorage.setItem(storageKey, JSON.stringify(instructions));
+      console.log('💾 Saved instructions for document:', currentDocumentId, instructions.length);
+    }
+  }, [instructions, currentDocumentId]);
 
   const [newInstruction, setNewInstruction] = useState({
     type: 'global' as 'global' | 'section' | 'paragraph',

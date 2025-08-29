@@ -322,6 +322,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                       executingInstructionId={executingInstructionId}
                       documentSections={analysisData?.sections?.map(s => ({id: s.id || s.title, title: s.title})) || []}
                       openFormWithSection={selectedSectionForInstruction}
+                      documentId={`${fileName}_${analysisData?.title || 'document'}`}
                     />
                   </div>
                 </div>
