@@ -168,14 +168,22 @@ Aplica la instrucció a tot el document i retorna el contingut modificat:`;
         break;
 
       case 'section':
-        systemPrompt = `Ets un expert en processament de documents. Modifica NOMÉS la secció especificada segons la instrucció donada.${knowledgeContext}`;
-        userPrompt = `INSTRUCCIÓ: ${instruction.instruction}
-TARGET SECCIÓ: ${instruction.target || 'No especificada'}
+        systemPrompt = `Ets un expert en processament de documents en format markdown. Modifica NOMÉS el contingut de la secció especificada.
 
-DOCUMENT:
+REGLES CRÍTIQUES:
+- Mantén EXACTAMENT el mateix format markdown original
+- Conserva TOTS els títols, subtítols i estructura
+- Modifica NOMÉS el text dels paràgrafs dins la secció target
+- NO canviïs capçaleres (##), llistes, o format markdown
+- Preserva salts de línia i estructura exacta
+- Retorna el document markdown complet idèntic excepte la secció modificada${knowledgeContext}`;
+        userPrompt = `SECCIÓ A MODIFICAR: "${instruction.target || 'No especificada'}"
+INSTRUCCIÓ: "${instruction.instruction}"
+
+DOCUMENT MARKDOWN ORIGINAL:
 ${originalContent}
 
-Modifica només la secció indicada i retorna el document complet:`;
+Retorna el document markdown complet mantenint EXACTAMENT la mateixa estructura però modificant NOMÉS el contingut de text de la secció "${instruction.target}":`;
         break;
 
       case 'paragraph':

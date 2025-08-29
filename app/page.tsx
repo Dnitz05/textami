@@ -1,47 +1,13 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@/hooks/useUser';
 import AuthForm from '@/components/AuthForm';
-import { useEffect } from 'react';
 
 export default function LandingPage() {
   const router = useRouter();
-  const { user, isAuthenticated, loading } = useUser();
   const [showAuthForm, setShowAuthForm] = useState(false);
-  const [redirecting, setRedirecting] = useState(false);
-
-  // Redirect authenticated users to dashboard
-  useEffect(() => {
-    if (isAuthenticated && user && !loading) {
-      setRedirecting(true);
-      router.push('/dashboard');
-    }
-  }, [isAuthenticated, user, loading, router]);
-
-  // Reduce loading time - only show loading for longer waits
-  if (loading && redirecting) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregant...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show redirecting state
-  if (redirecting || (isAuthenticated && user)) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Redirigint al dashboard...</p>
-        </div>
-      </div>
-    );
-  }
+  
+  // No auth checking on landing page - pure static content
 
   return (
     <div className="h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col overflow-hidden">
@@ -163,7 +129,10 @@ export default function LandingPage() {
               </button>
             </div>
             <div className="p-6">
-              <AuthForm onSuccess={() => setShowAuthForm(false)} />
+              <AuthForm onSuccess={() => {
+                setShowAuthForm(false);
+                router.push('/dashboard');
+              }} />
             </div>
           </div>
         </div>
