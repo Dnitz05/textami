@@ -54,12 +54,13 @@ const TemplateNameHeader: React.FC = () => {
   };
 
   return (
-    <div className="mb-8 pb-4 border-b border-gray-200">
+    <div className="mb-6 pb-3 border-b border-gray-100 bg-gray-50 -mx-4 px-4 py-3 rounded-t-lg">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="flex items-center space-x-2">
+          <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
+          <span className="text-xs text-gray-500 font-medium">Plantilla:</span>
           {isEditingName ? (
             <input
               type="text"
@@ -79,26 +80,26 @@ const TemplateNameHeader: React.FC = () => {
                   setIsEditingName(false);
                 }
               }}
-              className="text-lg font-semibold text-gray-900 bg-white border border-gray-300 rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-64"
+              className="text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-48"
               placeholder="Nom de la plantilla"
               autoFocus
             />
           ) : (
-            <h1
+            <span
               onClick={() => setIsEditingName(true)}
-              className="text-lg font-semibold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
-              title="Clica per editar el nom"
+              className="text-sm font-medium text-gray-700 cursor-pointer hover:text-blue-600 transition-colors"
+              title="Clica per editar el nom de la plantilla"
             >
-              {templateName || 'Plantilla sense nom'}
-            </h1>
+              {templateName || 'Sense nom'}
+            </span>
           )}
         </div>
         <button
           onClick={() => setIsEditingName(!isEditingName)}
-          className="text-gray-400 hover:text-blue-600 p-1 rounded-full hover:bg-blue-50 transition-all"
+          className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100 transition-all"
           title="Editar nom de plantilla"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
           </svg>
         </button>
