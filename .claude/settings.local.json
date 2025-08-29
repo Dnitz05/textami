@@ -21,7 +21,8 @@
       "Bash(sed:*)",
       "Bash(grep:*)",
       "Bash(git checkout:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git pull:*)"
     ],
     "additionalDirectories": [
       "C:\\mnt\\c\\projects",
