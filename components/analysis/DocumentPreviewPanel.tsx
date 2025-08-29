@@ -159,13 +159,13 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         
         /* SECCIONS - Estil modern amb caixes subtils */
         .document-section {
-          margin-bottom: 24pt;
+          margin-bottom: 16pt;
           page-break-inside: avoid;
-          background: rgba(248, 250, 252, 0.2);
-          border: 1px solid rgba(226, 232, 240, 0.2);
-          border-radius: 0px;
-          padding: 18pt 20pt;
-          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.01);
+          background: rgba(248, 250, 252, 0.5);
+          border: 1px solid rgba(226, 232, 240, 0.6);
+          border-radius: 2px;
+          padding: 14pt 16pt;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
           cursor: pointer;
           transition: all 0.3s ease;
           position: relative;
@@ -224,11 +224,11 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         
         .document-section h2 {
           font-family: 'Inter', 'Segoe UI', sans-serif;
-          font-size: 15pt;
+          font-size: 14pt;
           font-weight: 600;
           color: #0f172a;
-          margin: 0 0 16pt 0;
-          padding: 0 0 8pt 0;
+          margin: 0 0 12pt 0;
+          padding: 0 0 6pt 0;
           border: none;
           background: none;
           text-transform: none;
@@ -239,10 +239,10 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         
         .document-section h3 {
           font-family: 'Inter', 'Segoe UI', sans-serif;
-          font-size: 13pt;
+          font-size: 12pt;
           font-weight: 500;
           color: #334155;
-          margin: 14pt 0 8pt 0;
+          margin: 10pt 0 6pt 0;
           text-decoration: none;
           letter-spacing: -0.05pt;
         }
@@ -250,14 +250,26 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         /* CONTINGUT - Estil modern llegible */
         .document-content {
           font-family: 'Inter', 'Segoe UI', sans-serif;
-          font-size: 11pt;
-          line-height: 1.6;
+          font-size: 10.5pt;
+          line-height: 1.5;
           color: #374151;
           text-align: left;
           margin-bottom: 0;
           text-indent: 0;
           font-weight: 400;
           letter-spacing: -0.01pt;
+        }
+        
+        .document-content p {
+          margin-bottom: 8pt;
+        }
+        
+        .document-content ul, .document-content ol {
+          margin-bottom: 8pt;
+        }
+        
+        .document-content li {
+          margin-bottom: 4pt;
         }
         
         
