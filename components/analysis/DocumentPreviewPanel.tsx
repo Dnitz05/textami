@@ -7,6 +7,106 @@ import { useMapping } from '../../contexts/MappingContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTagHighlighting } from '../../hooks/useTagHighlighting';
 
+// Template Name Header Component
+const TemplateNameHeader: React.FC = () => {
+  const [templateName, setTemplateName] = useState('');
+  const [isEditingName, setIsEditingName] = useState(false);
+
+  // Load template name from sessionStorage
+  useEffect(() => {
+    const storedName = sessionStorage.getItem('templateName') || '';
+    setTemplateName(storedName);
+  }, []);
+
+  // Save template name to sessionStorage when changed
+  const handleNameChange = (newName: string) => {
+    if (typeof window !== 'undefined') {
+      const existingTemplates = Object.keys(sessionStorage)
+        .filter(key => key.startsWith('instructions_'))
+        .map(key => key.replace('instructions_', ''));
+      
+      const currentTemplate = sessionStorage.getItem('templateName') || '';
+      
+      console.log('🔍 Template name validation:', {
+        newName,
+        currentTemplate,
+        existingTemplates,
+        isDuplicate: newName !== currentTemplate && existingTemplates.includes(newName)
+      });
+      
+      // Check if name already exists (excluding current template)
+      if (newName !== currentTemplate && existingTemplates.includes(newName)) {
+        alert(`El nom "${newName}" ja existeix. Si us plau, tria un nom únic.`);
+        return false;
+      }
+      
+      // Additional validation: empty name
+      if (!newName.trim()) {
+        alert('El nom de la plantilla no pot estar buit.');
+        return false;
+      }
+    }
+    
+    setTemplateName(newName);
+    sessionStorage.setItem('templateName', newName);
+    console.log('✅ Template name saved:', newName);
+    return true;
+  };
+
+  return (
+    <div className="mb-8 pb-4 border-b border-gray-200">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          {isEditingName ? (
+            <input
+              type="text"
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              onBlur={() => {
+                const success = handleNameChange(templateName);
+                if (success) setIsEditingName(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const success = handleNameChange(templateName);
+                  if (success) setIsEditingName(false);
+                }
+                if (e.key === 'Escape') {
+                  setTemplateName(sessionStorage.getItem('templateName') || '');
+                  setIsEditingName(false);
+                }
+              }}
+              className="text-lg font-semibold text-gray-900 bg-white border border-gray-300 rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-64"
+              placeholder="Nom de la plantilla"
+              autoFocus
+            />
+          ) : (
+            <h1
+              onClick={() => setIsEditingName(true)}
+              className="text-lg font-semibold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+              title="Clica per editar el nom"
+            >
+              {templateName || 'Plantilla sense nom'}
+            </h1>
+          )}
+        </div>
+        <button
+          onClick={() => setIsEditingName(!isEditingName)}
+          className="text-gray-400 hover:text-blue-600 p-1 rounded-full hover:bg-blue-50 transition-all"
+          title="Editar nom de plantilla"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+};
+
 interface DocumentSignature {
   nom: string;
   carrec: string;
@@ -607,6 +707,9 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
             
             
 
+            {/* Template Name Header */}
+            <TemplateNameHeader />
+            
             {/* Document Content */}
             <div>
               {hasSectionModifications || sections.length > 0 ? (
