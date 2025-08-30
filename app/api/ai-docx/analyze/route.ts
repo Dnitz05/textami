@@ -79,35 +79,85 @@ function extractDocumentStructure(documentXml: string): DocumentElement[] {
 
 function classifyElement(text: string, styleName: string): DocumentElement['type'] {
   // Check for signature patterns
-  if (text.match(/signat per|firmat per|signature|signatura/i)) {
+  if (text.match(/signat per|firmat per|signature|signatura|atentament|cordialmente|salutacions/i)) {
     return 'signature';
   }
   
-  // Check style names for headings
-  if (styleName.match(/title|títol|heading1|h1/i)) {
+  // Check style names for headings (prioritat alta)
+  if (styleName.match(/title|títol|titol/i)) {
     return 'title';
   }
-  if (styleName.match(/heading1|h1/i)) {
+  if (styleName.match(/heading1|h1|cap1|encapçalament1/i)) {
     return 'heading1';
   }
-  if (styleName.match(/heading2|h2/i)) {
+  if (styleName.match(/heading2|h2|cap2|encapçalament2/i)) {
     return 'heading2';
   }
-  if (styleName.match(/heading3|h3/i)) {
+  if (styleName.match(/heading3|h3|cap3|encapçalament3/i)) {
     return 'heading3';
   }
   
-  // Check content patterns for titles/headings
-  if (text.length < 100 && text.match(/^[A-ZÀÁÈÉÍÓÚÇ][A-ZÀÁÈÉÍÓÚÇa-zàáèéíóúç\s]+$/)) {
-    if (text.length < 50) {
+  // Patrons específics per detectar títols principals (centrats, curts, majúscules)
+  if (text.length < 80) {
+    // Títol principal - tot majúscules o primera majúscula de cada paraula
+    if (text.match(/^[A-ZÀÁÈÉÍÓÚÇ\s\-\:\.\,]+$/) || 
+        text.match(/^([A-ZÀÁÈÉÍÓÚÇ][a-zàáèéíóúç]*\s*){1,8}$/)) {
       return 'title';
     }
-    return 'heading1';
+    
+    // Patrons comuns de títols de seccions
+    if (text.match(/^(INTRODUCCIÓ|ANTECEDENTS|OBJECTIUS|METODOLOGIA|RESULTATS|CONCLUSIONS|ANNEXOS|BIBLIOGRAFIA)/i) ||
+        text.match(/^(CAPÍTOL|SECCIÓ|APARTAT)\s+\d+/i) ||
+        text.match(/^(PART|TÍTOL)\s+[IVX]+/i)) {
+      return 'heading1';
+    }
   }
   
-  // Check for numbered sections
-  if (text.match(/^\d+[\.\-\)]\s/)) {
+  // Seccions numerades de diferents formats
+  if (text.match(/^\d+[\.\-\)]\s+[A-ZÀÁÈÉÍÓÚÇ]/)) {
+    return 'heading1'; // 1. Introducció, 1- Objectius
+  }
+  if (text.match(/^\d+\.\d+[\.\-\)]\s/)) {
+    return 'heading2'; // 1.1. Subsecció
+  }
+  if (text.match(/^\d+\.\d+\.\d+[\.\-\)]\s/)) {
+    return 'heading3'; // 1.1.1. Subsubsecció
+  }
+  
+  // Seccions amb lletres
+  if (text.match(/^[a-zA-Z][\.\-\)]\s+[A-ZÀÁÈÉÍÓÚÇ]/)) {
+    return 'heading2'; // a) Punt primer, A. Secció
+  }
+  
+  // Seccions amb numeració romana
+  if (text.match(/^[IVX]+[\.\-\)]\s+[A-ZÀÁÈÉÍÓÚÇ]/i)) {
+    return 'heading1'; // I. Primera part, IV- Quarta secció
+  }
+  
+  // Patrons de preguntes (títols de secció en forma de pregunta)
+  if (text.match(/^(Com|Què|Quan|On|Per què|Qui)\s+.*\?$/i) && text.length < 120) {
     return 'heading2';
+  }
+  
+  // Patrons específics de documents catalans
+  if (text.match(/^(INFORME|MEMÒRIA|PROPOSTA|RESOLUCIÓ|DICTAMEN|ACORD)/i) && text.length < 60) {
+    return 'title';
+  }
+  
+  // Text curt sense punt final pot ser un subtítol
+  if (text.length < 60 && !text.endsWith('.') && !text.endsWith(',') && 
+      text.match(/^[A-ZÀÁÈÉÍÓÚÇ]/) && text.split(' ').length >= 2) {
+    return 'heading2';
+  }
+  
+  // Llistes detectades pel format (però no confondre amb seccions numerades)
+  if (text.match(/^[\-\*\•]\s+/) && text.length > 10) {
+    return 'list';
+  }
+  // Llistes numerades simples (diferent de seccions)
+  if (text.match(/^\d{1,2}[\.\)]\s+/) && text.length > 20 && 
+      !text.match(/^\d+[\.\)]\s+[A-ZÀÁÈÉÍÓÚÇ][A-ZÀÁÈÉÍÓÚÇa-zàáèéíóúç\s]{5,30}$/)) {
+    return 'list';
   }
   
   return 'paragraph';
@@ -191,9 +241,9 @@ function generateStructuredHTML(elements: DocumentElement[], fileName: string): 
         htmlParts.push(`<div class="signature"><strong>Signatura:</strong> ${escapeHtml(element.text)}</div>`);
         break;
       case 'list':
-        if (element.items) {
-          htmlParts.push(`<ul>${element.items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`);
-        }
+        // Convert list text to proper list item
+        const listText = element.text.replace(/^[\-\*\•]\s+/, '').replace(/^\d+[\.\)]\s+/, '');
+        htmlParts.push(`<ul><li>${escapeHtml(listText)}</li></ul>`);
         break;
     }
   }
