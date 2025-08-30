@@ -169,6 +169,7 @@ interface RawTable {
   title: string;
   headers: string[];
   rows: string[][];
+  normalized?: Record<string, number>;
 }
 
 /**
