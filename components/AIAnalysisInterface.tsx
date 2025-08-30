@@ -417,7 +417,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                 </div>
               )}
 
-              <div style={{paddingTop: '5rem'}}>
+              <div style={{paddingTop: '6rem'}}>
                 <DocumentPreviewPanel 
                   title={analysisData.title}
                   markdown={currentMarkdown}
