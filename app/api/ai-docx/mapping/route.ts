@@ -52,13 +52,13 @@ export async function POST(request: NextRequest) {
 
     // Prepare data for GPT-5 mapping intelligence
     const mappingContext = {
-      documentPlaceholders: placeholders.map((p: DocumentPlaceholder) => ({
+      documentPlaceholders: placeholders.map((p: any) => ({
         text: p.text,
         type: p.type,
         confidence: p.confidence,
         context: p.reasoning
       })),
-      excelColumns: columns.map((c: ExcelColumn) => ({
+      excelColumns: columns.map((c: any) => ({
         column: c.column,
         header: c.header,
         dataType: c.dataType,
@@ -151,7 +151,7 @@ Focus on finding the best semantic and contextual matches. Be conservative with 
     return NextResponse.json({
       success: false,
       error: 'AI mapping analysis failed',
-      details: error.message,
+      details: error instanceof Error ? error.message : 'Unknown error',
       processingTime: Date.now() - startTime
     }, { status: 500 });
   }
