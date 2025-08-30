@@ -2,6 +2,7 @@
 // Left sidebar panel for knowledge base with uploaded PDFs for AI context
 import React, { useState, useEffect } from 'react';
 import { useUser } from '@/hooks/useUser';
+import { log } from '@/lib/logger';
 
 interface KnowledgeDocument {
   id: string;
