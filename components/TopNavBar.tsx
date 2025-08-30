@@ -6,6 +6,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useUser } from '../hooks/useUser';
+import { log } from '@/lib/logger';
 import AuthForm from './AuthForm';
 
 interface TopNavBarProps {
