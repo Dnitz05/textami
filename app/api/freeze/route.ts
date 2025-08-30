@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import PizZip from 'pizzip';
 import { ApiResponse, FreezeResponse, ParsedTag, PlaceholderReplacement } from '../../../lib/types';
+import { log } from '@/lib/logger';
 
 interface FreezeRequest {
   templateId: string;

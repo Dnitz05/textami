@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
 import { getOpenAI } from '@/lib/openai';
+import { log } from '@/lib/logger';
 
 interface ColumnAnalysis {
   column: string;

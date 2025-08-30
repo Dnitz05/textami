@@ -163,15 +163,6 @@ export default function GeneratorPage() {
       const result = await response.json();
       
       if (result.success && result.data) {
-        setTemplateInfo({
-          templateId: result.data.templateId,
-          fileName: result.data.fileName,
-          fileType: isPDF ? 'PDF' : 'DOCX',
-          placeholders: result.data.placeholders?.length || 0,
-          hasHtmlPreview: !!result.data.htmlPreview,
-          transcriptionLength: result.data.transcription?.length || 0
-        });
-
         const newAiState = {
           processing: false,
           template: {
@@ -224,7 +215,7 @@ export default function GeneratorPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    log.debug('📊 Excel file selected:', file.name, file.size);
+    log.debug('📊 Excel file selected:', { name: file.name, size: file.size });
     setExcelState({ processing: true, analysis: null, error: null });
 
     try {

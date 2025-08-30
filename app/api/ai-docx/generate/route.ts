@@ -5,6 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 import Docxtemplater from 'docxtemplater';
 import PizZip from 'pizzip';
 import { ApiResponse, GenerationResponse, ExcelRowData, GeneratedDocument, GenerationError } from '../../../../lib/types';
+import { log } from '@/lib/logger';
 
 interface GenerationRequest {
   templateId: string;

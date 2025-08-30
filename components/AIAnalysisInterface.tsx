@@ -138,7 +138,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
         const targetSection = analysisData.sections.find(s => s.id === instruction.target);
         if (targetSection) {
           sectionContent = targetSection.markdown;
-          log.debug('🎯 Found section content for:', instruction.target, 'Length:', sectionContent?.length);
+          log.debug('🎯 Found section content for:', { target: instruction.target, length: sectionContent?.length });
           
           // Store original content if not already stored
           if (!originalSectionContent[instruction.target]) {

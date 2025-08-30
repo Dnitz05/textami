@@ -6,6 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import TopNavBar from '../../components/TopNavBar';
 import { useUser } from '@/hooks/useUser';
+import { log } from '@/lib/logger';
 
 interface KnowledgeDocument {
   id: string;

@@ -5,6 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 import { parseAIAnalysis, type ParsedAnalysis } from '../../../lib/ai-parser';
 import { ApiResponse, ExtractionResponse } from '../../../lib/types';
+import { log } from '@/lib/logger';
 
 // Initialize OpenAI with GPT-5
 const openai = new OpenAI({

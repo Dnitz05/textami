@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { distance } from 'fastest-levenshtein';
 import { ApiResponse, MappingResponse, TagMapping, ParsedTag, MappingSuggestion } from '../../../lib/types';
+import { log } from '@/lib/logger';
 
 interface MappingRequest {
   tags: ParsedTag[];

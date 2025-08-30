@@ -15,6 +15,7 @@ import {
   ExtractionResponse,
   ParsedTag 
 } from '../../lib/types';
+import { log } from '@/lib/logger';
 
 export default function AnalyzePage() {
   const router = useRouter();

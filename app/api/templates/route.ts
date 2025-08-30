@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ApiResponse } from '../../../lib/types';
+import { log } from '@/lib/logger';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -89,12 +90,12 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
             });
           }
         } catch (parseError) {
-          log.error('❌ Error parsing template file:', file.name, parseError);
+          log.error('❌ Error parsing template file:', { fileName: file.name, error: parseError });
         }
       }
     }
 
-    log.debug('✅ Retrieved templates:', templates.length, 'templates');
+    log.debug('✅ Retrieved templates:', { count: templates.length, type: 'templates' });
     
     return NextResponse.json({
       success: true,

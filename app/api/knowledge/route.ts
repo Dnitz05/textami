@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ApiResponse } from '../../../lib/types';
+import { log } from '@/lib/logger';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
       });
       
     log.debug('📁 Debug - Storage path searched:', `${userId}/`);
-    log.debug('📄 Debug - Files found:', files?.length || 0, files);
+    log.debug('📄 Debug - Files found:', { count: files?.length || 0, files });
 
     if (error) {
       log.error('❌ Error fetching knowledge base:', error);
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
         url: undefined // Will be populated when needed
       }));
 
-    log.debug('✅ Retrieved knowledge base:', documents.length, 'documents');
+    log.debug('✅ Retrieved knowledge base:', { count: documents.length, type: 'documents' });
     
     // DEBUG: Also check if there are documents in the root or other folders
     if (documents.length === 0) {
@@ -74,13 +75,13 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
       const { data: rootFiles } = await supabase.storage
         .from('knowledge-base')
         .list('', { limit: 50 });
-      log.debug('📁 Debug - Root folder contents:', rootFiles?.length || 0, rootFiles?.map(f => f.name));
+      log.debug('📁 Debug - Root folder contents:', { count: rootFiles?.length || 0, files: rootFiles?.map(f => f.name) });
       
       // Check anonymous folder too
       const { data: anonymousFiles } = await supabase.storage
         .from('knowledge-base')
         .list('anonymous/', { limit: 50 });
-      log.debug('📁 Debug - Anonymous folder contents:', anonymousFiles?.length || 0, anonymousFiles?.map(f => f.name));
+      log.debug('📁 Debug - Anonymous folder contents:', { count: anonymousFiles?.length || 0, files: anonymousFiles?.map(f => f.name) });
     }
     
     return NextResponse.json({

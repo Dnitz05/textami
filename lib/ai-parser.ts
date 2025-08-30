@@ -1,42 +1,21 @@
 // lib/ai-parser.ts
 // AI Response Parser and Normalizer for document analysis
 
-export type TagType = 'string' | 'date' | 'currency' | 'percent' | 'number' | 'id' | 'address';
+import { 
+  ParsedTag, 
+  ParsedTable, 
+  ParsedSection, 
+  DocumentSignature,
+  DocumentType 
+} from './types';
 
-export interface ParsedTag {
-  name: string;
-  slug: string; // stable identifier
-  example: string;
-  type: TagType;
-  confidence: number;
-  page?: number;
-  anchor?: string;
-  normalized?: string | number | boolean | Date | null; // normalized value based on type
-}
-
-export interface ParsedTable {
-  id: string;
-  title: string;
-  headers: string[];
-  rows: string[][];
-  normalized?: Record<string, string | number | boolean>;
-}
-
-export interface ParsedSection {
-  id: string;
-  title: string;
-  markdown: string;
-}
+export type TagType = DocumentType;
 
 export interface ParsedAnalysis {
   sections: ParsedSection[];
   tables: ParsedTable[];
   tags: ParsedTag[];
-  signatura?: {
-    nom: string;
-    carrec: string;
-    data_lloc: string;
-  };
+  signatura?: DocumentSignature;
 }
 
 /**
@@ -241,7 +220,7 @@ interface RawAnalysis {
   sections?: RawSection[];
   tables?: RawTable[];
   tags?: RawTag[];
-  signatura?: string;
+  signatura?: DocumentSignature;
 }
 
 /**

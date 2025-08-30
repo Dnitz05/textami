@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import PizZip from 'pizzip';
+import { log } from '@/lib/logger';
 
 // Helper function to infer placeholder type from name
 function inferPlaceholderType(text: string): string {

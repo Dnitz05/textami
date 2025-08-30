@@ -1,6 +1,7 @@
 // app/api/debug/env/route.ts
 // Temporary diagnostic endpoint to check environment variables
 import { NextRequest, NextResponse } from 'next/server';
+import { log } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {

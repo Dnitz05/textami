@@ -44,9 +44,9 @@ class Logger {
     const levelStr = LogLevel[level];
     
     if (data) {
-      log.debug(`[${timestamp}] ${levelStr}: ${message}`, data);
+      console.log(`[${timestamp}] ${levelStr}: ${message}`, data);
     } else {
-      log.debug(`[${timestamp}] ${levelStr}: ${message}`);
+      console.log(`[${timestamp}] ${levelStr}: ${message}`);
     }
   }
 
@@ -82,7 +82,7 @@ class Logger {
   // YOLO MODE: High visibility logging for aggressive development
   yolo(message: string, data?: any): void {
     if (this.isDevelopment) {
-      log.debug(`🚀 YOLO: ${message}`, data ? data : '');
+      console.log(`🚀 YOLO: ${message}`, data ? data : '');
     }
   }
 }

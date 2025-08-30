@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ApiResponse, UploadResponse } from '../../../lib/types';
+import { log } from '@/lib/logger';
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<UploadResponse>>> {
   log.debug('📤 PDF Upload Started');
