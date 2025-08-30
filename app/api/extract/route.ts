@@ -135,6 +135,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     let analysisResult: AIAnalysisResponse;
 
     // Real GPT-5 multimodal call using standard chat completions API
+    try {
       const completion = await openai.chat.completions.create({
         model: "gpt-5",
         messages: [
@@ -234,17 +235,158 @@ Return ONLY valid JSON with the literal transcription.`
         },
         max_tokens: 16000,
         temperature: 0.05
+    });
+
+    const aiResponse = completion.choices[0].message.content;
+    if (!aiResponse) {
+      throw new Error('Empty response from GPT-5');
+    }
+
+    log.debug('🤖 GPT-5 response length:', aiResponse.length);
+
+    try {
+      // Parse the JSON response
+      const parsedResponse = JSON.parse(aiResponse);
+      
+      analysisResult = {
+        markdown: parsedResponse.markdown || '',
+        json: {
+          sections: parsedResponse.json?.sections || [],
+          tables: parsedResponse.json?.tables || [],
+          tags: parsedResponse.json?.tags || [],
+          signatura: parsedResponse.json?.signatura
+        }
+      };
+
+      log.debug('✅ GPT-5 JSON parsed successfully:', {
+        markdownLength: analysisResult.markdown.length,
+        sectionsFound: analysisResult.json.sections.length,
+        tablesFound: analysisResult.json.tables.length,
+        tagsFound: analysisResult.json.tags.length
       });
 
-      const aiResponse = completion.choices[0].message.content;
-      if (!aiResponse) {
-        throw new Error('Empty response from GPT-5');
-      }
+    } catch (parseError) {
+      log.error('❌ Failed to parse GPT-5 JSON response:', parseError);
+      log.error('Raw response:', aiResponse.substring(0, 1000));
+      throw new Error('Invalid JSON response from GPT-5');
+    }
 
-      log.debug('🤖 GPT-5 response length:', aiResponse.length);
+    } catch (openaiError) {
+      log.error('❌ GPT-5 API Error:', openaiError);
+      
+      // Check if it's a model availability error
+      if (openaiError instanceof Error && openaiError.message.includes('gpt-5')) {
+        log.warn('⚠️ GPT-5 may not be available, falling back to GPT-4o');
+        
+        // Fallback to GPT-4o
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: `You are a LITERAL document transcriber. Your ONLY job is to copy text EXACTLY as it appears in any PDF document - nothing more, nothing less.
 
-      try {
-        // Parse the JSON response
+⚠️ CRITICAL: YOU ARE A PHOTOCOPIER, NOT AN INTERPRETER
+- Copy text character-by-character exactly as written
+- If you see a header alone, write only that header text
+- If you see standalone text, write only that text
+- NEVER combine separate text lines into one sentence
+- NEVER expand abbreviated content with information from elsewhere
+- NEVER interpret what a section "means" or what it "refers to"
+
+🔍 READING METHODOLOGY:
+1. Read the PDF line by line from top to bottom
+2. Write EXACTLY what each line says - word for word
+3. If a line has only 2 words, transcribe only those 2 words
+4. If there's a title at the top, include it as the first line
+5. Respect blank lines and spacing as they appear
+
+📊 TABLE RULES:
+- Copy each table cell EXACTLY as written
+- Empty cells = empty string ""
+- Never merge information from different cells
+- Preserve exact numbers and formatting
+
+📝 SECTION IDENTIFICATION:
+- Sections = text lines that look like headers/titles
+- Section content = ONLY the text immediately following, not interpretation
+- If any header is followed by blank space, the content is blank
+- If any header is followed by specific text, copy only that text
+
+🚨 ABSOLUTELY FORBIDDEN:
+- Combining information from different parts of document
+- Expanding short text with "context" from elsewhere  
+- Interpreting what headers "should" contain
+- Adding descriptive text not present in PDF
+- Making logical connections between separate elements
+
+JSON FORMAT:
+{
+  "markdown": "Line-by-line exact transcription including document title",
+  "json": {
+    "sections": [{"id": "literal-section-name", "title": "Exact Header Text", "markdown": "Only immediate following content"}],
+    "tables": [{"id": "table-1", "title": "Exact table title or description", "headers": ["exact", "headers"], "rows": [["exact", "cell", "content"]]}],
+    "tags": [{"name": "field_name", "example": "exact_text_as_appears", "type": "string|date|currency|percent|number|id|address", "confidence": 0.95, "page": 1}],
+    "signatura": {"nom": "Exact Name", "carrec": "Exact Title", "data_lloc": "Exact Location, Date"}
+  }
+}
+
+REMEMBER: You are a COPYING machine, not a thinking machine. Copy, don't create.`
+            },
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: `TRANSCRIBE this PDF document EXACTLY as a photocopier would reproduce it.
+
+🚨 CRITICAL INSTRUCTION:
+- Include the TITLE/HEADER at the very top of the document
+- If you see any header followed by brief text, write EXACTLY that - do NOT expand it
+- If you see standalone headers, copy them standalone - do NOT fill with content from elsewhere  
+- Read line-by-line and copy each line exactly as it appears
+
+TRANSCRIPTION PROCESS:
+1️⃣ START FROM THE TOP: Include document title/header as first line
+2️⃣ LINE-BY-LINE COPY: Write each line exactly as it appears
+3️⃣ NO INTERPRETATION: Never guess what a section "should" contain
+4️⃣ PRESERVE STRUCTURE: Keep headers separate from content
+
+EXAMPLES OF CORRECT BEHAVIOR:
+✅ If PDF shows a standalone header → Write only that header text
+✅ If PDF shows header on line 1, subtitle on line 2 → Write both lines separately  
+✅ If table cell shows a number → Write exactly that number with same formatting
+
+EXAMPLES OF FORBIDDEN BEHAVIOR:  
+❌ Combining separate text elements into longer sentences → This creates false content
+❌ Skipping any text because it seems obvious → All text must be included
+❌ Adding context or interpretation to headers → Only copy what's literally there
+
+Return ONLY valid JSON with the literal transcription.`
+                },
+                {
+                  type: "image_url",
+                  image_url: {
+                    url: pdfSignedUrl
+                  }
+                }
+              ]
+            }
+          ],
+          response_format: {
+            type: "json_object"
+          },
+          max_tokens: 16000,
+          temperature: 0.05
+        });
+
+        const aiResponse = completion.choices[0].message.content;
+        if (!aiResponse) {
+          throw new Error('Empty response from GPT-4o fallback');
+        }
+
+        log.debug('🤖 GPT-4o fallback response length:', aiResponse.length);
+
         const parsedResponse = JSON.parse(aiResponse);
         
         analysisResult = {
@@ -257,18 +399,11 @@ Return ONLY valid JSON with the literal transcription.`
           }
         };
 
-        log.debug('✅ GPT-5 JSON parsed successfully:', {
-          markdownLength: analysisResult.markdown.length,
-          sectionsFound: analysisResult.json.sections.length,
-          tablesFound: analysisResult.json.tables.length,
-          tagsFound: analysisResult.json.tags.length
-        });
-
-      } catch (parseError) {
-        log.error('❌ Failed to parse GPT-5 JSON response:', parseError);
-        log.error('Raw response:', aiResponse.substring(0, 1000));
-        throw new Error('Invalid JSON response from GPT-5');
+        log.debug('✅ GPT-4o fallback parsed successfully');
+      } else {
+        throw openaiError;
       }
+    }
 
     // Parse and normalize the AI analysis
     const parsedAnalysis: ParsedAnalysis = parseAIAnalysis(analysisResult.json);
