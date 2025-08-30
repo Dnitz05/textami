@@ -178,7 +178,6 @@ You are like a photocopier - reproduce EXACTLY what you see.`
               content: `TRANSCRIBE this DOCX content EXACTLY:\n\n${textContent}`
             }
           ],
-          temperature: 0.1,
           max_completion_tokens: 4000
         });
         
