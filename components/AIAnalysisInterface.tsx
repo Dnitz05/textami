@@ -417,17 +417,18 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                 </div>
               )}
 
-              <DocumentPreviewPanel 
-                title={analysisData.title}
-                markdown={currentMarkdown}
-                sections={analysisData.sections}
-                tables={analysisData.tables}
-                tags={analysisData.tags}
-                signatura={analysisData.signatura}
-                isProcessing={isExecutingInstruction}
-                fileName={fileName}
-                onSave={onSave}
-                onSaveAs={onSaveAs}
+              <div style={{paddingTop: '5rem'}}>
+                <DocumentPreviewPanel 
+                  title={analysisData.title}
+                  markdown={currentMarkdown}
+                  sections={analysisData.sections}
+                  tables={analysisData.tables}
+                  tags={analysisData.tags}
+                  signatura={analysisData.signatura}
+                  isProcessing={isExecutingInstruction}
+                  fileName={fileName}
+                  onSave={onSave}
+                  onSaveAs={onSaveAs}
                 onClose={onClose}
                 mappedTags={mappings}
                 onMappingRemove={handleMappingRemove}
@@ -435,6 +436,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                 onSectionEdit={handleSectionEdit}
                 modifiedSections={modifiedSections}
               />
+              </div>
             </div>
           </div>
         </div>
