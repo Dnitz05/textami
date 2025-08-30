@@ -86,12 +86,12 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
     if (typeof window !== 'undefined') {
       const storageKey = `instructions_${currentDocumentId}`;
       const savedInstructions = sessionStorage.getItem(storageKey);
-      log.debug('🔄 Loading instructions for document:', currentDocumentId, 'StorageKey:', storageKey);
+      log.debug('🔄 Loading instructions for document:', { currentDocumentId, storageKey });
       if (savedInstructions) {
         try {
           const parsed = JSON.parse(savedInstructions);
           setInstructions(parsed);
-          log.debug('📋 Loaded', parsed.length, 'instructions for document:', currentDocumentId);
+          log.debug('📋 Loaded instructions for document:', { count: parsed.length, currentDocumentId });
         } catch (error) {
           log.error('❌ Error loading saved instructions:', error);
           setInstructions([]); // Reset to empty if error
