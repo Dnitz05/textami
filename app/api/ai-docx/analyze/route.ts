@@ -179,7 +179,7 @@ You are like a photocopier - reproduce EXACTLY what you see.`
             }
           ],
           temperature: 0.1,
-          max_tokens: 4000
+          max_completion_tokens: 4000
         });
         
         const transcription = completion.choices[0]?.message?.content || '';
