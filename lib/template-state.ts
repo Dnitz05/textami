@@ -1,6 +1,8 @@
 // lib/template-state.ts
 // Template state management utilities
 
+import { log } from '@/lib/logger';
+
 export interface TemplateState {
   templateId: string;
   status: 'uploaded' | 'analyzed' | 'mapped' | 'frozen' | 'production';
