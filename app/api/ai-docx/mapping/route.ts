@@ -2,6 +2,7 @@
 // AI-First Intelligent Mapping Proposals
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { log } from '../../../lib/logger';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || 'dummy-key-for-build',
@@ -105,7 +106,7 @@ Focus on finding the best semantic and contextual matches. Be conservative with 
     const aiResponse = JSON.parse(completion.choices[0].message.content || '{}');
 
     // Process AI mapping proposals
-    const proposals: MappingProposal[] = (aiResponse.proposals || []).map(p: DocumentPlaceholder => ({
+    const proposals: MappingProposal[] = (aiResponse.proposals || []).map((p: any) => ({
       placeholder: p.placeholder || '',
       excelColumn: p.excelColumn || p.column || '',
       excelHeader: p.excelHeader || p.header || '',

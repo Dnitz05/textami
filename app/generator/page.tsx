@@ -163,6 +163,7 @@ export default function GeneratorPage() {
       const result = await response.json();
       
       if (result.success && result.data) {
+        setTemplateInfo({
           templateId: result.data.templateId,
           fileName: result.data.fileName,
           fileType: isPDF ? 'PDF' : 'DOCX',
