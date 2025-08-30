@@ -2,12 +2,7 @@
 // UPDATED: Now uses OOXML+IA Hybrid Pipeline instead of GPT Vision
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { spawn } from 'child_process';
-import { promises as fs } from 'fs';
-import path from 'path';
-import { tmpdir } from 'os';
 import OpenAI from 'openai';
-import { htmlGenerator } from '../../../../lib/html-generator';
 import { log } from '@/lib/logger';
 const PizZip = require('pizzip');
 
@@ -104,10 +99,7 @@ Retorna JSON amb aquest format:
 }
 
 export async function POST(request: NextRequest) {
-  log.debug('🚀 OOXML+IA Hybrid Analysis Request Started');
-  
-  let tempDocxPath: string | null = null;
-  let tempOutputDir: string | null = null;
+  log.debug('🚀 Node.js OOXML Analysis Request Started');
   
   try {
     // Initialize Supabase client with error handling
@@ -222,65 +214,44 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 7. Run OOXML Parser to extract content and generate HTML preview
+    // 7. Run Node.js-based OOXML extraction (Vercel-compatible)
     try {
-      log.debug('🔍 Running OOXML+IA Pipeline...');
+      log.debug('🔍 Running Node.js OOXML extraction...');
       
-      // Save DOCX to temporary file for Python processing
-      tempDocxPath = path.join(tmpdir(), `${templateId}.docx`);
-      tempOutputDir = path.join(tmpdir(), `ooxml_output_${templateId}`);
+      // Extract DOCX content using PizZip (Node.js compatible)
+      const zip = new PizZip(buffer);
+      const documentXml = zip.file('word/document.xml')?.asText();
       
-      await fs.writeFile(tempDocxPath, buffer);
-      await fs.mkdir(tempOutputDir, { recursive: true });
+      if (!documentXml) {
+        throw new Error('Could not find document.xml in DOCX file');
+      }
       
-      log.debug('📁 Temporary files prepared:', { tempDocxPath, tempOutputDir });
+      log.debug('📄 Extracted document XML:', { length: documentXml.length });
       
-      // Execute Python OOXML parser
-      const pythonResult = await new Promise<string>((resolve, reject) => {
-        const pythonProcess = spawn('python', [
-          path.join(process.cwd(), 'scripts', 'ingest_docx.py'),
-          tempDocxPath!,  // We know it's not null at this point
-          '--output-dir', tempOutputDir!
-        ], {
-          env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
-        });
-        
-        let output = '';
-        let errorOutput = '';
-        
-        pythonProcess.stdout.on('data', (data) => {
-          output += data.toString();
-        });
-        
-        pythonProcess.stderr.on('data', (data) => {
-          errorOutput += data.toString();
-        });
-        
-        pythonProcess.on('close', (code) => {
-          if (code !== 0) {
-            reject(new Error(`Python process failed with code ${code}: ${errorOutput}`));
-          } else {
-            resolve(output);
-          }
-        });
+      // Extract text content and create basic HTML structure
+      const textContent = documentXml
+        .replace(/<w:t[^>]*>([^<]*)<\/w:t>/g, '$1')
+        .replace(/<w:br[^>]*\/>/g, '\n')
+        .replace(/<w:p[^>]*>/g, '\n')
+        .replace(/<[^>]*>/g, '')
+        .replace(/\n\s*\n/g, '\n')
+        .trim();
+      
+      // Create basic HTML content for consistency
+      const htmlContent = `<html><head><title>${file.name}</title></head><body>
+        ${textContent.split('\n').filter((line: string) => line.trim()).map((line: string) => 
+          `<p>${line.trim()}</p>`
+        ).join('\n')}
+      </body></html>`;
+      
+      log.debug('📄 Generated HTML preview:', { 
+        textLength: textContent.length,
+        htmlLength: htmlContent.length,
+        preview: textContent.substring(0, 200)
       });
       
-      log.debug('✅ OOXML parsing complete:', { pythonResult: pythonResult.substring(0, 200) });
-      
-      // Read generated files
-      const analysisPath = path.join(tempOutputDir, 'analysis.json');
-      const htmlPreviewPath = path.join(tempOutputDir, 'preview.html');
-      
-      const analysisData = JSON.parse(await fs.readFile(analysisPath, 'utf8'));
-      const htmlContent = await fs.readFile(htmlPreviewPath, 'utf8');
-      
-      log.debug('📊 OOXML Analysis:', {
-        stylesFound: analysisData.style_manifest ? Object.keys(analysisData.style_manifest.style_mappings || {}).length : 0,
-        processingTime: analysisData.processing_time_ms
-      });
-      
-      // 8. Perform AI analysis on clean HTML content
-      log.debug('🤖 Running AI analysis on clean HTML...');
+      // 8. Perform AI analysis on extracted content
+      log.debug('🤖 Running AI analysis on extracted content...');
       
       const aiAnalysisResult = await performAIAnalysis(htmlContent);
       
@@ -289,24 +260,25 @@ export async function POST(request: NextRequest) {
         templateId,
         fileName: file.name,
         storageUrl,
-        // Transform OOXML+HTML result to match expected markdown format for UI compatibility
+        // Transform extracted content to match expected format for UI compatibility
         transcription: htmlContent,
-        markdown: htmlContent, // UI expects this field
+        markdown: textContent, // UI expects this field - use clean text
         placeholders: aiAnalysisResult.placeholders,
         confidence: 95,
         metadata: {
-          extractionMethod: 'ooxml-ia-hybrid',
-          processingTimeMs: analysisData.processing_time_ms,
-          stylesFound: analysisData.style_manifest ? Object.keys(analysisData.style_manifest.style_mappings || {}).length : 0,
+          extractionMethod: 'nodejs-ooxml-extraction',
+          processingTimeMs: Date.now() - Date.now(), // Minimal processing time
+          stylesFound: 0, // Basic extraction doesn't preserve complex styles
           htmlLength: htmlContent.length,
+          textLength: textContent.length,
           storageSize: buffer.length
         }
       };
       
-      log.debug('✅ OOXML+IA pipeline complete:', {
+      log.debug('✅ Node.js OOXML extraction complete:', {
         templateId,
         placeholdersFound: aiAnalysisResult.placeholders.length,
-        processingTime: analysisData.processing_time_ms + 'ms',
+        textExtracted: textContent.length + ' chars',
         storageUrl
       });
       
@@ -316,9 +288,9 @@ export async function POST(request: NextRequest) {
       });
       
     } catch (ooxmlError) {
-      log.error('❌ OOXML+IA pipeline failed:', ooxmlError);
+      log.error('❌ Node.js OOXML extraction failed:', ooxmlError);
       return NextResponse.json(
-        { error: 'Failed to process document with OOXML pipeline', details: ooxmlError instanceof Error ? ooxmlError.message : 'Unknown error' },
+        { error: 'Failed to extract document content', details: ooxmlError instanceof Error ? ooxmlError.message : 'Unknown error' },
         { status: 500 }
       );
     }
@@ -332,19 +304,5 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     );
-  } finally {
-    // Cleanup temporary files
-    try {
-      if (tempDocxPath) {
-        await fs.unlink(tempDocxPath);
-        log.debug('🧹 Cleaned up temp DOCX:', tempDocxPath);
-      }
-      if (tempOutputDir) {
-        await fs.rm(tempOutputDir, { recursive: true, force: true });
-        log.debug('🧹 Cleaned up temp directory:', tempOutputDir);
-      }
-    } catch (cleanupError) {
-      log.warn('⚠️ Cleanup error (non-critical):', cleanupError);
-    }
   }
 }

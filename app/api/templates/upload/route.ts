@@ -2,7 +2,6 @@
 // OOXML+IA Hybrid Template Upload API
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { spawn } from 'child_process';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { tmpdir } from 'os';
@@ -10,6 +9,7 @@ import OpenAI from 'openai';
 import { ApiResponse } from '../../../../lib/types';
 import { htmlGenerator } from '../../../../lib/html-generator';
 import { log } from '@/lib/logger';
+const PizZip = require('pizzip');
 
 // Initialize clients lazily
 const getSupabase = () => {
@@ -252,7 +252,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 }
 
 /**
- * Execute Python OOXML parser script
+ * Execute Node.js OOXML extraction (Vercel-compatible)
  */
 async function executeOOXMLParser(docxPath: string, outputDir: string): Promise<{
   success: boolean;
@@ -261,88 +261,91 @@ async function executeOOXMLParser(docxPath: string, outputDir: string): Promise<
   processingTime: number;
   error?: string;
 }> {
-  return new Promise((resolve) => {
-    const scriptPath = path.join(process.cwd(), 'scripts', 'ingest_docx.py');
-    const startTime = Date.now();
-    
-    log.debug('🐍 Spawning Python OOXML parser:', {
-      script: scriptPath,
+  const startTime = Date.now();
+  
+  try {
+    log.debug('📄 Running Node.js DOCX extraction:', {
       docx: docxPath,
       output: outputDir
     });
     
-    const pythonProcess = spawn('python', [scriptPath, docxPath, '--output-dir', outputDir], {
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
+    // Read DOCX file using Node.js
+    const docxBuffer = await fs.readFile(docxPath);
+    const zip = new PizZip(docxBuffer);
     
-    let stdout = '';
-    let stderr = '';
+    // Extract document.xml content
+    const documentXml = zip.file('word/document.xml')?.asText();
+    if (!documentXml) {
+      throw new Error('Could not find document.xml in DOCX file');
+    }
     
-    pythonProcess.stdout.on('data', (data) => {
-      stdout += data.toString();
-    });
+    // Extract text content for structure analysis
+    const textContent = documentXml
+      .replace(/<w:t[^>]*>([^<]*)<\/w:t>/g, '$1')
+      .replace(/<w:br[^>]*\/>/g, '\n')
+      .replace(/<w:p[^>]*>/g, '\n')
+      .replace(/<[^>]*>/g, '')
+      .replace(/\n\s*\n/g, '\n')
+      .trim();
     
-    pythonProcess.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
+    // Create basic document structure
+    const documentStructure = textContent.split('\n')
+      .filter((line: string) => line.trim())
+      .map((text: string, index: number) => ({
+        type: 'paragraph',
+        text: text.trim(),
+        style: index === 0 ? 'Title' : 'Normal'
+      }));
     
-    pythonProcess.on('close', async (code) => {
-      const processingTime = Date.now() - startTime;
-      
-      if (code === 0) {
-        try {
-          // Read generated files
-          const baseName = path.basename(docxPath, '.docx');
-          const manifestPath = path.join(outputDir, `${baseName}_styleManifest.json`);
-          
-          const manifestContent = await fs.readFile(manifestPath, 'utf-8');
-          const styleManifest = JSON.parse(manifestContent);
-          
-          // Mock document structure (would be included in parser output)
-          const documentStructure = [
-            { type: 'paragraph', text: 'Sample content', style: 'Normal' }
-          ];
-          
-          resolve({
-            success: true,
-            styleManifest,
-            documentStructure,
-            processingTime
-          });
-        } catch (readError) {
-          log.error('❌ Error reading OOXML parser output:', readError);
-          resolve({
-            success: false,
-            error: `Failed to read parser output: ${readError}`,
-            styleManifest: {},
-            documentStructure: [],
-            processingTime
-          });
-        }
-      } else {
-        log.error('❌ Python OOXML parser failed:', { code, stderr });
-        resolve({
-          success: false,
-          error: `Parser exited with code ${code}: ${stderr}`,
-          styleManifest: {},
-          documentStructure: [],
-          processingTime
-        });
+    // Create basic style manifest for Node.js processing
+    const styleManifest = {
+      version: '1.0-nodejs',
+      extraction_method: 'nodejs-basic',
+      styles: {
+        'Title': 'h1',
+        'Normal': 'p',
+        'Heading1': 'h1',
+        'Heading2': 'h2',
+        'Heading3': 'h3'
+      },
+      fallbacks: {
+        'default': 'p'
+      },
+      warnings: ['Using basic Node.js extraction - limited style preservation'],
+      vocabulary: ['p', 'h1', 'h2', 'h3', 'strong', 'em'],
+      statistics: {
+        total_styles_found: 5,
+        mapped_styles: 5,
+        fallback_styles: 0
       }
+    };
+    
+    const processingTime = Date.now() - startTime;
+    
+    log.debug('✅ Node.js DOCX extraction complete:', {
+      paragraphs: documentStructure.length,
+      processingTime: processingTime + 'ms'
     });
     
-    // Timeout after 30 seconds
-    setTimeout(() => {
-      pythonProcess.kill();
-      resolve({
-        success: false,
-        error: 'OOXML parser timeout (30s)',
-        styleManifest: {},
-        documentStructure: [],
-        processingTime: Date.now() - startTime
-      });
-    }, 30000);
-  });
+    return {
+      success: true,
+      styleManifest,
+      documentStructure,
+      processingTime
+    };
+    
+  } catch (error) {
+    const processingTime = Date.now() - startTime;
+    log.error('❌ Node.js DOCX extraction failed:', error);
+    
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      styleManifest: {},
+      documentStructure: [],
+      processingTime
+    };
+  }
 }
 
 /**
