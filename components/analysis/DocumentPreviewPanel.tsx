@@ -691,80 +691,11 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
             
             {/* Document Content */}
             <div>
-              {hasSectionModifications || sections.length > 0 ? (
-                // Show sections with selective modifications
-                sections.map((section, index) => {
-                  const sectionTitle = section.title || `Section ${index + 1}`;
-                  const sectionId = section.id || section.title || `section_${index}`;
-                  const isModified = modifiedSections[sectionId];
-                  const sectionContent = isModified ? modifiedSections[sectionId] : section.markdown;
-                  
-                  return (
-                    <div 
-                      key={section.id || index} 
-                      className="document-section"
-                    >
-                      {/* Section Action Buttons */}
-                      <div className="section-actions">
-                        {isModified && (
-                          <div className="text-xs text-blue-600 font-medium flex items-center mr-2">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full mr-1"></div>
-                            Modificat per IA
-                          </div>
-                        )}
-                        <button
-                          className="section-action-btn btn-edit"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSectionEdit?.(section, index);
-                          }}
-                          title="Editar aquesta secció"
-                        >
-                          ✏️ Editar
-                        </button>
-                        <button
-                          className="section-action-btn btn-instruction"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSectionClick?.(section, index);
-                          }}
-                          title="Crear instrucció per aquesta secció"
-                        >
-                          🤖 Instrucció
-                        </button>
-                      </div>
-                      
-                      {section.title && (
-                        <h2>{section.title}</h2>
-                      )}
-                      <div 
-                        className="document-content"
-                        dangerouslySetInnerHTML={{ __html: highlightTags(sectionContent) }}
-                      />
-                    </div>
-                  );
-                })
-              ) : isContentModified ? (
-                // Show modified content for global changes
-                <div className="document-section">
-                  <div className="section-actions">
-                    <div className="text-xs text-blue-600 font-medium flex items-center">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
-                      Contingut modificat per IA
-                    </div>
-                  </div>
-                  <div 
-                    className="document-content"
-                    dangerouslySetInnerHTML={{ __html: highlightTags(markdown) }}
-                  />
-                </div>
-              ) : (
-                // Show original clean content
-                <div 
-                  className="document-content"
-                  dangerouslySetInnerHTML={{ __html: highlightTags(cleanedText) }}
-                />
-              )}
+              {/* Always show the structured HTML content from markdown field */}
+              <div 
+                className="document-content"
+                dangerouslySetInnerHTML={{ __html: highlightTags(markdown) }}
+              />
             </div>
 
             {/* Tables */}

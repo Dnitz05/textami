@@ -230,12 +230,12 @@ export default function AnalyzePage() {
     const analysisData: AnalysisData = {
       templateId: result.templateId,
       title: result.fileName,
-      markdown: result.markdown || result.transcription || `# ${result.fileName}\n\nDocument DOCX transcrit amb GPT-5.`,
-      sections: [],
-      tables: [],
+      markdown: result.transcription || result.markdown || `# ${result.fileName}\n\nDocument DOCX transcrit amb GPT-5.`, // Use structured HTML
+      sections: result.sections || [],
+      tables: result.tables || [],
       tags: [], // Legacy format - kept for backwards compatibility
       placeholders: result.placeholders || [], // New OOXML+IA format
-      signatura: undefined
+      signatura: result.signatura || undefined
     };
 
     setAnalysisData(analysisData);
