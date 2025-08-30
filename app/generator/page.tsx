@@ -174,13 +174,13 @@ export default function GeneratorPage() {
             message: 'Analysis completed successfully'
           },
           aiAnalysis: {
-            placeholders: result.data.placeholders || [],
-            transcription: `DOCX analyzed: ${result.data.placeholders?.length || 0} placeholders found`,
+            placeholders: [], // Smart mapping will generate these
+            transcription: result.data.transcription || result.data.markdown || 'DOCX transcribed with GPT-5',
             htmlPreview: `<div class="p-8 text-center">
               <div class="text-4xl mb-4">📄</div>
               <h3 class="text-lg font-semibold mb-2">${result.data.fileName}</h3>
-              <p class="text-gray-600">DOCX analyzed successfully.</p>
-              <p class="text-sm text-blue-600 mt-2">${result.data.placeholders?.length || 0} placeholders detected.</p>
+              <p class="text-gray-600">DOCX transcribed successfully with GPT-5.</p>
+              <p class="text-sm text-blue-600 mt-2">Ready for smart mapping.</p>
             </div>`
           },
           error: null
@@ -529,7 +529,7 @@ export default function GeneratorPage() {
                       {Math.round(aiState.template.size / 1024)} KB
                     </div>
                     <div className="text-xs text-blue-600">
-                      🎯 {aiState.aiAnalysis?.placeholders?.length ?? 0} placeholders ready
+                      📄 Transcription ready for smart mapping
                     </div>
                     <div className="text-xs text-green-600">
                       Preview available above ↑

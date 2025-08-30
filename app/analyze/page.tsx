@@ -230,14 +230,10 @@ export default function AnalyzePage() {
     const analysisData: AnalysisData = {
       templateId: result.templateId,
       title: result.fileName,
-      markdown: `# ${result.fileName}\n\n**Placeholders detectats:** ${result.placeholders.length}\n\nAquest document DOCX té ${result.placeholders.length} placeholders detectats per a personalització.`,
+      markdown: result.markdown || result.transcription || `# ${result.fileName}\n\nDocument DOCX transcrit amb GPT-5.`,
       sections: [],
       tables: [],
-      tags: result.placeholders.map((p: any) => ({
-        text: p.text,
-        type: p.type,
-        confidence: p.confidence
-      })),
+      tags: [], // Smart mapping will generate these later
       signatura: undefined
     };
 

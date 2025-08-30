@@ -2,22 +2,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import PizZip from 'pizzip';
+import OpenAI from 'openai';
 import { log } from '@/lib/logger';
 
-// Helper function to infer placeholder type from name
-function inferPlaceholderType(text: string): string {
-  const lowerText = text.toLowerCase();
-  
-  if (lowerText.includes('email') || lowerText.includes('mail')) return 'email';
-  if (lowerText.includes('phone') || lowerText.includes('tel')) return 'phone';
-  if (lowerText.includes('date') || lowerText.includes('data')) return 'date';
-  if (lowerText.includes('amount') || lowerText.includes('import') || lowerText.includes('price')) return 'number';
-  if (lowerText.includes('address') || lowerText.includes('direccio')) return 'address';
-  
-  return 'string';
-}
+// Initialize OpenAI client lazily
+const getOpenAI = () => {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY not configured');
+  }
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+};
 
-// NO MORE HTML CONVERSION - Working with binary DOCX only
+// GPT-5 DOCX Transcription - Faithful document reproduction
 
 export async function POST(request: NextRequest) {
   log.debug('📄 DOCX Analysis Request Started');
@@ -135,17 +133,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 7. Extract ONLY placeholders from DOCX (NO text conversion)
-    let extractedPlaceholders: Array<{
-      text: string;
-      type: string;
-      confidence: number;
-      originalMatch: string;
-      position: number;
-    }> = [];
-    
+    // 7. Extract text content from DOCX for GPT-5 transcription
     try {
-      log.debug('🔍 Analyzing DOCX for placeholders (preserving binary format)...');
+      log.debug('🔍 Analyzing DOCX content for GPT-5 transcription...');
       
       // Use PizZip to read DOCX structure
       const zip = new PizZip(buffer);
@@ -154,75 +144,89 @@ export async function POST(request: NextRequest) {
       if (documentXml) {
         log.debug('📄 Scanning XML for placeholder patterns...');
         
-        // Extract only text content for placeholder detection (don't convert for display)
+        // Extract text content for GPT-5 transcription
         const textContent = documentXml
           .replace(/<w:t[^>]*>([^<]*)<\/w:t>/g, '$1')
           .replace(/<[^>]*>/g, '')
           .trim();
           
-        log.debug('🔍 Text content length:', textContent.length);
+        log.debug('📄 Text content extracted:', { length: textContent.length, preview: textContent.substring(0, 200) });
         
-        // Detect placeholders - focus on {{placeholder}} format for docxtemplater
-        const placeholderPatterns = [
-          /\{\{([^}]+)\}\}/g, // {{placeholder}} - primary format for docxtemplater
-          /\{([^}]+)\}/g,     // {placeholder} - alternative format
-        ];
+        // 8. Call GPT-5 to transcribe the DOCX content faithfully
+        log.debug('🤖 Calling GPT-5 for faithful DOCX transcription...');
         
-        placeholderPatterns.forEach((pattern, index) => {
-          log.debug(`🔍 Testing pattern ${index + 1}: ${pattern.source}`);
-          let match;
-          let patternMatches = 0;
-          while ((match = pattern.exec(textContent)) !== null) {
-            patternMatches++;
-            const text = match[1].trim();
-            log.debug(`✅ Found placeholder: "${match[0]}" -> "${text}"`);
-            if (text && !extractedPlaceholders.some(p => p.text === text)) {
-              extractedPlaceholders.push({
-                text: text,
-                type: inferPlaceholderType(text),
-                confidence: 95,
-                originalMatch: match[0],
-                position: match.index || 0
-              });
+        const openai = getOpenAI();
+        const completion = await openai.chat.completions.create({
+          model: "gpt-5",
+          messages: [
+            {
+              role: "system",
+              content: `You are a LITERAL document transcriber. Your ONLY job is to recreate the original document structure EXACTLY as it appears.
+
+RULES:
+1. Copy text line by line, preserving EXACT formatting
+2. Maintain original spacing, line breaks, and structure
+3. Do NOT add explanations, interpretations, or expansions
+4. Do NOT omit any content - transcribe everything
+5. Preserve tables, headers, lists exactly as shown
+6. Output in clean markdown format
+
+You are like a photocopier - reproduce EXACTLY what you see.`
+            },
+            {
+              role: "user",
+              content: `TRANSCRIBE this DOCX content EXACTLY:\n\n${textContent}`
             }
-          }
-          log.debug(`📊 Pattern ${index + 1} found ${patternMatches} matches`);
+          ],
+          temperature: 0.1,
+          max_tokens: 4000
         });
+        
+        const transcription = completion.choices[0]?.message?.content || '';
+        log.debug('✅ GPT-5 transcription complete:', { length: transcription.length });
+        
+        // Return transcribed content instead of just placeholders
+        const analysisResult = {
+          templateId,
+          fileName: file.name,
+          storageUrl,
+          transcription,
+          markdown: transcription, // For compatibility with existing interface
+          placeholders: [], // Will be generated by smart mapping later
+          confidence: 95,
+          metadata: {
+            transcriptionLength: transcription.length,
+            storageSize: buffer.length,
+            extractionMethod: 'gpt-5-transcription',
+            requiresSmartMapping: true
+          }
+        };
+        
+        log.debug('✅ GPT-5 transcription analysis complete:', {
+          templateId,
+          transcriptionLength: transcription.length,
+          storageUrl
+        });
+        
+        return NextResponse.json({
+          success: true,
+          data: analysisResult
+        });
+      } else {
+        // No document.xml found
+        log.error('❌ Could not find document.xml in DOCX file');
+        return NextResponse.json(
+          { error: 'Invalid DOCX file - missing document.xml' },
+          { status: 400 }
+        );
       }
     } catch (extractError) {
-      log.error('❌ Placeholder extraction failed:', extractError);
+      log.error('❌ DOCX transcription failed:', extractError);
       return NextResponse.json(
-        { error: 'Failed to analyze DOCX structure', details: extractError instanceof Error ? extractError.message : 'Unknown error' },
+        { error: 'Failed to transcribe DOCX content', details: extractError instanceof Error ? extractError.message : 'Unknown error' },
         { status: 500 }
       );
     }
-    
-    // Return ONLY placeholder analysis - NO transcription or HTML
-    const analysisResult = {
-      templateId,
-      fileName: file.name,
-      storageUrl, // Essential for binary retrieval
-      placeholders: extractedPlaceholders,
-      confidence: extractedPlaceholders.length > 0 ? 95 : 0,
-      metadata: {
-        placeholderCount: extractedPlaceholders.length,
-        storageSize: buffer.length,
-        extractionMethod: 'pizzip-binary',
-        requiresDocxtemplater: true
-      }
-    };
-
-    log.debug('✅ Binary analysis complete:', {
-      templateId,
-      placeholders: analysisResult.placeholders.length,
-      storageUrl: analysisResult.storageUrl
-    });
-
-    // 8. Return binary-first response
-    return NextResponse.json({
-      success: true,
-      data: analysisResult
-    });
 
   } catch (error) {
     log.error('❌ Unexpected error in analyze:', error);
