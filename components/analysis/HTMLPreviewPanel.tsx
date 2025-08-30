@@ -132,7 +132,7 @@ export function HTMLPreviewPanel({
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">{'{{'}}</span>
+                  <span className="text-sm text-gray-500">{'{{'}</span>
                   <input
                     type="text"
                     value={placeholder.variable}
@@ -140,14 +140,13 @@ export function HTMLPreviewPanel({
                     className="px-2 py-1 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="nom_variable"
                   />
-                  <span className="text-sm text-gray-500">{'}}'}</span>
+                  <span className="text-sm text-gray-500">{'}'}</span>
                 </div>
                 
                 <Button
-                  variant="outline"
-                  size="sm"
+                  variant="secondary"
                   onClick={() => togglePlaceholder(index)}
-                  className="text-red-600 hover:text-red-800"
+                  className="text-red-600 hover:text-red-800 text-sm px-2 py-1"
                 >
                   Eliminar
                 </Button>
@@ -171,7 +170,7 @@ export function HTMLPreviewPanel({
                 <span className="ml-1 px-2 py-1 bg-red-100 text-red-800 rounded text-xs">&lt;60% Baixa</span>
               </div>
               
-              <Button variant="outline" size="sm">
+              <Button variant="secondary" className="text-sm px-3 py-1">
                 + Afegir Variable Manual
               </Button>
             </div>

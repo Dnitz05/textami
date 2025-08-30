@@ -520,7 +520,13 @@ function extractBasicPatterns(textContent: string): Array<{
   context: string;
   type: 'text' | 'date' | 'number' | 'currency' | 'email' | 'other';
 }> {
-  const patterns = [];
+  const patterns: Array<{
+    text: string;
+    variable: string;
+    confidence: number;
+    context: string;
+    type: 'text' | 'date' | 'number' | 'currency' | 'email' | 'other';
+  }> = [];
   
   // Email pattern
   const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;

@@ -52,9 +52,9 @@ interface GenerationResult {
 }
 
 export class SemanticHTMLGenerator {
-  private nunjucksEnv: nunjucks.Environment;
-  private templateConfig: any;
-  private htmlVocabulary: Record<string, any>;
+  private nunjucksEnv!: nunjucks.Environment;
+  private templateConfig!: any;
+  private htmlVocabulary!: Record<string, any>;
   
   constructor() {
     this.initializeNunjucks();

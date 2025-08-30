@@ -267,7 +267,7 @@ export function OOXMLUploadInterface({ onUploadComplete }: OOXMLUploadInterfaceP
 
           {/* Actions */}
           <div className="flex justify-between">
-            <Button variant="outline" onClick={resetUpload}>
+            <Button variant="secondary" onClick={resetUpload}>
               ← Tornar a començar
             </Button>
             <Button onClick={handleSaveTemplate}>
@@ -301,7 +301,7 @@ export function OOXMLUploadInterface({ onUploadComplete }: OOXMLUploadInterfaceP
             </div>
 
             <div className="flex gap-4 justify-center">
-              <Button onClick={resetUpload} variant="outline">
+              <Button onClick={resetUpload} variant="secondary">
                 Crear Nova Plantilla
               </Button>
               <Button onClick={() => window.location.href = '/generator'}>

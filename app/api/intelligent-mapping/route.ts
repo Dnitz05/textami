@@ -258,7 +258,7 @@ RESPOSTA OBLIGATÒRIA EN JSON:
     log.debug('🤖 AI mapping response length:', aiResponse.length);
     log.debug('🧠 Raw AI response:', aiResponse);
     log.debug('🔍 DEBUGGING ESPECÍFIC - Headers esperats:', excelHeaders);
-    log.debug('🔍 DEBUGGING ESPECÍFIC - Tags disponibles:', tags.map(t => `${t.name} (${t.slug}) - exemple: ${t.example}`));
+    log.debug('🔍 DEBUGGING ESPECÍFIC - Tags disponibles:', normalizedTags.map(t => `${t.name} (${t.slug}) - exemple: ${t.example}`));
 
     let parsedResponse;
     try {

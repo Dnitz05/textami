@@ -239,8 +239,8 @@ export async function POST(request: NextRequest) {
       const pythonResult = await new Promise<string>((resolve, reject) => {
         const pythonProcess = spawn('python', [
           path.join(process.cwd(), 'scripts', 'ingest_docx.py'),
-          tempDocxPath,
-          '--output-dir', tempOutputDir
+          tempDocxPath!,  // We know it's not null at this point
+          '--output-dir', tempOutputDir!
         ], {
           env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
         });
