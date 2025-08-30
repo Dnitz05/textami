@@ -43,6 +43,13 @@ export interface AnalysisData {
   sections: ParsedSection[];
   tables: ParsedTable[];
   tags: ParsedTag[];
+  placeholders?: Array<{  // New OOXML+IA format
+    text: string;
+    variable: string;
+    confidence: number;
+    context: string;
+    type: 'text' | 'date' | 'number' | 'currency' | 'email' | 'other';
+  }>;
   signatura?: DocumentSignature;
 }
 

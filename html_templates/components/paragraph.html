@@ -1,0 +1,18 @@
+{# 
+  Component: Semantic Paragraphs
+  Usage: {% include 'components/paragraph.html' with { content: text, style: 'BodyText' } %}
+#}
+
+{% if style == 'BodyText' %}
+<p class="BodyText">{{ content }}</p>
+
+{% elif style == 'Normal' %}
+<p>{{ content }}</p>
+
+{% elif style == 'Quote' %}
+<blockquote>{{ content }}</blockquote>
+
+{% else %}
+{# Fallback per estils desconeguts #}
+<p class="{{ style | default('') }}">{{ content }}</p>
+{% endif %}

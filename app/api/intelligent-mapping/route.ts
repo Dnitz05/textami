@@ -16,7 +16,14 @@ const getOpenAI = () => {
 };
 
 interface IntelligentMappingRequest {
-  tags: ParsedTag[];
+  tags?: ParsedTag[]; // Legacy format for backwards compatibility
+  placeholders?: Array<{  // New OOXML+IA format
+    text: string;
+    variable: string;
+    confidence: number;
+    context: string;
+    type: 'text' | 'date' | 'number' | 'currency' | 'email' | 'other';
+  }>;
   excelHeaders: string[];
   documentContent?: string; // Optional context from document
 }
@@ -36,6 +43,25 @@ interface IntelligentMappingResponse {
   totalTags: number;
   mappedTags: number;
   mappingCoverage: number;
+}
+
+// Helper function to convert OOXML+IA placeholder types to DocumentType
+function mapPlaceholderTypeToDocumentType(placeholderType: 'text' | 'date' | 'number' | 'currency' | 'email' | 'other'): 'string' | 'date' | 'currency' | 'percent' | 'number' | 'id' | 'address' {
+  switch (placeholderType) {
+    case 'date':
+      return 'date';
+    case 'currency':
+      return 'currency';
+    case 'number':
+      return 'number';
+    case 'email':
+      return 'id'; // Email is treated as ID type
+    case 'other':
+      return 'address'; // Other types mapped to address for flexibility
+    case 'text':
+    default:
+      return 'string';
+  }
 }
 
 // Simple string similarity function (Levenshtein-based)
@@ -75,18 +101,46 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
   log.debug('🧠 Intelligent AI Mapping Request Started');
   
   try {
-    const { tags, excelHeaders, documentContent = '' }: IntelligentMappingRequest = await request.json();
+    const { tags, placeholders, excelHeaders, documentContent = '' }: IntelligentMappingRequest = await request.json();
+    
+    // Convert placeholders to ParsedTag format if using new OOXML+IA pipeline
+    let normalizedTags: ParsedTag[] = [];
+    
+    if (placeholders && Array.isArray(placeholders) && placeholders.length > 0) {
+      // New OOXML+IA format - convert placeholders to ParsedTag
+      normalizedTags = placeholders.map((placeholder, index) => ({
+        name: placeholder.variable || placeholder.text,
+        slug: placeholder.variable.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, ''),
+        example: placeholder.text,
+        type: mapPlaceholderTypeToDocumentType(placeholder.type),
+        confidence: placeholder.confidence / 100, // Convert percentage to 0-1 scale
+        page: 1,
+        anchor: placeholder.context || '',
+        normalized: null
+      }));
+      
+      log.debug('🔄 Converted placeholders to ParsedTag format:', {
+        placeholdersCount: placeholders.length,
+        convertedTagsCount: normalizedTags.length
+      });
+    } else if (tags && Array.isArray(tags) && tags.length > 0) {
+      // Legacy format - use as is
+      normalizedTags = tags;
+      log.debug('📜 Using legacy ParsedTag format:', {
+        tagsCount: tags.length
+      });
+    }
     
     log.debug('🔍 AI Mapping request:', {
-      tagsCount: tags.length,
+      normalizedTagsCount: normalizedTags.length,
       headersCount: excelHeaders.length,
       hasContext: documentContent.length > 0,
       headers: excelHeaders
     });
 
-    if (!tags || !Array.isArray(tags) || tags.length === 0) {
+    if (!normalizedTags || normalizedTags.length === 0) {
       return NextResponse.json(
-        { success: false, error: 'No tags provided for mapping' },
+        { success: false, error: 'No tags or placeholders provided for mapping' },
         { status: 400 }
       );
     }
@@ -110,7 +164,7 @@ CAPÇALERES EXCEL DISPONIBLES:
 ${excelHeaders.map((header, i) => `${i + 1}. "${header}"`).join('\n')}
 
 TAGS DETECTATS EN EL DOCUMENT:
-${tags.map(tag => `- ${tag.name} (slug: ${tag.slug})
+${normalizedTags.map(tag => `- ${tag.name} (slug: ${tag.slug})
   Exemple detectat: "${tag.example}"
   Tipus: ${tag.type}
   Confiança: ${Math.round(tag.confidence * 100)}%`).join('\n')}${contextInfo}
@@ -223,7 +277,7 @@ RESPOSTA OBLIGATÒRIA EN JSON:
     const suggestions: IntelligentMappingSuggestion[] = aiHeaderMappings.map((mapping: any) => ({
       tagSlug: mapping.assignedTagSlug,
       tagName: mapping.assignedTagName,
-      tagExample: mapping.assignedTagExample || tags.find(t => t.slug === mapping.assignedTagSlug)?.example || '',
+      tagExample: mapping.assignedTagExample || normalizedTags.find(t => t.slug === mapping.assignedTagSlug)?.example || '',
       suggestedHeader: mapping.excelHeader,
       confidence: Math.max(0, Math.min(1, mapping.confidence || 0.5)),
       reasoning: mapping.reasoning || 'AI suggestion',
@@ -240,10 +294,10 @@ RESPOSTA OBLIGATÒRIA EN JSON:
       // Create fallback mappings for unmapped headers
       unmappedHeaders.forEach(header => {
         // Find best matching tag based on name similarity
-        const bestTag = tags.reduce((best, tag) => {
+        const bestTag = normalizedTags.reduce((best, tag) => {
           const similarity = calculateSimilarity(header.toLowerCase(), tag.name.toLowerCase());
           return similarity > calculateSimilarity(header.toLowerCase(), best.name.toLowerCase()) ? tag : best;
-        }, tags[0]);
+        }, normalizedTags[0]);
 
         suggestions.push({
           tagSlug: bestTag.slug,

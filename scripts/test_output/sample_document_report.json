@@ -1,0 +1,30 @@
+{
+  "processing_date": "2025-08-30T22:01:21.800259",
+  "docx_file": "sample_document.docx",
+  "styles_found": 164,
+  "numbering_found": 9,
+  "document_elements": 14,
+  "html_mappings": 8,
+  "warnings": [
+    "Unknown style 'header' mapped to 'p'",
+    "Unknown style 'footer' mapped to 'p'",
+    "Unknown style 'heading 4' mapped to 'p'",
+    "Unknown style 'heading 5' mapped to 'p'",
+    "Unknown style 'heading 6' mapped to 'p'",
+    "Unknown style 'heading 7' mapped to 'p'",
+    "Unknown style 'heading 8' mapped to 'p'",
+    "Unknown style 'heading 9' mapped to 'p'",
+    "Unknown style 'No Spacing' mapped to 'p'",
+    "Unknown style 'List Paragraph' mapped to 'p'",
+    "Unknown style 'List' mapped to 'p'",
+    "Unknown style 'List 2' mapped to 'p'",
+    "Unknown style 'List 3' mapped to 'p'",
+    "Unknown style 'List Continue' mapped to 'p'",
+    "Unknown style 'List Continue 2' mapped to 'p'",
+    "Unknown style 'List Continue 3' mapped to 'p'",
+    "Unknown style 'macro' mapped to 'p'",
+    "Unknown style 'caption' mapped to 'p'",
+    "Unknown style 'TOC Heading' mapped to 'p'"
+  ],
+  "success": true
+}

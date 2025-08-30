@@ -24,7 +24,11 @@
       "Bash(find:*)",
       "Bash(git pull:*)",
       "Bash(ping:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(python -m pip install:*)",
+      "Bash(python test_ooxml_parser.py:*)",
+      "Bash(python:*)",
+      "Bash(PYTHONIOENCODING=utf-8 python ingest_docx.py sample_document.docx --output-dir ./test_output)"
     ],
     "additionalDirectories": [
       "C:\\mnt\\c\\projects",

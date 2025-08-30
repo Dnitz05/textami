@@ -406,6 +406,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                   <div className="flex-1 overflow-y-auto px-6 py-6 bg-gray-50/40 backdrop-blur-sm">
                     <ExcelMappingPanel 
                       tags={analysisData.tags}
+                      placeholders={analysisData.placeholders}
                       excelHeaders={excelHeaders}
                       onMappingUpdate={handleMappingUpdate}
                       pipelineStatus={pipelineStatus}

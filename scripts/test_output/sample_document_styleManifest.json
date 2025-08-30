@@ -1,0 +1,73 @@
+{
+  "version": "1.0",
+  "generatedAt": "2025-08-30T22:01:21.799258",
+  "docx_path": "sample_document.docx",
+  "styles": {
+    "p": "Body Text 3",
+    "h1": "Title",
+    "h2": "Subtitle",
+    "h3": "heading 3",
+    "ul.Bulleted": "List Bullet 3",
+    "ol.Numbered": "List Number 3",
+    "blockquote": "Intense Quote",
+    "table.StdTable": "Colorful Grid Accent 6"
+  },
+  "fallbacks": {
+    "header": "p",
+    "footer": "p",
+    "heading 4": "p",
+    "heading 5": "p",
+    "heading 6": "p",
+    "heading 7": "p",
+    "heading 8": "p",
+    "heading 9": "p",
+    "No Spacing": "p",
+    "List Paragraph": "p",
+    "List": "p",
+    "List 2": "p",
+    "List 3": "p",
+    "List Continue": "p",
+    "List Continue 2": "p",
+    "List Continue 3": "p",
+    "macro": "p",
+    "caption": "p",
+    "TOC Heading": "p"
+  },
+  "warnings": [
+    "Unknown style 'header' mapped to 'p'",
+    "Unknown style 'footer' mapped to 'p'",
+    "Unknown style 'heading 4' mapped to 'p'",
+    "Unknown style 'heading 5' mapped to 'p'",
+    "Unknown style 'heading 6' mapped to 'p'",
+    "Unknown style 'heading 7' mapped to 'p'",
+    "Unknown style 'heading 8' mapped to 'p'",
+    "Unknown style 'heading 9' mapped to 'p'",
+    "Unknown style 'No Spacing' mapped to 'p'",
+    "Unknown style 'List Paragraph' mapped to 'p'",
+    "Unknown style 'List' mapped to 'p'",
+    "Unknown style 'List 2' mapped to 'p'",
+    "Unknown style 'List 3' mapped to 'p'",
+    "Unknown style 'List Continue' mapped to 'p'",
+    "Unknown style 'List Continue 2' mapped to 'p'",
+    "Unknown style 'List Continue 3' mapped to 'p'",
+    "Unknown style 'macro' mapped to 'p'",
+    "Unknown style 'caption' mapped to 'p'",
+    "Unknown style 'TOC Heading' mapped to 'p'"
+  ],
+  "vocabulary": [
+    "h1",
+    "h2",
+    "h3",
+    "p",
+    "p.BodyText",
+    "ul.Bulleted",
+    "ol.Numbered",
+    "table.StdTable",
+    "blockquote"
+  ],
+  "statistics": {
+    "total_styles_found": 164,
+    "mapped_styles": 8,
+    "fallback_styles": 19
+  }
+}

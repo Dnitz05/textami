@@ -7,6 +7,13 @@ import { useMapping } from '../../contexts/MappingContext';
 
 interface ExcelMappingPanelProps {
   tags: ParsedTag[];
+  placeholders?: Array<{  // New OOXML+IA format
+    text: string;
+    variable: string;
+    confidence: number;
+    context: string;
+    type: 'text' | 'date' | 'number' | 'currency' | 'email' | 'other';
+  }>;
   excelHeaders: string[];
   onMappingUpdate?: (mappings: Record<string, string>) => void;
   pipelineStatus?: string;
@@ -29,6 +36,7 @@ interface MappingSuggestion {
 
 const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
   tags,
+  placeholders,
   excelHeaders,
   onMappingUpdate,
   pipelineStatus,
@@ -53,10 +61,10 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
 
   // Load intelligent AI mapping suggestions
   useEffect(() => {
-    if (tags.length > 0 && excelHeaders.length > 0) {
+    if ((tags.length > 0 || (placeholders && placeholders.length > 0)) && excelHeaders.length > 0) {
       loadIntelligentMappings();
     }
-  }, [tags, excelHeaders]);
+  }, [tags, placeholders, excelHeaders]);
 
   // Note: Text selection now handled via Context API
 
@@ -70,21 +78,35 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
       
       log.debug('📊 Input data:', {
         tagsCount: tags.length,
+        placeholdersCount: placeholders?.length || 0,
         originalHeaders: excelHeaders,
         cleanedHeaders: cleanedHeaders,
-        headersCount: cleanedHeaders.length
+        headersCount: cleanedHeaders.length,
+        usingNewFormat: (placeholders && placeholders.length > 0)
       });
+      
+      // Use new format if placeholders exist, otherwise use legacy tags
+      const requestBody: any = {
+        excelHeaders: cleanedHeaders, // Use cleaned headers
+        documentContent: documentMarkdown || '' // Pass document content for better context
+      };
+      
+      if (placeholders && placeholders.length > 0) {
+        // New OOXML+IA format
+        requestBody.placeholders = placeholders;
+        log.debug('🔄 Using new OOXML+IA placeholders format');
+      } else {
+        // Legacy format
+        requestBody.tags = tags;
+        log.debug('📜 Using legacy ParsedTag format');
+      }
       
       const response = await fetch('/api/intelligent-mapping', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          tags: tags,
-          excelHeaders: cleanedHeaders, // Use cleaned headers
-          documentContent: documentMarkdown || '' // Pass document content for better context
-        })
+        body: JSON.stringify(requestBody)
       });
 
       const result = await response.json();
@@ -149,16 +171,24 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
 
   const loadFuzzyMappings = async () => {
     try {
+      // Use new format if placeholders exist, otherwise use legacy tags
+      const requestBody: any = {
+        excelHeaders: excelHeaders,
+        confidenceThreshold: 0.6
+      };
+      
+      if (placeholders && placeholders.length > 0) {
+        requestBody.placeholders = placeholders;
+      } else {
+        requestBody.tags = tags;
+      }
+      
       const response = await fetch('/api/map', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          tags: tags,
-          excelHeaders: excelHeaders,
-          confidenceThreshold: 0.6
-        })
+        body: JSON.stringify(requestBody)
       });
 
       if (response.ok) {
