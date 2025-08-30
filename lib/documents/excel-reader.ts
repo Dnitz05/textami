@@ -3,6 +3,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import * as XLSX from 'xlsx';
+import { log } from '@/lib/logger';
 
 /**
  * Dades d'Excel processades
