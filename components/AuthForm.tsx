@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useUser } from '@/hooks/useUser';
+import { log } from '@/lib/logger';
 
 type AuthMode = 'login' | 'signup';
 
