@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
         log.debug('📄 Text content extracted:', { length: textContent.length, preview: textContent.substring(0, 200) });
         
         // 8. Call GPT-5 to transcribe the DOCX content faithfully
-        log.debug('🤖 Calling GPT-5 for faithful DOCX transcription...');
+        log.debug('🤖 Calling GPT-5 for faithful DOCX transcription (v2)...');
         
         const openai = getOpenAI();
         const completion = await openai.chat.completions.create({
