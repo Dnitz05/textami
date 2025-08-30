@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Prepare data for GPT-5 mapping intelligence
+    // Prepare data for GPT-4 mapping intelligence
     const mappingContext = {
       documentPlaceholders: placeholders.map((p: any) => ({
         text: p.text,
@@ -67,9 +67,9 @@ export async function POST(request: NextRequest) {
       }))
     };
 
-    // GPT-5 Intelligent Mapping
+    // GPT-4 Intelligent Mapping  
     const completion = await openai.chat.completions.create({
-      model: "gpt-5", // GPT-5 official model
+      model: "gpt-4o", // GPT-4o model
       messages: [
         {
           role: "system",
