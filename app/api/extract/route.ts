@@ -6,6 +6,7 @@ import OpenAI from 'openai';
 import { parseAIAnalysis, type ParsedAnalysis } from '../../../lib/ai-parser';
 import { ApiResponse, ExtractionResponse } from '../../../lib/types';
 import { log } from '@/lib/logger';
+import pdfParse from 'pdf-parse';
 
 // Initialize OpenAI with GPT-5
 const openai = new OpenAI({
@@ -129,19 +130,39 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       );
     }
 
-    // Call GPT-5 multimodal for document analysis
-    log.debug('🤖 Calling GPT-5 multimodal for document analysis...');
+    // Download and parse PDF content
+    log.debug('📄 Downloading PDF for text extraction...');
+    
+    let pdfText: string = '';
+    try {
+      const pdfResponse = await fetch(pdfSignedUrl);
+      if (!pdfResponse.ok) {
+        throw new Error(`Failed to download PDF: ${pdfResponse.status}`);
+      }
+      
+      const pdfBuffer = Buffer.from(await pdfResponse.arrayBuffer());
+      const pdfData = await pdfParse(pdfBuffer);
+      pdfText = pdfData.text;
+      
+      log.debug('📄 PDF text extracted:', { textLength: pdfText.length, pages: pdfData.numpages });
+    } catch (pdfError) {
+      log.error('❌ PDF extraction failed:', pdfError);
+      throw new Error('Failed to extract text from PDF');
+    }
+
+    // Call GPT-5 for document analysis using extracted text
+    log.debug('🤖 Calling GPT-5 for text-based document analysis...');
 
     let analysisResult: AIAnalysisResponse;
 
-    // Real GPT-5 multimodal call using standard chat completions API
+    // Real GPT-5 call using extracted PDF text
     try {
       const completion = await openai.chat.completions.create({
         model: "gpt-5",
         messages: [
           {
             role: "system",
-            content: `You are a LITERAL document transcriber. Your ONLY job is to copy text EXACTLY as it appears in any PDF document - nothing more, nothing less.
+            content: `You are a LITERAL document transcriber. Your task is to analyze the extracted PDF text and recreate the original document structure as accurately as possible.
 
 ⚠️ CRITICAL: YOU ARE A PHOTOCOPIER, NOT AN INTERPRETER
 - Copy text character-by-character exactly as written
@@ -335,42 +356,36 @@ REMEMBER: You are a COPYING machine, not a thinking machine. Copy, don't create.
             },
             {
               role: "user",
-              content: [
-                {
-                  type: "text",
-                  text: `TRANSCRIBE this PDF document EXACTLY as a photocopier would reproduce it.
+              content: `ANALYZE this extracted PDF text and recreate the original document structure:
 
-🚨 CRITICAL INSTRUCTION:
-- Include the TITLE/HEADER at the very top of the document
-- If you see any header followed by brief text, write EXACTLY that - do NOT expand it
-- If you see standalone headers, copy them standalone - do NOT fill with content from elsewhere  
-- Read line-by-line and copy each line exactly as it appears
+EXTRACTED PDF TEXT:
+${pdfText}
+
+🚨 CRITICAL INSTRUCTIONS:
+- Recreate the original document structure from this extracted text
+- Identify headers, sections, tables, and other elements
+- Preserve exact text as it appears in the extraction
+- Do NOT add, modify, or interpret any content
+- Maintain the document's original flow and organization
 
 TRANSCRIPTION PROCESS:
-1️⃣ START FROM THE TOP: Include document title/header as first line
-2️⃣ LINE-BY-LINE COPY: Write each line exactly as it appears
-3️⃣ NO INTERPRETATION: Never guess what a section "should" contain
-4️⃣ PRESERVE STRUCTURE: Keep headers separate from content
+1️⃣ IDENTIFY STRUCTURE: Find titles, headers, sections, tables
+2️⃣ PRESERVE TEXT: Use exact text from the extraction
+3️⃣ ORGANIZE SECTIONS: Group related content logically  
+4️⃣ EXTRACT TABLES: Identify tabular data and preserve structure
+5️⃣ FIND VARIABLES: Locate names, dates, amounts, addresses
 
 EXAMPLES OF CORRECT BEHAVIOR:
-✅ If PDF shows a standalone header → Write only that header text
-✅ If PDF shows header on line 1, subtitle on line 2 → Write both lines separately  
-✅ If table cell shows a number → Write exactly that number with same formatting
+✅ If extracted text shows standalone headers → Keep them as headers
+✅ If extracted text has tabular data → Recreate as proper table structure
+✅ If extracted text contains numbers/dates → Preserve exact formatting
 
 EXAMPLES OF FORBIDDEN BEHAVIOR:  
-❌ Combining separate text elements into longer sentences → This creates false content
-❌ Skipping any text because it seems obvious → All text must be included
-❌ Adding context or interpretation to headers → Only copy what's literally there
+❌ Adding explanatory text not in the extraction
+❌ Modifying or "fixing" the extracted text
+❌ Combining unrelated text elements
 
-Return ONLY valid JSON with the literal transcription.`
-                },
-                {
-                  type: "image_url",
-                  image_url: {
-                    url: pdfSignedUrl
-                  }
-                }
-              ]
+Return ONLY valid JSON with the structured document analysis.`
             }
           ],
           response_format: {
