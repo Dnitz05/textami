@@ -213,51 +213,89 @@ Tortosa, 8 d'abril de 2021`,
     } else {
       // Real GPT-5 multimodal call using standard chat completions API
       const completion = await openai.chat.completions.create({
-        model: "gpt-5",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
-            content: `You are an AI document analysis expert specialized in Catalan/Spanish municipal documents.
+            content: `You are an AI document transcription specialist for Catalan/Spanish municipal documents. Your task is to create a PERFECTLY FAITHFUL reproduction of the PDF content.
 
-CRITICAL: Extract EXACTLY what appears in the PDF. DO NOT add, modify, or interpret content.
+🎯 CRITICAL TRANSCRIPTION RULES:
+1. WORD-FOR-WORD ACCURACY: Copy EVERY single word, number, punctuation mark EXACTLY as written
+2. COMPLETE CONTENT: DO NOT omit, skip, summarize, or shorten ANY text from the document
+3. PRESERVE ORIGINAL LANGUAGE: Keep all Catalan, Spanish, or other languages exactly as written
+4. MAINTAIN FORMATTING: Respect original spacing, line breaks, and structure
 
-Extract from the PDF:
-1. Complete Markdown transcription (H1-H3 headers, lists, tables) - VERBATIM text only
-2. Structured JSON with sections, tables, and variable tags
+📊 TABLE TRANSCRIPTION (ULTRA CRITICAL):
+- Extract EVERY table with 100% accuracy
+- Include ALL rows and columns without exception
+- Preserve exact text, numbers, symbols (€, %, etc.)
+- Never merge, split, or modify table cells
+- If a cell is empty, represent as empty string ""
+- Maintain exact column headers and order
 
-Return ONLY valid JSON in this exact format:
+📝 STRUCTURE REQUIREMENTS:
+- Create complete markdown transcription with ALL content
+- Identify meaningful sections (headings become sections)
+- Extract ALL tables found in the document
+- Find placeholders/variables: names, dates, amounts, references
+- Locate signature information at document end
+
+Return JSON in this EXACT format:
 {
-  "markdown": "complete markdown transcription - EXACT TEXT ONLY",
+  "markdown": "COMPLETE word-for-word transcription in markdown format",
   "json": {
-    "sections": [{"id": "string", "title": "string", "markdown": "string"}],
-    "tables": [{"id": "string", "title": "string", "headers": ["string"], "rows": [["string"]]}],
-    "tags": [{"name": "string", "example": "string", "type": "string|date|currency|percent|number|id|address", "confidence": 0.9, "page": 1, "anchor": "string"}],
-    "signatura": {"nom": "string", "carrec": "string", "data_lloc": "string"}
+    "sections": [{"id": "kebab-case-id", "title": "Section Title", "markdown": "Full section content"}],
+    "tables": [{"id": "table-id", "title": "Table Description", "headers": ["Col1", "Col2"], "rows": [["cell1", "cell2"], ["cell3", "cell4"]]}],
+    "tags": [{"name": "variable_name", "example": "exact_text_found", "type": "string|date|currency|percent|number|id|address", "confidence": 0.9, "page": 1, "anchor": "surrounding_context"}],
+    "signatura": {"nom": "Full Name", "carrec": "Position/Title", "data_lloc": "Place, Date"}
   }
 }
 
-RULES:
-- Use ONLY text that appears literally in the PDF
-- DO NOT add explanatory text, summaries, or interpretations
-- DO NOT duplicate content between markdown and sections
-- Present as CONTINUOUS TEXT, not paginated (combine all pages into single flow)
-- Preserve original formatting, spelling, and language exactly
-- Focus on extracting: names, addresses, dates, amounts, references, signatures
-- If uncertain about text, mark confidence < 0.8`
+🚫 FORBIDDEN ACTIONS:
+- Never add explanatory text or interpretations
+- Never summarize or shorten content
+- Never fix "errors" in the original text
+- Never translate or modify language
+- Never merge or split table information
+- Never omit content due to repetition
+
+✅ QUALITY CHECK:
+- Every word from PDF must appear in transcription
+- Every table must be complete with all data
+- All numbers, dates, amounts must be exact
+- Original spelling and punctuation preserved`
           },
           {
             role: "user",
             content: [
               {
                 type: "text",
-                text: `Analyze this PDF document and return the complete analysis in the JSON format specified above. Include:
+                text: `Transcribe this PDF document with COMPLETE FIDELITY. Follow these steps:
 
-1. Full markdown transcription with proper structure
-2. All sections, tables, and variable placeholders found
-3. Accurate confidence scores and page references
-4. Preserve original formatting and language
+STEP 1 - FULL TRANSCRIPTION:
+- Read EVERY word from the PDF carefully
+- Create complete markdown with ALL content (no omissions)
+- Preserve exact text, punctuation, and formatting
+- Include ALL headers, paragraphs, lists, and content
 
-Return ONLY the JSON response, no additional text.`
+STEP 2 - TABLE EXTRACTION:
+- Locate EVERY table in the document
+- Extract ALL rows and columns with perfect accuracy  
+- Preserve exact numbers, currencies, percentages
+- Keep original column headers and cell content
+- Never merge or modify table data
+
+STEP 3 - VARIABLE IDENTIFICATION:
+- Find all placeholders: names, addresses, dates, amounts
+- Mark exact text found with high confidence
+- Note page location and surrounding context
+
+STEP 4 - STRUCTURE ORGANIZATION:
+- Organize content into logical sections
+- Maintain document flow and relationships
+- Identify signature/authorization areas
+
+Return ONLY the JSON response with COMPLETE content. No text outside JSON.`
               },
               {
                 type: "image_url",
@@ -271,8 +309,8 @@ Return ONLY the JSON response, no additional text.`
         response_format: {
           type: "json_object"
         },
-        max_tokens: 8000,
-        temperature: 0.1
+        max_tokens: 16000,
+        temperature: 0.05
       });
 
       const aiResponse = completion.choices[0].message.content;
