@@ -11,6 +11,128 @@ import { htmlGenerator } from '../../../../lib/html-generator';
 import { log } from '@/lib/logger';
 const PizZip = require('pizzip');
 
+// Document structure extraction (same as in analyze endpoint)
+interface DocumentElement {
+  type: 'title' | 'heading1' | 'heading2' | 'heading3' | 'paragraph' | 'table' | 'signature' | 'list';
+  text: string;
+  style?: string;
+  level?: number;
+  rows?: string[][];
+  items?: string[];
+}
+
+function extractDocumentStructure(documentXml: string): DocumentElement[] {
+  const elements: DocumentElement[] = [];
+  
+  // Extract paragraphs with style information
+  const paragraphRegex = /<w:p[^>]*>([\s\S]*?)<\/w:p>/g;
+  const paragraphs = documentXml.match(paragraphRegex) || [];
+  
+  for (const paragraph of paragraphs) {
+    // Extract text content
+    const textMatches = paragraph.match(/<w:t[^>]*>([^<]*)<\/w:t>/g) || [];
+    const text = textMatches
+      .map(match => match.replace(/<w:t[^>]*>([^<]*)<\/w:t>/, '$1'))
+      .join('')
+      .trim();
+    
+    if (!text) continue;
+    
+    // Extract style information
+    const styleMatch = paragraph.match(/<w:pStyle[^>]*w:val="([^"]*)"[^>]*>/);
+    const styleName = styleMatch ? styleMatch[1] : 'Normal';
+    
+    // Classify element type based on style and content
+    const elementType = classifyElement(text, styleName);
+    
+    elements.push({
+      type: elementType,
+      text: text,
+      style: styleName
+    });
+  }
+  
+  // Extract tables
+  const tableRegex = /<w:tbl[^>]*>([\s\S]*?)<\/w:tbl>/g;
+  const tables = documentXml.match(tableRegex) || [];
+  
+  for (const table of tables) {
+    const rows = extractTableRows(table);
+    if (rows.length > 0) {
+      elements.push({
+        type: 'table',
+        text: `Taula amb ${rows.length} files`,
+        rows: rows
+      });
+    }
+  }
+  
+  return elements;
+}
+
+function classifyElement(text: string, styleName: string): DocumentElement['type'] {
+  // Check for signature patterns
+  if (text.match(/signat per|firmat per|signature|signatura/i)) {
+    return 'signature';
+  }
+  
+  // Check style names for headings
+  if (styleName.match(/title|títol|heading1|h1/i)) {
+    return 'title';
+  }
+  if (styleName.match(/heading1|h1/i)) {
+    return 'heading1';
+  }
+  if (styleName.match(/heading2|h2/i)) {
+    return 'heading2';
+  }
+  if (styleName.match(/heading3|h3/i)) {
+    return 'heading3';
+  }
+  
+  // Check content patterns for titles/headings
+  if (text.length < 100 && text.match(/^[A-ZÀÁÈÉÍÓÚÇ][A-ZÀÁÈÉÍÓÚÇa-zàáèéíóúç\s]+$/)) {
+    if (text.length < 50) {
+      return 'title';
+    }
+    return 'heading1';
+  }
+  
+  // Check for numbered sections
+  if (text.match(/^\d+[\.\-\)]\s/)) {
+    return 'heading2';
+  }
+  
+  return 'paragraph';
+}
+
+function extractTableRows(tableXml: string): string[][] {
+  const rows: string[][] = [];
+  const rowRegex = /<w:tr[^>]*>([\s\S]*?)<\/w:tr>/g;
+  const rowMatches = tableXml.match(rowRegex) || [];
+  
+  for (const row of rowMatches) {
+    const cells: string[] = [];
+    const cellRegex = /<w:tc[^>]*>([\s\S]*?)<\/w:tc>/g;
+    const cellMatches = row.match(cellRegex) || [];
+    
+    for (const cell of cellMatches) {
+      const textMatches = cell.match(/<w:t[^>]*>([^<]*)<\/w:t>/g) || [];
+      const cellText = textMatches
+        .map(match => match.replace(/<w:t[^>]*>([^<]*)<\/w:t>/, '$1'))
+        .join(' ')
+        .trim();
+      cells.push(cellText);
+    }
+    
+    if (cells.length > 0) {
+      rows.push(cells);
+    }
+  }
+  
+  return rows;
+}
+
 // Initialize clients lazily
 const getSupabase = () => {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -279,23 +401,8 @@ async function executeOOXMLParser(docxPath: string, outputDir: string): Promise<
       throw new Error('Could not find document.xml in DOCX file');
     }
     
-    // Extract text content for structure analysis
-    const textContent = documentXml
-      .replace(/<w:t[^>]*>([^<]*)<\/w:t>/g, '$1')
-      .replace(/<w:br[^>]*\/>/g, '\n')
-      .replace(/<w:p[^>]*>/g, '\n')
-      .replace(/<[^>]*>/g, '')
-      .replace(/\n\s*\n/g, '\n')
-      .trim();
-    
-    // Create basic document structure
-    const documentStructure = textContent.split('\n')
-      .filter((line: string) => line.trim())
-      .map((text: string, index: number) => ({
-        type: 'paragraph',
-        text: text.trim(),
-        style: index === 0 ? 'Title' : 'Normal'
-      }));
+    // Extract structured content from DOCX (same logic as analyze endpoint)
+    const documentStructure = extractDocumentStructure(documentXml);
     
     // Create basic style manifest for Node.js processing
     const styleManifest = {

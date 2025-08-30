@@ -18,6 +18,199 @@ const getOpenAI = () => {
 
 // OOXML+IA Hybrid Analysis - Preserving UI compatibility
 
+// Document structure extraction
+interface DocumentElement {
+  type: 'title' | 'heading1' | 'heading2' | 'heading3' | 'paragraph' | 'table' | 'signature' | 'list';
+  text: string;
+  style?: string;
+  level?: number;
+  rows?: string[][];
+  items?: string[];
+}
+
+function extractDocumentStructure(documentXml: string): DocumentElement[] {
+  const elements: DocumentElement[] = [];
+  
+  // Extract paragraphs with style information
+  const paragraphRegex = /<w:p[^>]*>([\s\S]*?)<\/w:p>/g;
+  const paragraphs = documentXml.match(paragraphRegex) || [];
+  
+  for (const paragraph of paragraphs) {
+    // Extract text content
+    const textMatches = paragraph.match(/<w:t[^>]*>([^<]*)<\/w:t>/g) || [];
+    const text = textMatches
+      .map(match => match.replace(/<w:t[^>]*>([^<]*)<\/w:t>/, '$1'))
+      .join('')
+      .trim();
+    
+    if (!text) continue;
+    
+    // Extract style information
+    const styleMatch = paragraph.match(/<w:pStyle[^>]*w:val="([^"]*)"[^>]*>/);
+    const styleName = styleMatch ? styleMatch[1] : 'Normal';
+    
+    // Classify element type based on style and content
+    const elementType = classifyElement(text, styleName);
+    
+    elements.push({
+      type: elementType,
+      text: text,
+      style: styleName
+    });
+  }
+  
+  // Extract tables
+  const tableRegex = /<w:tbl[^>]*>([\s\S]*?)<\/w:tbl>/g;
+  const tables = documentXml.match(tableRegex) || [];
+  
+  for (const table of tables) {
+    const rows = extractTableRows(table);
+    if (rows.length > 0) {
+      elements.push({
+        type: 'table',
+        text: `Taula amb ${rows.length} files`,
+        rows: rows
+      });
+    }
+  }
+  
+  return elements;
+}
+
+function classifyElement(text: string, styleName: string): DocumentElement['type'] {
+  // Check for signature patterns
+  if (text.match(/signat per|firmat per|signature|signatura/i)) {
+    return 'signature';
+  }
+  
+  // Check style names for headings
+  if (styleName.match(/title|títol|heading1|h1/i)) {
+    return 'title';
+  }
+  if (styleName.match(/heading1|h1/i)) {
+    return 'heading1';
+  }
+  if (styleName.match(/heading2|h2/i)) {
+    return 'heading2';
+  }
+  if (styleName.match(/heading3|h3/i)) {
+    return 'heading3';
+  }
+  
+  // Check content patterns for titles/headings
+  if (text.length < 100 && text.match(/^[A-ZÀÁÈÉÍÓÚÇ][A-ZÀÁÈÉÍÓÚÇa-zàáèéíóúç\s]+$/)) {
+    if (text.length < 50) {
+      return 'title';
+    }
+    return 'heading1';
+  }
+  
+  // Check for numbered sections
+  if (text.match(/^\d+[\.\-\)]\s/)) {
+    return 'heading2';
+  }
+  
+  return 'paragraph';
+}
+
+function extractTableRows(tableXml: string): string[][] {
+  const rows: string[][] = [];
+  const rowRegex = /<w:tr[^>]*>([\s\S]*?)<\/w:tr>/g;
+  const rowMatches = tableXml.match(rowRegex) || [];
+  
+  for (const row of rowMatches) {
+    const cells: string[] = [];
+    const cellRegex = /<w:tc[^>]*>([\s\S]*?)<\/w:tc>/g;
+    const cellMatches = row.match(cellRegex) || [];
+    
+    for (const cell of cellMatches) {
+      const textMatches = cell.match(/<w:t[^>]*>([^<]*)<\/w:t>/g) || [];
+      const cellText = textMatches
+        .map(match => match.replace(/<w:t[^>]*>([^<]*)<\/w:t>/, '$1'))
+        .join(' ')
+        .trim();
+      cells.push(cellText);
+    }
+    
+    if (cells.length > 0) {
+      rows.push(cells);
+    }
+  }
+  
+  return rows;
+}
+
+function generateStructuredHTML(elements: DocumentElement[], fileName: string): string {
+  const htmlParts = [
+    `<html>`,
+    `<head>`,
+    `<title>${fileName}</title>`,
+    `<meta charset="utf-8">`,
+    `<style>`,
+    `body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; }`,
+    `h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }`,
+    `h2 { color: #34495e; margin-top: 30px; }`,
+    `h3 { color: #7f8c8d; }`,
+    `table { width: 100%; border-collapse: collapse; margin: 20px 0; }`,
+    `th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }`,
+    `th { background-color: #f8f9fa; font-weight: bold; }`,
+    `.signature { border: 2px solid #e74c3c; background-color: #fdf2f2; padding: 15px; margin: 20px 0; border-radius: 5px; }`,
+    `</style>`,
+    `</head>`,
+    `<body>`
+  ];
+  
+  for (const element of elements) {
+    switch (element.type) {
+      case 'title':
+        htmlParts.push(`<h1>${escapeHtml(element.text)}</h1>`);
+        break;
+      case 'heading1':
+        htmlParts.push(`<h2>${escapeHtml(element.text)}</h2>`);
+        break;
+      case 'heading2':
+        htmlParts.push(`<h3>${escapeHtml(element.text)}</h3>`);
+        break;
+      case 'heading3':
+        htmlParts.push(`<h4>${escapeHtml(element.text)}</h4>`);
+        break;
+      case 'paragraph':
+        htmlParts.push(`<p>${escapeHtml(element.text)}</p>`);
+        break;
+      case 'table':
+        if (element.rows && element.rows.length > 0) {
+          htmlParts.push(`<table>`);
+          element.rows.forEach((row, index) => {
+            const tag = index === 0 ? 'th' : 'td';
+            htmlParts.push(`<tr>${row.map(cell => `<${tag}>${escapeHtml(cell)}</${tag}>`).join('')}</tr>`);
+          });
+          htmlParts.push(`</table>`);
+        }
+        break;
+      case 'signature':
+        htmlParts.push(`<div class="signature"><strong>Signatura:</strong> ${escapeHtml(element.text)}</div>`);
+        break;
+      case 'list':
+        if (element.items) {
+          htmlParts.push(`<ul>${element.items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`);
+        }
+        break;
+    }
+  }
+  
+  htmlParts.push(`</body></html>`);
+  return htmlParts.join('\n');
+}
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // AI Analysis helper function
 async function performAIAnalysis(htmlContent: string): Promise<{
   placeholders: Array<{
@@ -228,21 +421,17 @@ export async function POST(request: NextRequest) {
       
       log.debug('📄 Extracted document XML:', { length: documentXml.length });
       
-      // Extract text content and create basic HTML structure
-      const textContent = documentXml
-        .replace(/<w:t[^>]*>([^<]*)<\/w:t>/g, '$1')
-        .replace(/<w:br[^>]*\/>/g, '\n')
-        .replace(/<w:p[^>]*>/g, '\n')
-        .replace(/<[^>]*>/g, '')
-        .replace(/\n\s*\n/g, '\n')
-        .trim();
+      // Extract structured content from DOCX
+      const structuredContent = extractDocumentStructure(documentXml);
       
-      // Create basic HTML content for consistency
-      const htmlContent = `<html><head><title>${file.name}</title></head><body>
-        ${textContent.split('\n').filter((line: string) => line.trim()).map((line: string) => 
-          `<p>${line.trim()}</p>`
-        ).join('\n')}
-      </body></html>`;
+      // Generate structured HTML based on document elements
+      const htmlContent = generateStructuredHTML(structuredContent, file.name);
+      
+      // Also create plain text version for AI analysis
+      const textContent = structuredContent
+        .map(element => element.text)
+        .filter(text => text.trim())
+        .join('\n');
       
       log.debug('📄 Generated HTML preview:', { 
         textLength: textContent.length,
@@ -255,7 +444,35 @@ export async function POST(request: NextRequest) {
       
       const aiAnalysisResult = await performAIAnalysis(htmlContent);
       
-      // 9. Format response to match existing UI expectations
+      // 9. Process structured content for UI
+      const sections = structuredContent
+        .filter(el => ['title', 'heading1', 'heading2', 'heading3'].includes(el.type))
+        .map((section, index) => ({
+          id: `section_${index}`,
+          title: section.text,
+          markdown: `## ${section.text}\n`,
+          type: section.type
+        }));
+
+      const tables = structuredContent
+        .filter(el => el.type === 'table')
+        .map((table, index) => ({
+          id: `table_${index}`,
+          title: `Taula ${index + 1}`,
+          headers: table.rows?.[0] || [],
+          rows: table.rows?.slice(1) || [],
+          normalized: {}
+        }));
+
+      const signatures = structuredContent
+        .filter(el => el.type === 'signature')
+        .map(sig => ({
+          nom: '',
+          carrec: '',
+          data_lloc: sig.text
+        }));
+
+      // 10. Format response to match existing UI expectations
       const analysisResult = {
         templateId,
         fileName: file.name,
@@ -263,12 +480,20 @@ export async function POST(request: NextRequest) {
         // Transform extracted content to match expected format for UI compatibility
         transcription: htmlContent,
         markdown: textContent, // UI expects this field - use clean text
+        sections: sections,
+        tables: tables,
         placeholders: aiAnalysisResult.placeholders,
+        signatura: signatures.length > 0 ? signatures[0] : undefined,
         confidence: 95,
         metadata: {
-          extractionMethod: 'nodejs-ooxml-extraction',
+          extractionMethod: 'nodejs-ooxml-structured',
           processingTimeMs: Date.now() - Date.now(), // Minimal processing time
-          stylesFound: 0, // Basic extraction doesn't preserve complex styles
+          elementsFound: {
+            sections: sections.length,
+            tables: tables.length,
+            signatures: signatures.length,
+            paragraphs: structuredContent.filter(el => el.type === 'paragraph').length
+          },
           htmlLength: htmlContent.length,
           textLength: textContent.length,
           storageSize: buffer.length
