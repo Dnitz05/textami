@@ -72,7 +72,7 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
         .filter(key => key.startsWith('instructions_'))
         .map(key => key.replace('instructions_', ''));
       
-      log.debug('🔍 Generating unique name for:', baseName, 'Existing:', existingTemplates);
+      log.debug('🔍 Generating unique name for:', { baseName, existingTemplates });
       
       while (existingTemplates.includes(uniqueName)) {
         uniqueName = `${baseName} (${counter})`;
