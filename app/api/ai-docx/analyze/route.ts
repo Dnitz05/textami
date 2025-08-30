@@ -156,8 +156,13 @@ export async function POST(request: NextRequest) {
         log.debug('🤖 Calling GPT-5 for faithful DOCX transcription (v2)...');
         
         const openai = getOpenAI();
-        const completion = await openai.chat.completions.create({
-          model: "gpt-5",
+        
+        // Try GPT-5 first, fallback to GPT-4o if issues
+        let completion;
+        try {
+          log.debug('🚀 Attempting GPT-5 transcription...');
+          completion = await openai.chat.completions.create({
+            model: "gpt-5",
           messages: [
             {
               role: "system",
@@ -180,9 +185,40 @@ You are like a photocopier - reproduce EXACTLY what you see.`
           ],
           max_completion_tokens: 4000
         });
+        } catch (gpt5Error) {
+          log.warn('⚠️ GPT-5 failed, falling back to GPT-4o:', gpt5Error);
+          completion = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+              {
+                role: "system",
+                content: `You are a LITERAL document transcriber. Your ONLY job is to recreate the original document structure EXACTLY as it appears.
+
+RULES:
+1. Copy text line by line, preserving EXACT formatting
+2. Maintain original spacing, line breaks, and structure
+3. Do NOT add explanations, interpretations, or expansions
+4. Do NOT omit any content - transcribe everything
+5. Preserve tables, headers, lists exactly as shown
+6. Output in clean markdown format
+
+You are like a photocopier - reproduce EXACTLY what you see.`
+              },
+              {
+                role: "user",
+                content: `TRANSCRIBE this DOCX content EXACTLY:\n\n${textContent}`
+              }
+            ],
+            temperature: 0.1,
+            max_tokens: 4000
+          });
+        }
         
         const transcription = completion.choices[0]?.message?.content || '';
-        log.debug('✅ GPT-5 transcription complete:', { length: transcription.length });
+        log.debug('✅ DOCX transcription complete:', { 
+          length: transcription.length,
+          model: completion.model || 'unknown'
+        });
         
         // Return transcribed content instead of just placeholders
         const analysisResult = {
