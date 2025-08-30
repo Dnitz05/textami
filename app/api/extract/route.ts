@@ -217,85 +217,85 @@ Tortosa, 8 d'abril de 2021`,
         messages: [
           {
             role: "system",
-            content: `You are an AI document transcription specialist for Catalan/Spanish municipal documents. Your task is to create a PERFECTLY FAITHFUL reproduction of the PDF content.
+            content: `You are a LITERAL document transcriber. Your ONLY job is to copy text EXACTLY as it appears in the PDF - nothing more, nothing less.
 
-🎯 CRITICAL TRANSCRIPTION RULES:
-1. WORD-FOR-WORD ACCURACY: Copy EVERY single word, number, punctuation mark EXACTLY as written
-2. COMPLETE CONTENT: DO NOT omit, skip, summarize, or shorten ANY text from the document
-3. PRESERVE ORIGINAL LANGUAGE: Keep all Catalan, Spanish, or other languages exactly as written
-4. MAINTAIN FORMATTING: Respect original spacing, line breaks, and structure
+⚠️ CRITICAL: YOU ARE A PHOTOCOPIER, NOT AN INTERPRETER
+- Copy text character-by-character exactly as written
+- If you see "Assumpte" alone, write only "Assumpte" 
+- If you see "Llicència d'obra menor" alone, write only "Llicència d'obra menor"
+- NEVER combine separate text lines into one sentence
+- NEVER expand abbreviated content with information from elsewhere
+- NEVER interpret what a section "means" or what it "refers to"
 
-📊 TABLE TRANSCRIPTION (ULTRA CRITICAL):
-- Extract EVERY table with 100% accuracy
-- Include ALL rows and columns without exception
-- Preserve exact text, numbers, symbols (€, %, etc.)
-- Never merge, split, or modify table cells
-- If a cell is empty, represent as empty string ""
-- Maintain exact column headers and order
+🔍 READING METHODOLOGY:
+1. Read the PDF line by line from top to bottom
+2. Write EXACTLY what each line says - word for word
+3. If a line has only 2 words, transcribe only those 2 words
+4. If there's a title at the top, include it as the first line
+5. Respect blank lines and spacing as they appear
 
-📝 STRUCTURE REQUIREMENTS:
-- Create complete markdown transcription with ALL content
-- Identify meaningful sections (headings become sections)
-- Extract ALL tables found in the document
-- Find placeholders/variables: names, dates, amounts, references
-- Locate signature information at document end
+📊 TABLE RULES:
+- Copy each table cell EXACTLY as written
+- Empty cells = empty string ""
+- Never merge information from different cells
+- Preserve exact numbers and formatting
 
-Return JSON in this EXACT format:
+📝 SECTION IDENTIFICATION:
+- Sections = text lines that look like headers/titles
+- Section content = ONLY the text immediately following, not interpretation
+- If "Assumpte" is followed by blank space, the content is blank
+- If "Assumpte" is followed by specific text, copy only that text
+
+🚨 ABSOLUTELY FORBIDDEN:
+- Combining information from different parts of document
+- Expanding short text with "context" from elsewhere  
+- Interpreting what headers "should" contain
+- Adding descriptive text not present in PDF
+- Making logical connections between separate elements
+
+JSON FORMAT:
 {
-  "markdown": "COMPLETE word-for-word transcription in markdown format",
+  "markdown": "Line-by-line exact transcription including document title",
   "json": {
-    "sections": [{"id": "kebab-case-id", "title": "Section Title", "markdown": "Full section content"}],
-    "tables": [{"id": "table-id", "title": "Table Description", "headers": ["Col1", "Col2"], "rows": [["cell1", "cell2"], ["cell3", "cell4"]]}],
-    "tags": [{"name": "variable_name", "example": "exact_text_found", "type": "string|date|currency|percent|number|id|address", "confidence": 0.9, "page": 1, "anchor": "surrounding_context"}],
-    "signatura": {"nom": "Full Name", "carrec": "Position/Title", "data_lloc": "Place, Date"}
+    "sections": [{"id": "literal-section-name", "title": "Exact Header Text", "markdown": "Only immediate following content"}],
+    "tables": [{"id": "table-1", "title": "Exact table title or description", "headers": ["exact", "headers"], "rows": [["exact", "cell", "content"]]}],
+    "tags": [{"name": "field_name", "example": "exact_text_as_appears", "type": "string|date|currency|percent|number|id|address", "confidence": 0.95, "page": 1}],
+    "signatura": {"nom": "Exact Name", "carrec": "Exact Title", "data_lloc": "Exact Location, Date"}
   }
 }
 
-🚫 FORBIDDEN ACTIONS:
-- Never add explanatory text or interpretations
-- Never summarize or shorten content
-- Never fix "errors" in the original text
-- Never translate or modify language
-- Never merge or split table information
-- Never omit content due to repetition
-
-✅ QUALITY CHECK:
-- Every word from PDF must appear in transcription
-- Every table must be complete with all data
-- All numbers, dates, amounts must be exact
-- Original spelling and punctuation preserved`
+REMEMBER: You are a COPYING machine, not a thinking machine. Copy, don't create.`
           },
           {
             role: "user",
             content: [
               {
                 type: "text",
-                text: `Transcribe this PDF document with COMPLETE FIDELITY. Follow these steps:
+                text: `TRANSCRIBE this PDF document EXACTLY as a photocopier would reproduce it.
 
-STEP 1 - FULL TRANSCRIPTION:
-- Read EVERY word from the PDF carefully
-- Create complete markdown with ALL content (no omissions)
-- Preserve exact text, punctuation, and formatting
-- Include ALL headers, paragraphs, lists, and content
+🚨 CRITICAL INSTRUCTION:
+- Include the TITLE/HEADER at the very top of the document
+- If you see "Assumpte" followed by just "Llicència d'obra menor", write EXACTLY that - do NOT expand it
+- If you see standalone headers, copy them standalone - do NOT fill with content from elsewhere
+- Read line-by-line and copy each line exactly as it appears
 
-STEP 2 - TABLE EXTRACTION:
-- Locate EVERY table in the document
-- Extract ALL rows and columns with perfect accuracy  
-- Preserve exact numbers, currencies, percentages
-- Keep original column headers and cell content
-- Never merge or modify table data
+TRANSCRIPTION PROCESS:
+1️⃣ START FROM THE TOP: Include document title/header as first line
+2️⃣ LINE-BY-LINE COPY: Write each line exactly as it appears
+3️⃣ NO INTERPRETATION: Never guess what a section "should" contain
+4️⃣ PRESERVE STRUCTURE: Keep headers separate from content
 
-STEP 3 - VARIABLE IDENTIFICATION:
-- Find all placeholders: names, addresses, dates, amounts
-- Mark exact text found with high confidence
-- Note page location and surrounding context
+EXAMPLES OF CORRECT BEHAVIOR:
+✅ If PDF shows: "INFORME TÈCNIC" → Write: "INFORME TÈCNIC"
+✅ If PDF shows: "Assumpte" on line 1, "Llicència d'obra menor" on line 2 → Write both lines separately
+✅ If table cell shows "23,36 €" → Write exactly "23,36 €"
 
-STEP 4 - STRUCTURE ORGANIZATION:
-- Organize content into logical sections
-- Maintain document flow and relationships
-- Identify signature/authorization areas
+EXAMPLES OF FORBIDDEN BEHAVIOR:  
+❌ Combining "Assumpte" + "Llicència d'obra menor" + content from paragraph → This creates false content
+❌ Skipping document title because it seems obvious → All text must be included
+❌ Interpreting what sections mean → Only copy what's literally there
 
-Return ONLY the JSON response with COMPLETE content. No text outside JSON.`
+Return ONLY valid JSON with the literal transcription.`
               },
               {
                 type: "image_url",
