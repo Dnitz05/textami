@@ -517,11 +517,12 @@ export default function AnalyzePage() {
     <div className="min-h-screen bg-white">
       <TopNavBar />
       
-      {/* Main content with padding-top to compensate for fixed navbar */}
-      <div className="pt-20">
+      {/* Main content */}
+      <div>
         {/* Upload Section */}
         {!analysisData && (
-          <div className="max-w-7xl mx-auto px-6 py-12">
+          <div className="pt-20">
+            <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Upload Document for Analysis</h2>
             <p className="text-gray-600 mb-6">Upload a PDF document to start AI analysis with GPT-5</p>
@@ -564,8 +565,9 @@ export default function AnalyzePage() {
               </div>
             )}
           </div>
-        </div>
-      )}
+            </div>
+          </div>
+        )}
 
       {/* Analysis Interface */}
       {analysisData && pipelineStatus !== 'production' && (

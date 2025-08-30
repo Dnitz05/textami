@@ -321,8 +321,8 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
       <div className="h-screen flex flex-col">
         {/* Fixed layout without outer padding/margins - sidebars attached to document */}
         <div className="flex-1 flex">
-        {/* Toggle buttons - positioned at top right */}
-        <div className="absolute top-2 right-2 flex items-center space-x-2 z-20">
+        {/* Toggle buttons - positioned at top right (accounting for fixed navbar) */}
+        <div className="absolute top-4 right-4 flex items-center space-x-2 z-20">
           <button
             onClick={() => setShowLeftSidebar(!showLeftSidebar)}
             className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 shadow-sm bg-white"
@@ -350,8 +350,8 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
             <div className="bg-gray-50 border border-gray-200 relative" style={{width: '210mm'}}>
               {/* Left Sidebar - positioned to align right edge with left edge of template */}
               {showLeftSidebar && (
-                <div className="fixed w-80 bg-gray-50/80 backdrop-blur-sm shadow-2xl border border-white/30 flex flex-col z-10" 
-                     style={{right: 'calc(50% + 105mm)', top: '0', bottom: '0'}}>
+                <div className="fixed w-80 bg-gray-50/80 backdrop-blur-sm shadow-2xl border border-white/30 flex flex-col z-10 m-4" 
+                     style={{right: 'calc(50% + 105mm)', top: '5rem', bottom: '1rem'}}>
                   {/* Sidebar Header */}
                   <div className="px-6 py-5 border-b border-gray-200/50 bg-gray-50/40 backdrop-blur-sm flex-none">
                     <h3 className="text-sm font-semibold text-gray-800 flex items-center">
@@ -390,8 +390,8 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
 
               {/* Right Sidebar - positioned to align left edge with right edge of template */}
               {showRightSidebar && (
-                <div className="fixed w-80 bg-gray-50/80 backdrop-blur-sm shadow-2xl border border-white/30 flex flex-col z-10" 
-                     style={{left: 'calc(50% + 105mm)', top: '0', bottom: '0'}}>
+                <div className="fixed w-80 bg-gray-50/80 backdrop-blur-sm shadow-2xl border border-white/30 flex flex-col z-10 m-4" 
+                     style={{left: 'calc(50% + 105mm)', top: '5rem', bottom: '1rem'}}>
                   {/* Sidebar Header */}
                   <div className="px-6 py-5 border-b border-gray-200/50 bg-gray-50/40 backdrop-blur-sm flex-none">
                     <h3 className="text-sm font-semibold text-gray-800 flex items-center">
