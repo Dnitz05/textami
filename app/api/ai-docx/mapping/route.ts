@@ -125,11 +125,11 @@ Focus on finding the best semantic and contextual matches. Be conservative with 
     const mappedColumns = new Set(proposals.map(p => p.excelColumn));
     
     const unmappedPlaceholders = placeholders
-      .map(p: DocumentPlaceholder => p.text)
+      .map((p: any) => p.text)
       .filter((text: string) => !mappedPlaceholders.has(text));
       
     const unmappedColumns = columns
-      .map(c: ExcelColumn => c.column)
+      .map((c: any) => c.column)
       .filter((col: string) => !mappedColumns.has(col));
 
     const result: MappingIntelligence = {

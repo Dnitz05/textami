@@ -324,6 +324,7 @@ export default function GeneratorPage() {
         error: null
       });
 
+      log.success('🎯 AI Mapping completed successfully', {
         count: mappings.length,
         timestamp: new Date().toISOString()
       });
