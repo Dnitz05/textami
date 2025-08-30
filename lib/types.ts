@@ -13,7 +13,7 @@ export interface ParsedTag {
   confidence: number;
   page?: number;
   anchor?: string;
-  normalized?: string | number;
+  normalized?: string | number | Date | null;
 }
 
 export interface ParsedSection {
