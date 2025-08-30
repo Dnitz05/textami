@@ -101,9 +101,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
     let pdfSignedUrl: string;
 
-    // Get signed URL for PDF (or mock for development)
+    // Get signed URL for PDF
     if (pdfPath) {
-      // Real mode: get signed URL from Supabase Storage
+      // Path mode: get signed URL from Supabase Storage
       const { data: signedUrlData, error: urlError } = await supabase.storage
         .from('ingest')
         .createSignedUrl(pdfPath, 3600); // 1 hour expiry
@@ -118,10 +118,15 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
       pdfSignedUrl = signedUrlData.signedUrl;
       log.debug('✅ PDF signed URL created for AI analysis');
+    } else if (pdfUrl) {
+      // URL mode: use provided signed URL directly
+      pdfSignedUrl = pdfUrl;
+      log.debug('✅ Using provided PDF URL for AI analysis');
     } else {
-      // Mock mode: use sample municipal report for development
-      log.debug('🧪 MOCK MODE: Using sample municipal report data');
-      pdfSignedUrl = 'MOCK_PDF_URL';
+      return NextResponse.json(
+        { success: false, error: 'Either pdfPath or pdfUrl is required' },
+        { status: 400 }
+      );
     }
 
     // Call GPT-5 multimodal for document analysis
@@ -129,91 +134,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
     let analysisResult: AIAnalysisResponse;
 
-    if (pdfSignedUrl === 'MOCK_PDF_URL') {
-      // Mock response for development - based on municipal report example
-      analysisResult = {
-        markdown: `# INFORME TÈCNIC
-
-## Assumpte
-Llicència d'obra menor sol·licitada per Paquita Ferre SL per a la reparació de façana situada al carrer Llarg de Sant Vicent, 56 de Tortosa.
-
-## Antecedents
-Paquita Ferre SL sol·licita llicència d'obra menor per a la reparació de façana situada al carrer Llarg de Sant Vicent, 56 de Tortosa, amb un pressupost de 683,00 €.
-
-## Informe
-S'informa favorablement la concessió de la llicència sol·licitada d'acord amb la documentació presentada i les condicions particulars que s'estableixen.
-
-## Condicions particulars
-- No s'admet la reparació amb pintura de cautxú o similar que pugui desprendre's amb facilitat
-- Previ inici de l'obra s'hauran de presentar les mostres dels materials a utilitzar
-- Els treballs s'executaran d'acord amb la normativa vigent
-
-| Concepte | Impost | Taxa | Total |
-|----------|--------|------|--------|
-| Quota resultant | 23,36 € | 6,15 € | 29,51 € |
-| Quota mínima | 0,00 € | 78,60 € | 78,60 € |
-| Total quota | 23,36 € | 78,60 € | 101,96 € |
-
-**Aitor Gilabert Juan**  
-Arquitecte Municipal  
-Tortosa, 8 d'abril de 2021`,
-        json: {
-          sections: [
-            {
-              id: "assumpte",
-              title: "Assumpte",
-              markdown: "Llicència d'obra menor sol·licitada per Paquita Ferre SL per a la reparació de façana situada al carrer Llarg de Sant Vicent, 56 de Tortosa."
-            },
-            {
-              id: "antecedents", 
-              title: "Antecedents",
-              markdown: "Paquita Ferre SL sol·licita llicència d'obra menor per a la reparació de façana situada al carrer Llarg de Sant Vicent, 56 de Tortosa, amb un pressupost de 683,00 €."
-            },
-            {
-              id: "informe",
-              title: "Informe", 
-              markdown: "S'informa favorablement la concessió de la llicència sol·licitada d'acord amb la documentació presentada i les condicions particulars que s'estableixen."
-            }
-          ],
-          tables: [
-            {
-              id: "liquidacio",
-              title: "Informe liquidació obra",
-              headers: ["Concepte", "Impost", "Taxa", "Total"],
-              rows: [
-                ["Quota resultant", "23,36 €", "6,15 €", "29,51 €"],
-                ["Quota mínima", "0,00 €", "78,60 €", "78,60 €"],
-                ["Total quota", "23,36 €", "78,60 €", "101,96 €"]
-              ],
-              normalized: {
-                pressupost: 683.00,
-                impost_pct: 3.42,
-                taxa_pct: 0.90,
-                total_quota: 101.96
-              }
-            }
-          ],
-          tags: [
-            { name: "nom_solicitant", example: "Paquita Ferre SL", type: "string", confidence: 0.95, page: 1, anchor: "sol·licitada per" },
-            { name: "adreca_obra", example: "carrer Llarg de Sant Vicent, 56", type: "address", confidence: 0.98, page: 1 },
-            { name: "municipi", example: "Tortosa", type: "string", confidence: 0.99, page: 1 },
-            { name: "pressupost", example: "683,00 €", type: "currency", confidence: 0.99, page: 1 },
-            { name: "impost_pct", example: "3,42%", type: "percent", confidence: 0.95 },
-            { name: "taxa_pct", example: "0,90%", type: "percent", confidence: 0.95 },
-            { name: "total_quota", example: "101,96 €", type: "currency", confidence: 0.99, page: 1, anchor: "Total quota" },
-            { name: "data_informe", example: "8 d'abril de 2021", type: "date", confidence: 0.95, page: 1 }
-          ],
-          signatura: {
-            nom: "Aitor Gilabert Juan",
-            carrec: "Arquitecte Municipal", 
-            data_lloc: "Tortosa, 8 d'abril de 2021"
-          }
-        }
-      };
-    } else {
-      // Real GPT-5 multimodal call using standard chat completions API
+    // Real GPT-5 multimodal call using standard chat completions API
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-5",
         messages: [
           {
             role: "system",
@@ -346,7 +269,6 @@ Return ONLY valid JSON with the literal transcription.`
         log.error('Raw response:', aiResponse.substring(0, 1000));
         throw new Error('Invalid JSON response from GPT-5');
       }
-    }
 
     // Parse and normalize the AI analysis
     const parsedAnalysis: ParsedAnalysis = parseAIAnalysis(analysisResult.json);
