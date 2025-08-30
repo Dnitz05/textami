@@ -108,7 +108,7 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
     if (typeof window !== 'undefined' && currentDocumentId && instructions.length >= 0) {
       const storageKey = `instructions_${currentDocumentId}`;
       sessionStorage.setItem(storageKey, JSON.stringify(instructions));
-      log.debug('💾 Saved', instructions.length, 'instructions for document:', currentDocumentId, 'StorageKey:', storageKey);
+      log.debug('💾 Saved instructions for document:', { count: instructions.length, currentDocumentId, storageKey });
     }
   }, [instructions, currentDocumentId]);
 
