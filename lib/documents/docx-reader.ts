@@ -2,6 +2,7 @@
 // Lector de documents DOCX SIMPLIFICAT per Textami MVP
 
 import { createClient } from '@supabase/supabase-js';
+import { log } from '@/lib/logger';
 
 /**
  * Valida que un path de storage és vàlid
