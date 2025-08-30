@@ -15,7 +15,7 @@ interface FreezeRequest {
 // PlaceholderReplacement and FreezeResponse are now imported from types.ts
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<FreezeResponse>>> {
-  console.log('🧊 Template Freeze Request Started');
+  log.debug('🧊 Template Freeze Request Started');
   
   try {
     // Initialize Supabase client
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('❌ Supabase environment variables missing');
+      log.error('❌ Supabase environment variables missing');
       return NextResponse.json(
         { success: false, error: 'Storage configuration required' },
         { status: 500 }
@@ -31,12 +31,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    console.log('✅ Supabase client initialized for template freezing');
+    log.debug('✅ Supabase client initialized for template freezing');
 
     // Parse request data
     const { templateId, storageUrl, tags, mappings }: FreezeRequest = await request.json();
     
-    console.log('🧊 Freeze request:', {
+    log.debug('🧊 Freeze request:', {
       templateId,
       storageUrl,
       tagsCount: tags.length,
@@ -51,13 +51,13 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     }
 
     // 1. Retrieve original DOCX from Supabase Storage
-    console.log('📥 Retrieving original DOCX for freezing:', storageUrl);
+    log.debug('📥 Retrieving original DOCX for freezing:', storageUrl);
     const { data: fileData, error: downloadError } = await supabase.storage
       .from('template-docx')
       .download(storageUrl);
 
     if (downloadError || !fileData) {
-      console.error('❌ Failed to retrieve DOCX for freezing:', downloadError);
+      log.error('❌ Failed to retrieve DOCX for freezing:', downloadError);
       return NextResponse.json(
         { success: false, error: 'Failed to retrieve template for freezing', details: downloadError?.message },
         { status: 500 }
@@ -68,13 +68,13 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const arrayBuffer = await fileData.arrayBuffer();
     const originalBuffer = Buffer.from(arrayBuffer);
     
-    console.log('✅ Original DOCX retrieved for freezing:', {
+    log.debug('✅ Original DOCX retrieved for freezing:', {
       size: originalBuffer.length,
       type: fileData.type
     });
 
     // 2. Process DOCX and insert placeholders
-    console.log('🔄 Processing DOCX to insert placeholders...');
+    log.debug('🔄 Processing DOCX to insert placeholders...');
     
     let modifiedBuffer: Buffer;
     const replacements: PlaceholderReplacement[] = [];
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         throw new Error('Could not extract document.xml from DOCX');
       }
 
-      console.log('📄 Original XML length:', documentXml.length);
+      log.debug('📄 Original XML length:', documentXml.length);
       
       let modifiedXml = documentXml;
       let successfulReplacements = 0;
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       for (const tag of tags) {
         const mappedHeader = mappings[tag.slug];
         if (!mappedHeader) {
-          console.log(`⚠️ Skipping unmapped tag: ${tag.name}`);
+          log.debug(`⚠️ Skipping unmapped tag: ${tag.name}`);
           continue;
         }
 
@@ -129,14 +129,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                 applied: true
               };
               successfulReplacements++;
-              console.log(`✅ Exact match: "${tag.example}" → ${placeholder}`);
+              log.debug(`✅ Exact match: "${tag.example}" → ${placeholder}`);
             }
           } else if (exactMatches > 1) {
             replacement.reason = `Multiple matches found (${exactMatches}), manual review required`;
-            console.log(`⚠️ Multiple matches: "${tag.example}" (${exactMatches})`);
+            log.debug(`⚠️ Multiple matches: "${tag.example}" (${exactMatches})`);
           } else {
             replacement.reason = 'No exact matches found';
-            console.log(`❌ No match: "${tag.example}"`);
+            log.debug(`❌ No match: "${tag.example}"`);
           }
         }
 
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
               reason: `Used anchor: "${tag.anchor}"`
             };
             successfulReplacements++;
-            console.log(`✅ Anchor match: "${tag.anchor}" → ${placeholder}`);
+            log.debug(`✅ Anchor match: "${tag.anchor}" → ${placeholder}`);
           } else {
             replacement.reason = replacement.reason || `Anchor "${tag.anchor}" not found or ambiguous`;
           }
@@ -179,7 +179,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                 reason: 'Currency pattern match'
               };
               successfulReplacements++;
-              console.log(`✅ Pattern match: ${tag.example} → ${placeholder}`);
+              log.debug(`✅ Pattern match: ${tag.example} → ${placeholder}`);
             }
           }
         }
@@ -194,7 +194,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         compression: 'DEFLATE'
       });
 
-      console.log('✅ DOCX modification complete:', {
+      log.debug('✅ DOCX modification complete:', {
         originalSize: originalBuffer.length,
         modifiedSize: modifiedBuffer.length,
         successfulReplacements,
@@ -202,7 +202,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       });
 
     } catch (processingError) {
-      console.error('❌ DOCX processing failed:', processingError);
+      log.error('❌ DOCX processing failed:', processingError);
       return NextResponse.json(
         { 
           success: false,
@@ -215,7 +215,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
     // 3. Save frozen template to storage
     const frozenFileName = `frozen_${templateId}_${Date.now()}.docx`;
-    console.log('💾 Saving frozen template:', frozenFileName);
+    log.debug('💾 Saving frozen template:', frozenFileName);
 
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('template-docx')
@@ -225,7 +225,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       });
 
     if (uploadError) {
-      console.error('❌ Failed to save frozen template:', uploadError);
+      log.error('❌ Failed to save frozen template:', uploadError);
       return NextResponse.json(
         { success: false, error: 'Failed to save frozen template', details: uploadError.message },
         { status: 500 }
@@ -237,7 +237,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       .from('template-docx')
       .getPublicUrl(uploadData.path);
 
-    console.log('✅ Frozen template saved:', publicUrlData.publicUrl);
+    log.debug('✅ Frozen template saved:', publicUrlData.publicUrl);
 
     // 5. Identify tags requiring manual review
     const manualReviewRequired = replacements
@@ -259,7 +259,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       data: freezeData
     };
 
-    console.log('✅ Template freeze complete:', {
+    log.debug('✅ Template freeze complete:', {
       templateId,
       successRate: `${response.data?.successfulReplacements}/${response.data?.totalReplacements}`,
       manualReviewCount: manualReviewRequired.length
@@ -268,7 +268,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     return NextResponse.json(response);
 
   } catch (error) {
-    console.error('❌ Unexpected error in template freeze:', error);
+    log.error('❌ Unexpected error in template freeze:', error);
     return NextResponse.json(
       { 
         success: false,

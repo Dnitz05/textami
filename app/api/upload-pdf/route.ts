@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 import { ApiResponse, UploadResponse } from '../../../lib/types';
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<UploadResponse>>> {
-  console.log('📤 PDF Upload Started');
+  log.debug('📤 PDF Upload Started');
   
   try {
     // Initialize Supabase client
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('❌ Supabase environment variables missing');
+      log.error('❌ Supabase environment variables missing');
       return NextResponse.json(
         { success: false, error: 'Storage configuration required' },
         { status: 500 }
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    console.log('✅ Supabase client initialized for PDF upload');
+    log.debug('✅ Supabase client initialized for PDF upload');
 
     // Parse form data
     const formData = await request.formData();
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       );
     }
 
-    console.log('📄 Processing PDF upload:', {
+    log.debug('📄 Processing PDF upload:', {
       fileName: file.name,
       size: file.size,
       type: file.type,
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       });
 
     if (uploadError) {
-      console.error('❌ Failed to upload PDF:', uploadError);
+      log.error('❌ Failed to upload PDF:', uploadError);
       return NextResponse.json(
         { success: false, error: 'Failed to upload PDF', details: uploadError.message },
         { status: 500 }
@@ -77,14 +77,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       .createSignedUrl(uploadData.path, 3600); // 1 hour expiry
 
     if (signedUrlError) {
-      console.error('❌ Failed to create signed URL:', signedUrlError);
+      log.error('❌ Failed to create signed URL:', signedUrlError);
       return NextResponse.json(
         { success: false, error: 'Failed to create access URL', details: signedUrlError.message },
         { status: 500 }
       );
     }
 
-    console.log('✅ PDF uploaded successfully:', {
+    log.debug('✅ PDF uploaded successfully:', {
       path: uploadData.path,
       signedUrl: signedUrlData.signedUrl
     });
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     });
 
   } catch (error) {
-    console.error('❌ Unexpected error in PDF upload:', error);
+    log.error('❌ Unexpected error in PDF upload:', error);
     return NextResponse.json(
       { 
         success: false,

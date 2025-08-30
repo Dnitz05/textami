@@ -63,12 +63,12 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
   const loadIntelligentMappings = async () => {
     setIsLoadingSuggestions(true);
     try {
-      console.log('🧠 Loading intelligent AI mappings...');
+      log.debug('🧠 Loading intelligent AI mappings...');
       
       // Clean headers at frontend level to prevent space issues
       const cleanedHeaders = excelHeaders.map(header => header.trim()).filter(header => header.length > 0);
       
-      console.log('📊 Input data:', {
+      log.debug('📊 Input data:', {
         tagsCount: tags.length,
         originalHeaders: excelHeaders,
         cleanedHeaders: cleanedHeaders,
@@ -90,7 +90,7 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
       const result = await response.json();
       
       if (result.success && result.data.suggestions) {
-        console.log('✅ AI API response:', {
+        log.debug('✅ AI API response:', {
           suggestionsCount: result.data.suggestions.length,
           suggestions: result.data.suggestions.map((s: any) => ({
             header: s.suggestedHeader,
@@ -125,7 +125,7 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
         setMappings(autoMappings);
         onMappingUpdate?.(autoMappings);
         
-        console.log('✅ AI mappings loaded:', {
+        log.debug('✅ AI mappings loaded:', {
           total: aiSuggestions.length,
           autoApplied: Object.keys(autoMappings).length,
           mappingDetails: Object.entries(autoMappings).map(([header, tagSlug]) => ({
@@ -138,9 +138,9 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
         throw new Error(result.error || 'Failed to get AI suggestions');
       }
     } catch (error) {
-      console.error('❌ Failed to load intelligent mappings:', error);
+      log.error('❌ Failed to load intelligent mappings:', error);
       // Fallback to fuzzy matching if AI fails
-      console.log('📊 Falling back to fuzzy matching...');
+      log.debug('📊 Falling back to fuzzy matching...');
       await loadFuzzyMappings();
     } finally {
       setIsLoadingSuggestions(false);
@@ -178,7 +178,7 @@ const ExcelMappingPanel: React.FC<ExcelMappingPanelProps> = ({
         }
       }
     } catch (error) {
-      console.error('Failed to load fuzzy mappings:', error);
+      log.error('Failed to load fuzzy mappings:', error);
     }
   };
 

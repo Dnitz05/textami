@@ -65,12 +65,12 @@ function levenshteinDistance(str1: string, str2: string): number {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<IntelligentMappingResponse>>> {
-  console.log('🧠 Intelligent AI Mapping Request Started');
+  log.debug('🧠 Intelligent AI Mapping Request Started');
   
   try {
     const { tags, excelHeaders, documentContent = '' }: IntelligentMappingRequest = await request.json();
     
-    console.log('🔍 AI Mapping request:', {
+    log.debug('🔍 AI Mapping request:', {
       tagsCount: tags.length,
       headersCount: excelHeaders.length,
       hasContext: documentContent.length > 0,
@@ -193,23 +193,23 @@ RESPOSTA OBLIGATÒRIA EN JSON:
       throw new Error('Empty response from AI');
     }
 
-    console.log('🤖 AI mapping response length:', aiResponse.length);
-    console.log('🧠 Raw AI response:', aiResponse);
-    console.log('🔍 DEBUGGING ESPECÍFIC - Headers esperats:', excelHeaders);
-    console.log('🔍 DEBUGGING ESPECÍFIC - Tags disponibles:', tags.map(t => `${t.name} (${t.slug}) - exemple: ${t.example}`));
+    log.debug('🤖 AI mapping response length:', aiResponse.length);
+    log.debug('🧠 Raw AI response:', aiResponse);
+    log.debug('🔍 DEBUGGING ESPECÍFIC - Headers esperats:', excelHeaders);
+    log.debug('🔍 DEBUGGING ESPECÍFIC - Tags disponibles:', tags.map(t => `${t.name} (${t.slug}) - exemple: ${t.example}`));
 
     let parsedResponse;
     try {
       parsedResponse = JSON.parse(aiResponse);
     } catch (parseError) {
-      console.error('❌ Failed to parse AI response:', parseError);
-      console.log('💥 Problematic response:', aiResponse);
+      log.error('❌ Failed to parse AI response:', parseError);
+      log.debug('💥 Problematic response:', aiResponse);
       throw new Error('Invalid JSON response from AI');
     }
 
     const aiHeaderMappings = parsedResponse.headerMappings || [];
-    console.log('📋 AI returned mappings for headers:', aiHeaderMappings.map((m: any) => m.excelHeader));
-    console.log('📋 Expected headers:', excelHeaders);
+    log.debug('📋 AI returned mappings for headers:', aiHeaderMappings.map((m: any) => m.excelHeader));
+    log.debug('📋 Expected headers:', excelHeaders);
     
     // Transform AI header mappings to our suggestion format (headers are already clean)
     const suggestions: IntelligentMappingSuggestion[] = aiHeaderMappings.map((mapping: any) => ({
@@ -227,7 +227,7 @@ RESPOSTA OBLIGATÒRIA EN JSON:
     const unmappedHeaders = excelHeaders.filter(header => !mappedHeaders.has(header));
     
     if (unmappedHeaders.length > 0) {
-      console.log('⚠️ Creating fallback mappings for unmapped headers:', unmappedHeaders);
+      log.debug('⚠️ Creating fallback mappings for unmapped headers:', unmappedHeaders);
       
       // Create fallback mappings for unmapped headers
       unmappedHeaders.forEach(header => {
@@ -252,7 +252,7 @@ RESPOSTA OBLIGATÒRIA EN JSON:
     const mappedCount = suggestions.length;
     const mappingCoverage = excelHeaders.length > 0 ? (mappedCount / excelHeaders.length) * 100 : 0;
 
-    console.log('✅ AI header mapping complete:', {
+    log.debug('✅ AI header mapping complete:', {
       totalHeaders: excelHeaders.length,
       mappedHeaders: mappedCount,
       coverage: `${Math.round(mappingCoverage)}%`,
@@ -273,7 +273,7 @@ RESPOSTA OBLIGATÒRIA EN JSON:
     });
 
   } catch (error) {
-    console.error('❌ Intelligent mapping error:', error);
+    log.error('❌ Intelligent mapping error:', error);
     return NextResponse.json(
       { 
         success: false,

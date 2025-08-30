@@ -94,7 +94,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
       
       const currentTemplate = sessionStorage.getItem('templateName') || '';
       
-      console.log('🔍 Template name validation:', {
+      log.debug('🔍 Template name validation:', {
         newName,
         currentTemplate,
         existingTemplates,
@@ -116,7 +116,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
     
     setTemplateName(newName);
     sessionStorage.setItem('templateName', newName);
-    console.log('✅ Template name saved:', newName);
+    log.debug('✅ Template name saved:', newName);
     return true;
   };
 

@@ -10,8 +10,8 @@ const openai = new OpenAI({
 });
 
 // Debug: Check API key availability
-console.log('🔑 OpenAI API Key available:', !!process.env.OPENAI_API_KEY);
-console.log('🔑 API Key length:', process.env.OPENAI_API_KEY?.length || 0);
+log.debug('🔑 OpenAI API Key available:', !!process.env.OPENAI_API_KEY);
+log.debug('🔑 API Key length:', process.env.OPENAI_API_KEY?.length || 0);
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -48,16 +48,16 @@ interface ExecuteInstructionResponse {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<ExecuteInstructionResponse>>> {
-  console.log('🤖 AI Instruction execution request started');
+  log.debug('🤖 AI Instruction execution request started');
   
   try {
-    console.log('📥 Parsing request JSON...');
+    log.debug('📥 Parsing request JSON...');
     const requestBody = await request.json();
-    console.log('📋 Request body keys:', Object.keys(requestBody));
+    log.debug('📋 Request body keys:', Object.keys(requestBody));
     
     const { instruction, originalContent, sectionContent, knowledgeDocuments = [] } = requestBody as ExecuteInstructionRequest;
     
-    console.log('📝 Executing instruction:', {
+    log.debug('📝 Executing instruction:', {
       type: instruction.type,
       title: instruction.title,
       contentLength: originalContent.length,
@@ -76,12 +76,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     // Extract and prepare knowledge context if available
     let knowledgeContext = '';
     if (knowledgeDocuments.length > 0) {
-      console.log('📚 Extracting content from knowledge documents...');
+      log.debug('📚 Extracting content from knowledge documents...');
       
       const knowledgeContents = await Promise.all(
         knowledgeDocuments.map(async (doc) => {
           try {
-            console.log(`📄 Reading content from: ${doc.filename}`);
+            log.debug(`📄 Reading content from: ${doc.filename}`);
             
             // Get signed URL and fetch PDF content
             const { data: urlData } = await supabase.storage
@@ -89,14 +89,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
               .createSignedUrl(doc.storagePath, 3600);
               
             if (!urlData?.signedUrl) {
-              console.error(`❌ Failed to get signed URL for ${doc.filename}`);
+              log.error(`❌ Failed to get signed URL for ${doc.filename}`);
               return null;
             }
             
             // Fetch PDF and extract text content
             const pdfResponse = await fetch(urlData.signedUrl);
             if (!pdfResponse.ok) {
-              console.error(`❌ Failed to fetch ${doc.filename}`);
+              log.error(`❌ Failed to fetch ${doc.filename}`);
               return null;
             }
             
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
             const pdfData = await pdfParse(pdfBuffer);
             
             const extractedText = pdfData.text.trim();
-            console.log(`✅ Successfully extracted ${extractedText.length} characters from ${doc.filename}`);
+            log.debug(`✅ Successfully extracted ${extractedText.length} characters from ${doc.filename}`);
             
             // Truncate content if too long to fit within token limits
             const maxContentLength = 8000; // Approximate token limit for context
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
             };
             
           } catch (error) {
-            console.error(`❌ Error processing ${doc.filename}:`, error);
+            log.error(`❌ Error processing ${doc.filename}:`, error);
             return null;
           }
         })
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
           ).join('\n---\n\n') +
           `\n\nUtilitza aquests documents com a context quan executes la instrucció.`;
           
-        console.log(`✅ Knowledge context prepared with ${validContents.length} documents`);
+        log.debug(`✅ Knowledge context prepared with ${validContents.length} documents`);
       }
     }
 
@@ -173,13 +173,13 @@ Aplica la instrucció a tot el document i retorna el contingut modificat:`;
 
       case 'section':
         // Use section content passed from frontend
-        console.log('🔍 Processing section:', instruction.target);
+        log.debug('🔍 Processing section:', instruction.target);
         
         if (!sectionContent) {
           throw new Error(`Section content not provided for section "${instruction.target}"`);
         }
         
-        console.log('✅ Section content received, length:', sectionContent.length);
+        log.debug('✅ Section content received, length:', sectionContent.length);
         
         systemPrompt = `Ets un expert en processament de contingut de seccions de documents.
 
@@ -214,8 +214,8 @@ Modifica només el paràgraf indicat i retorna el document complet:`;
     }
 
     // Call GPT-5 to execute the instruction
-    console.log('🔄 Calling OpenAI GPT-5...');
-    console.log('📊 Prompt lengths:', { systemPrompt: systemPrompt.length, userPrompt: userPrompt.length });
+    log.debug('🔄 Calling OpenAI GPT-5...');
+    log.debug('📊 Prompt lengths:', { systemPrompt: systemPrompt.length, userPrompt: userPrompt.length });
     
     const completion = await openai.chat.completions.create({
       model: "gpt-4-turbo",
@@ -233,7 +233,7 @@ Modifica només el paràgraf indicat i retorna el document complet:`;
       temperature: 0.2 // Low temperature for consistent document processing
     });
     
-    console.log('✅ OpenAI response received');
+    log.debug('✅ OpenAI response received');
 
     const modifiedContent = completion.choices[0].message.content;
     
@@ -243,7 +243,7 @@ Modifica només el paràgraf indicat i retorna el document complet:`;
 
     const executionTime = Date.now() - startTime;
 
-    console.log('✅ AI instruction executed successfully:', {
+    log.debug('✅ AI instruction executed successfully:', {
       originalLength: originalContent.length,
       modifiedLength: modifiedContent.length,
       executionTimeMs: executionTime,
@@ -277,8 +277,8 @@ Modifica només el paràgraf indicat i retorna el document complet:`;
     });
 
   } catch (error) {
-    console.error('❌ AI instruction execution error:', error);
-    console.error('🔍 Error details:', {
+    log.error('❌ AI instruction execution error:', error);
+    log.error('🔍 Error details:', {
       name: error instanceof Error ? error.name : 'Unknown',
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : 'No stack trace'

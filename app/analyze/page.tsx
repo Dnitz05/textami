@@ -54,9 +54,9 @@ export default function AnalyzePage() {
         setExcelHeaders(template.excelHeaders);
         setPipelineStatus('frozen');
         sessionStorage.removeItem('loadedTemplate');
-        console.log('✅ Template loaded:', template.name);
+        log.debug('✅ Template loaded:', template.name);
       } catch (error) {
-        console.error('❌ Error loading template:', error);
+        log.error('❌ Error loading template:', error);
       }
     }
 
@@ -67,7 +67,7 @@ export default function AnalyzePage() {
     if (selectedFile && selectedFileContent) {
       try {
         const fileData = JSON.parse(selectedFile);
-        console.log('🔄 Auto-uploading file from Nova Plantilla:', fileData.file.name);
+        log.debug('🔄 Auto-uploading file from Nova Plantilla:', fileData.file.name);
         
         // Convert base64 back to file
         const binaryString = atob(selectedFileContent);
@@ -89,7 +89,7 @@ export default function AnalyzePage() {
         uploadFile(file);
         
       } catch (error) {
-        console.error('❌ Error auto-uploading file:', error);
+        log.error('❌ Error auto-uploading file:', error);
         sessionStorage.removeItem('selectedFile');
         sessionStorage.removeItem('selectedFileContent');
       }
@@ -146,12 +146,12 @@ export default function AnalyzePage() {
       if (result.success) {
         alert('✅ Plantilla guardada correctament!');
         setShowSaveTemplateDialog(false);
-        console.log('✅ Template saved:', result.data.name);
+        log.debug('✅ Template saved:', result.data.name);
       } else {
         throw new Error(result.error || 'Failed to save template');
       }
     } catch (error) {
-      console.error('❌ Error saving template:', error);
+      log.error('❌ Error saving template:', error);
       alert('Error guardant la plantilla: ' + (error instanceof Error ? error.message : 'Error desconegut'));
     }
   };
@@ -168,13 +168,13 @@ export default function AnalyzePage() {
     try {
       const templateId = `template_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      console.log('🚀 Real GPT-5 Analysis: Uploading PDF to Supabase and calling /api/extract...');
+      log.debug('🚀 Real GPT-5 Analysis: Uploading PDF to Supabase and calling /api/extract...');
       
       // Rest of the upload logic will continue...
       await performAnalysis(file, templateId);
       
     } catch (err) {
-      console.error('❌ Analysis failed:', err);
+      log.error('❌ Analysis failed:', err);
       const errorMsg = `Analysis failed: ${err instanceof Error ? err.message : 'Unknown error'}`;
       setError(errorMsg);
     } finally {
@@ -191,7 +191,7 @@ export default function AnalyzePage() {
 
   const performAnalysis = async (file: File, templateId: string) => {
     setOriginalFileName(file.name);
-    console.log('🚀 Real GPT-5 Analysis: Uploading PDF to Supabase and calling /api/extract...');
+    log.debug('🚀 Real GPT-5 Analysis: Uploading PDF to Supabase and calling /api/extract...');
     
     // 1. Upload PDF to Supabase Storage
     const formData = new FormData();
@@ -209,7 +209,7 @@ export default function AnalyzePage() {
     }
     
     const uploadResult = await uploadResponse.json() as ApiResponse<UploadResponse>;
-    console.log('✅ PDF uploaded successfully:', uploadResult);
+    log.debug('✅ PDF uploaded successfully:', uploadResult);
     
     if (!uploadResult.success || !uploadResult.data) {
       throw new Error('Upload response invalid');
@@ -234,7 +234,7 @@ export default function AnalyzePage() {
     }
     
     const analysisResult = await analysisResponse.json() as ApiResponse<ExtractionResponse>;
-    console.log('✅ GPT-5 analysis completed:', analysisResult);
+    log.debug('✅ GPT-5 analysis completed:', analysisResult);
     
     if (!analysisResult.success || !analysisResult.data) {
       throw new Error('Analysis response invalid');
@@ -271,7 +271,7 @@ export default function AnalyzePage() {
     setError(null);
 
     try {
-      console.log('📊 Processing Excel file with real AI analysis:', file.name);
+      log.debug('📊 Processing Excel file with real AI analysis:', file.name);
       
       // Use real Excel API instead of mock
       const formData = new FormData();
@@ -283,7 +283,7 @@ export default function AnalyzePage() {
       });
 
       const result = await response.json();
-      console.log('📥 Excel API response:', result);
+      log.debug('📥 Excel API response:', result);
 
       if (!response.ok) {
         throw new Error(result.error || 'Failed to analyze Excel file');
@@ -295,8 +295,8 @@ export default function AnalyzePage() {
         setExcelHeaders(headers);
         setPipelineStatus('mapped');
         
-        console.log('✅ Real Excel headers extracted:', headers);
-        console.log('📊 Full column data:', result.columns);
+        log.debug('✅ Real Excel headers extracted:', headers);
+        log.debug('📊 Full column data:', result.columns);
         
         // Store full column data for future use
         localStorage.setItem('textami_excel_columns', JSON.stringify(result.columns));
@@ -306,7 +306,7 @@ export default function AnalyzePage() {
       
     } catch (err) {
       setError(`Failed to analyze Excel file: ${err instanceof Error ? err.message : 'Unknown error'}`);
-      console.error('❌ Excel analysis error:', err);
+      log.error('❌ Excel analysis error:', err);
     } finally {
       setIsProcessingExcel(false);
     }
@@ -319,7 +319,7 @@ export default function AnalyzePage() {
   };
 
   const handleMappingUpdate = (mappings: Record<string, string>): void => {
-    console.log('📋 Mapping updated:', mappings);
+    log.debug('📋 Mapping updated:', mappings);
     // Save mappings to localStorage or database
     if (analysisData) {
       localStorage.setItem(`mappings_${analysisData.templateId}`, JSON.stringify(mappings));
@@ -346,7 +346,7 @@ export default function AnalyzePage() {
     if (!shouldProceed) return;
 
     try {
-      console.log('🧊 Starting template freeze process...');
+      log.debug('🧊 Starting template freeze process...');
       setError(null);
       
       // Call freeze API
@@ -373,7 +373,7 @@ export default function AnalyzePage() {
       if (result.success) {
         const { successfulReplacements, totalReplacements, manualReviewRequired } = result.data;
         
-        console.log('✅ Template freeze successful:', result.data);
+        log.debug('✅ Template freeze successful:', result.data);
         
         // Update pipeline status
         setPipelineStatus('frozen');
@@ -405,7 +405,7 @@ export default function AnalyzePage() {
       }
       
     } catch (err) {
-      console.error('❌ Template freeze failed:', err);
+      log.error('❌ Template freeze failed:', err);
       const errorMsg = `Failed to freeze template: ${err instanceof Error ? err.message : 'Unknown error'}`;
       setError(errorMsg);
     }
@@ -443,7 +443,7 @@ export default function AnalyzePage() {
     setError(null);
 
     try {
-      console.log('🚀 Starting mass document generation...');
+      log.debug('🚀 Starting mass document generation...');
 
       // Mock Excel data for testing (in production, use real parsed Excel)
       const mockExcelData = [
@@ -489,7 +489,7 @@ export default function AnalyzePage() {
       const result = await response.json();
       
       if (result.success) {
-        console.log('✅ Mass generation successful:', result.data);
+        log.debug('✅ Mass generation successful:', result.data);
         
         setGenerationResult({
           batchId: result.data.batchId,
@@ -505,7 +505,7 @@ export default function AnalyzePage() {
       }
       
     } catch (err) {
-      console.error('❌ Mass generation failed:', err);
+      log.error('❌ Mass generation failed:', err);
       const errorMsg = `Failed to generate documents: ${err instanceof Error ? err.message : 'Unknown error'}`;
       setError(errorMsg);
     } finally {

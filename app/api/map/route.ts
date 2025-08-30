@@ -101,12 +101,12 @@ function enhancedMatch(tagName: string, tagExample: string, header: string): {
 }
 
 export async function POST(request: NextRequest) {
-  console.log('🔗 Excel Mapping Request Started');
+  log.debug('🔗 Excel Mapping Request Started');
   
   try {
     const { tags, excelHeaders, confidenceThreshold = 0.7 }: MappingRequest = await request.json();
     
-    console.log('📊 Mapping request:', {
+    log.debug('📊 Mapping request:', {
       tagsCount: tags.length,
       headersCount: excelHeaders.length,
       threshold: confidenceThreshold
@@ -161,15 +161,15 @@ export async function POST(request: NextRequest) {
 
         mappedCount++;
         
-        console.log(`✅ Match: ${tag.name} → ${bestMatch.header} (${Math.round(bestMatch.score * 100)}%)`);
+        log.debug(`✅ Match: ${tag.name} → ${bestMatch.header} (${Math.round(bestMatch.score * 100)}%)`);
       } else {
-        console.log(`❌ No match: ${tag.name} (best: ${Math.round(bestMatch.score * 100)}%)`);
+        log.debug(`❌ No match: ${tag.name} (best: ${Math.round(bestMatch.score * 100)}%)`);
       }
     }
 
     const mappingCoverage = tags.length > 0 ? (mappedCount / tags.length) * 100 : 0;
 
-    console.log('✅ Mapping analysis complete:', {
+    log.debug('✅ Mapping analysis complete:', {
       totalTags: tags.length,
       mappedTags: mappedCount,
       coverage: `${Math.round(mappingCoverage)}%`,
@@ -191,7 +191,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(response);
 
   } catch (error) {
-    console.error('❌ Mapping error:', error);
+    log.error('❌ Mapping error:', error);
     return NextResponse.json(
       { 
         error: 'Mapping analysis failed',

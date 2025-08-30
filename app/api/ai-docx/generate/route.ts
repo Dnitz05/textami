@@ -19,7 +19,7 @@ interface GenerationRequest {
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<GenerationResponse>>> {
   const startTime = Date.now();
-  console.log('🚀 MASS PRODUCTION Started');
+  log.debug('🚀 MASS PRODUCTION Started');
   
   try {
     // Initialize Supabase client
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('❌ Supabase environment variables missing');
+      log.error('❌ Supabase environment variables missing');
       return NextResponse.json(
         { success: false, error: 'Storage configuration required' },
         { status: 500 }
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    console.log('✅ Supabase client initialized for mass production');
+    log.debug('✅ Supabase client initialized for mass production');
 
     // Parse request data
     const { 
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       outputFormat = 'docx'
     }: GenerationRequest = await request.json();
     
-    console.log('📊 Mass production request:', {
+    log.debug('📊 Mass production request:', {
       templateId,
       frozenTemplateUrl,
       dataRows: excelData?.length || 0,
@@ -72,13 +72,13 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     }
 
     // 1. Retrieve frozen DOCX template from Supabase Storage
-    console.log('📥 Retrieving frozen DOCX template:', frozenTemplateUrl);
+    log.debug('📥 Retrieving frozen DOCX template:', frozenTemplateUrl);
     const { data: templateData, error: downloadError } = await supabase.storage
       .from('template-docx')
       .download(frozenTemplateUrl);
 
     if (downloadError || !templateData) {
-      console.error('❌ Failed to retrieve frozen template:', downloadError);
+      log.error('❌ Failed to retrieve frozen template:', downloadError);
       return NextResponse.json(
         { success: false, error: 'Failed to retrieve frozen template', details: downloadError?.message },
         { status: 500 }
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const arrayBuffer = await templateData.arrayBuffer();
     const templateBuffer = Buffer.from(arrayBuffer);
     
-    console.log('✅ Frozen DOCX template retrieved:', {
+    log.debug('✅ Frozen DOCX template retrieved:', {
       size: templateBuffer.length,
       type: templateData.type
     });
@@ -100,14 +100,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const documents: GeneratedDocument[] = [];
     const errors: GenerationError[] = [];
 
-    console.log(`🔄 Processing ${totalRows} documents in batch ${batchId}...`);
+    log.debug(`🔄 Processing ${totalRows} documents in batch ${batchId}...`);
 
     for (let i = 0; i < totalRows; i++) {
       const rowData = excelData[i];
       const documentId = `${templateId}_doc_${i + 1}_${Date.now()}`;
       
       try {
-        console.log(`📄 Processing document ${i + 1}/${totalRows}:`, rowData);
+        log.debug(`📄 Processing document ${i + 1}/${totalRows}:`, rowData);
         
         // 2.1. Create data object for this row based on mappings
         const docData: Record<string, string | number> = {};
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
           }
         }
         
-        console.log(`📋 Mapped data for document ${i + 1}:`, docData);
+        log.debug(`📋 Mapped data for document ${i + 1}:`, docData);
 
         // 2.2. Generate DOCX with docxtemplater
         const zip = new PizZip(templateBuffer);
@@ -174,10 +174,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
           generatedAt: new Date().toISOString()
         });
 
-        console.log(`✅ Document ${i + 1} generated successfully: ${fileName}`);
+        log.debug(`✅ Document ${i + 1} generated successfully: ${fileName}`);
 
       } catch (docError) {
-        console.error(`❌ Failed to generate document ${i + 1}:`, docError);
+        log.error(`❌ Failed to generate document ${i + 1}:`, docError);
         errors.push({
           rowIndex: i,
           error: docError instanceof Error ? docError.message : 'Unknown error',
@@ -204,7 +204,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       data: generationData
     };
 
-    console.log('✅ Mass production complete:', {
+    log.debug('✅ Mass production complete:', {
       batchId,
       requested: totalRows,
       generated: documents.length,
@@ -216,7 +216,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     return NextResponse.json(response);
 
   } catch (error) {
-    console.error('❌ Unexpected error in mass production:', error);
+    log.error('❌ Unexpected error in mass production:', error);
     return NextResponse.json(
       { 
         success: false,

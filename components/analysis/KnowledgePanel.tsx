@@ -47,10 +47,10 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({
       if (result.success) {
         setKnowledgeDocuments(result.data);
       } else {
-        console.error('Failed to load knowledge base:', result.error);
+        log.error('Failed to load knowledge base:', result.error);
       }
     } catch (error) {
-      console.error('Error loading knowledge base:', error);
+      log.error('Error loading knowledge base:', error);
     } finally {
       setLoading(false);
     }
@@ -83,12 +83,12 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({
         // Add to local state
         setKnowledgeDocuments(prev => [result.data, ...prev]);
         onDocumentUpload?.(file);
-        console.log('✅ PDF uploaded to knowledge base:', result.data.filename);
+        log.debug('✅ PDF uploaded to knowledge base:', result.data.filename);
       } else {
         throw new Error(result.error || 'Failed to upload PDF');
       }
     } catch (error) {
-      console.error('Error uploading document:', error);
+      log.error('Error uploading document:', error);
       alert('Error al pujar el document: ' + (error instanceof Error ? error.message : 'Error desconegut'));
     } finally {
       setUploading(false);
@@ -106,12 +106,12 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({
       
       if (result.success) {
         setKnowledgeDocuments(prev => prev.filter(d => d.id !== doc.id));
-        console.log('✅ PDF removed from knowledge base:', doc.filename);
+        log.debug('✅ PDF removed from knowledge base:', doc.filename);
       } else {
         throw new Error(result.error || 'Failed to delete document');
       }
     } catch (error) {
-      console.error('Error removing document:', error);
+      log.error('Error removing document:', error);
       alert('Error eliminant el document: ' + (error instanceof Error ? error.message : 'Error desconegut'));
     }
   };

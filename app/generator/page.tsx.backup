@@ -109,7 +109,7 @@ export default function GeneratorPage() {
     const isPDF = file.name.toLowerCase().endsWith('.pdf');
     const isDOCX = file.name.toLowerCase().endsWith('.docx');
     
-    log.debug(`📤 UPLOAD #${uploadId} - Starting ${isPDF ? 'PDF' : 'DOCX'} upload:`, {
+    console.log(`📤 UPLOAD #${uploadId} - Starting ${isPDF ? 'PDF' : 'DOCX'} upload:`, {
       fileName: file.name,
       size: file.size,
       fileType: isPDF ? 'PDF' : 'DOCX',
@@ -121,7 +121,7 @@ export default function GeneratorPage() {
     });
 
     if (!isPDF && !isDOCX) {
-      log.error('❌ Unsupported file type');
+      console.error('❌ Unsupported file type');
       setAiState(prevState => ({
         ...prevState,
         error: 'Only PDF and DOCX files are supported'
@@ -152,17 +152,19 @@ export default function GeneratorPage() {
         body: formData
       });
       
-      log.debug('📡 Response status:', response.status);
+      console.log('📡 Response status:', response.status);
       
       if (!response.ok) {
         const errorData = await response.json();
-        log.error('❌ API Error:', errorData);
+        console.error('❌ API Error:', errorData);
         throw new Error(errorData.error || `HTTP ${response.status}`);
       }
       
       const result = await response.json();
+      console.log('✅ Analysis result:', result);
       
       if (result.success && result.data) {
+        console.log(`✅ UPLOAD #${uploadId} - SUCCESS:`, {
           templateId: result.data.templateId,
           fileName: result.data.fileName,
           fileType: isPDF ? 'PDF' : 'DOCX',
@@ -199,18 +201,18 @@ export default function GeneratorPage() {
           error: null
         };
         
-        log.debug(`🔄 UPLOAD #${uploadId} - Setting new state:`, newAiState);
+        console.log(`🔄 UPLOAD #${uploadId} - Setting new state:`, newAiState);
         setAiState(newAiState);
         
         // Guardar a localStorage per backup
         localStorage.setItem('currentTemplate', JSON.stringify(result.data));
-        log.debug(`💾 UPLOAD #${uploadId} - Saved to localStorage`);
+        console.log(`💾 UPLOAD #${uploadId} - Saved to localStorage`);
       } else {
-        log.error(`❌ UPLOAD #${uploadId} - Invalid response format:`, result);
+        console.error(`❌ UPLOAD #${uploadId} - Invalid response format:`, result);
         throw new Error('Invalid response format');
       }
     } catch (error) {
-      log.error(`❌ UPLOAD #${uploadId} - Upload failed:`, error);
+      console.error(`❌ UPLOAD #${uploadId} - Upload failed:`, error);
       setAiState(prevState => ({
         ...prevState,
         processing: false,
@@ -223,21 +225,21 @@ export default function GeneratorPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    log.debug('📊 Excel file selected:', file.name, file.size);
+    console.log('📊 Excel file selected:', file.name, file.size);
     setExcelState({ processing: true, analysis: null, error: null });
 
     try {
       const formData = new FormData();
       formData.append('excel', file);
 
-      log.debug('📤 Calling /api/ai-docx/excel...');
+      console.log('📤 Calling /api/ai-docx/excel...');
       const response = await fetch('/api/ai-docx/excel', {
         method: 'POST',
         body: formData,
       });
 
       const result = await response.json();
-      log.debug('📥 Excel API response:', result);
+      console.log('📥 Excel API response:', result);
 
       if (!response.ok) {
         throw new Error(result.error || 'Error en Excel AI analysis');
@@ -249,9 +251,10 @@ export default function GeneratorPage() {
         error: null
       });
 
+      console.log('✅ Excel analysis completed:', result.columns?.length + ' columns detected');
 
     } catch (error) {
-      log.error('❌ Excel analysis error:', error);
+      console.error('❌ Excel analysis error:', error);
       setExcelState({
         processing: false,
         analysis: null,
@@ -269,7 +272,7 @@ export default function GeneratorPage() {
       mappingState.mappings.length === 0;
     
     if (shouldFetchMappings) {
-      log.debug('🤖 Both files ready, auto-fetching AI mappings...', {
+      console.log('🤖 Both files ready, auto-fetching AI mappings...', {
         placeholders: aiState.aiAnalysis?.placeholders?.length ?? 0,
         columns: excelState.analysis?.columns?.length ?? 0,
         currentMappings: mappingState.mappings.length,
@@ -281,21 +284,21 @@ export default function GeneratorPage() {
 
   const fetchMappings = async () => {
     if (!aiState.aiAnalysis?.placeholders || !excelState.analysis?.columns) {
-      log.warn('⚠️ fetchMappings called without required data');
+      console.warn('⚠️ fetchMappings called without required data');
       return;
     }
     
     // Evitar múltiples crides simultànies
     if (mappingState.loading) {
-      log.debug('⏳ Mappings already loading, skipping...');
+      console.log('⏳ Mappings already loading, skipping...');
       return;
     }
 
-    log.debug('🚀 Starting fetchMappings...');
+    console.log('🚀 Starting fetchMappings...');
     setMappingState({ loading: true, mappings: [], error: null });
 
     try {
-      log.debug('📤 Calling /api/ai-docx/mapping with data:', {
+      console.log('📤 Calling /api/ai-docx/mapping with data:', {
         placeholders: aiState.aiAnalysis.placeholders,
         columns: excelState.analysis.columns
       });
@@ -310,7 +313,7 @@ export default function GeneratorPage() {
       });
 
       const result = await response.json();
-      log.debug('📥 Mappings response:', result);
+      console.log('📥 Mappings response:', result);
 
       if (!response.ok) {
         throw new Error(result.error || 'Error en AI mapping');
@@ -323,12 +326,13 @@ export default function GeneratorPage() {
         error: null
       });
 
+      console.log('✅ Mappings loaded successfully:', {
         count: mappings.length,
         timestamp: new Date().toISOString()
       });
 
     } catch (error) {
-      log.error('❌ Mapping error:', error);
+      console.error('❌ Mapping error:', error);
       setMappingState({
         loading: false,
         mappings: [],
@@ -342,7 +346,7 @@ export default function GeneratorPage() {
     const hasExcel = !!excelState.analysis;
     const hasMappings = mappingState.mappings.length > 0;
     
-    log.debug('🔥 GENERATE CLICKED - Progressive State Debug:', {
+    console.log('🔥 GENERATE CLICKED - Progressive State Debug:', {
       hasDocument,
       hasExcel, 
       hasMappings,
@@ -363,16 +367,16 @@ export default function GeneratorPage() {
     
     // Document-only mode (preview/setup)
     if (!hasExcel) {
-      log.debug('📄 Document-only mode - going to advanced for setup');
+      console.log('📄 Document-only mode - going to advanced for setup');
     }
     
     // Partial mode (generating mappings)
     if (hasExcel && !hasMappings && mappingState.loading) {
-      log.debug('⏳ Waiting for mappings to complete');
+      console.log('⏳ Waiting for mappings to complete');
       return;
     }
     
-    log.debug('🚀 Starting generation - preparing data for advanced interface');
+    console.log('🚀 Starting generation - preparing data for advanced interface');
     
     // Prepare data for localStorage (progressive data)
     const documentData = {
@@ -407,7 +411,7 @@ export default function GeneratorPage() {
     }
     localStorage.setItem('textami_mappings', JSON.stringify(mappingState.mappings));
     
-    log.debug('💾 Progressive data saved to localStorage:', {
+    console.log('💾 Progressive data saved to localStorage:', {
       hasDocument: true,
       hasExcel: !!excelData,
       mappingsCount: mappingState.mappings.length,
@@ -416,7 +420,7 @@ export default function GeneratorPage() {
     
     // Redirect to advanced interface
     const url = `/generator/advanced?templateId=${aiState.template!.templateId}`;
-    log.debug('🔄 Redirecting to advanced interface:', url);
+    console.log('🔄 Redirecting to advanced interface:', url);
     
     window.location.href = url;
   };
@@ -458,7 +462,7 @@ export default function GeneratorPage() {
                           if (target.classList.contains('placeholder-highlight')) {
                             const placeholder = target.dataset.placeholder;
                             const type = target.dataset.type;
-                            log.debug('🖱️ Placeholder clicked:', { placeholder, type });
+                            console.log('🖱️ Placeholder clicked:', { placeholder, type });
                           }
                         }}
                       />
@@ -511,7 +515,7 @@ export default function GeneratorPage() {
                 {!aiState.template && (
                   <>
                     <label 
-                      onClick={() => log.debug('🖱️ DOCX Label clicked!')}
+                      onClick={() => console.log('🖱️ DOCX Label clicked!')}
                       className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors cursor-pointer block text-center"
                     >
                       {aiState.processing ? 'GPT-5 Analitzant...' : 'Upload per AI Analysis'}
@@ -519,7 +523,7 @@ export default function GeneratorPage() {
                         type="file"
                         accept=".docx,.pdf"
                         onChange={(e) => {
-                          log.debug('📁 Document Input activated!', e.target.files?.[0]?.name);
+                          console.log('📁 Document Input activated!', e.target.files?.[0]?.name);
                           handleAiDocumentAnalysis(e);
                         }}
                         disabled={aiState.processing}
@@ -568,7 +572,7 @@ export default function GeneratorPage() {
 
                 {/* Always show upload button, but change text if Excel exists */}
                 <label 
-                  onClick={() => log.debug('🖱️ Excel Label clicked!')}
+                  onClick={() => console.log('🖱️ Excel Label clicked!')}
                   className={`w-full py-3 px-4 rounded-md transition-all block text-center font-medium ${
                     !excelState.processing
                       ? aiState.template 
@@ -582,7 +586,7 @@ export default function GeneratorPage() {
                                       excelState.analysis ? '🔄 Replace Excel/CSV' : 
                                       aiState.template ? '📊 Upload Excel Now!' : 'Upload Excel/CSV';
                     
-                    log.debug('🔍 Excel Button Debug:', {
+                    console.log('🔍 Excel Button Debug:', {
                       processing: excelState.processing,
                       hasAnalysis: !!excelState.analysis,
                       hasTemplate: !!aiState.template,
@@ -598,7 +602,7 @@ export default function GeneratorPage() {
                     disabled={excelState.processing}
                     className="hidden"
                     onChange={(e) => {
-                      log.debug('📊 Excel Input activated!', e.target.files?.[0]?.name);
+                      console.log('📊 Excel Input activated!', e.target.files?.[0]?.name);
                       handleExcelAnalysis(e);
                     }}
                   />
@@ -622,7 +626,7 @@ export default function GeneratorPage() {
                       <span>✅ {excelState.analysis.fileName}</span>
                       <button
                         onClick={() => {
-                          log.debug('🗑️ Clearing Excel data');
+                          console.log('🗑️ Clearing Excel data');
                           setExcelState({ processing: false, analysis: null, error: null });
                         }}
                         className="text-red-500 hover:text-red-700 text-xs px-1"
@@ -903,7 +907,7 @@ export default function GeneratorPage() {
                       if (target.classList.contains('placeholder-highlight')) {
                         const placeholder = target.dataset.placeholder;
                         const type = target.dataset.type;
-                        log.debug('🖱️ Placeholder clicked:', { placeholder, type });
+                        console.log('🖱️ Placeholder clicked:', { placeholder, type });
                         // Future enhancement: Show mapping info modal or inline editor
                       }
                     }}

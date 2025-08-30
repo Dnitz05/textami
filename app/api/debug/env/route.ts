@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       }
     };
 
-    console.log('🔍 Environment Variables Check:', envCheck);
+    log.debug('🔍 Environment Variables Check:', envCheck);
 
     return NextResponse.json({
       success: true,
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('❌ Environment check failed:', error);
+    log.error('❌ Environment check failed:', error);
     return NextResponse.json(
       { 
         success: false,

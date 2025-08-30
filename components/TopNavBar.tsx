@@ -26,12 +26,12 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
         .filter(key => key.startsWith('instructions_'))
         .map(key => key.replace('instructions_', ''));
       
-      console.log('🧹 Existing templates found:', existingTemplates);
+      log.debug('🧹 Existing templates found:', existingTemplates);
       
       // If there are duplicates, show warning
       const duplicates = existingTemplates.filter((item, index) => existingTemplates.indexOf(item) !== index);
       if (duplicates.length > 0) {
-        console.warn('⚠️ Duplicate template names detected:', duplicates);
+        log.warn('⚠️ Duplicate template names detected:', duplicates);
       }
     }
   }, []);
@@ -71,16 +71,16 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
         .filter(key => key.startsWith('instructions_'))
         .map(key => key.replace('instructions_', ''));
       
-      console.log('🔍 Generating unique name for:', baseName, 'Existing:', existingTemplates);
+      log.debug('🔍 Generating unique name for:', baseName, 'Existing:', existingTemplates);
       
       while (existingTemplates.includes(uniqueName)) {
         uniqueName = `${baseName} (${counter})`;
         counter++;
-        console.log('📝 Name exists, trying:', uniqueName);
+        log.debug('📝 Name exists, trying:', uniqueName);
       }
       
       sessionStorage.setItem('templateName', uniqueName);
-      console.log('✅ Generated unique template name:', uniqueName);
+      log.debug('✅ Generated unique template name:', uniqueName);
       
       // Create FileReader to store file content
       const reader = new FileReader();

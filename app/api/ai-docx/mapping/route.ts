@@ -16,6 +16,18 @@ interface MappingProposal {
   dataTypeMatch: boolean;
 }
 
+interface DocumentPlaceholder {
+  text: string;
+  type?: string;
+  example?: string;
+}
+
+interface ExcelColumn {
+  column: string;
+  type?: string;
+  examples?: string[];
+}
+
 interface MappingIntelligence {
   success: boolean;
   proposals: MappingProposal[];
@@ -39,13 +51,13 @@ export async function POST(request: NextRequest) {
 
     // Prepare data for GPT-5 mapping intelligence
     const mappingContext = {
-      documentPlaceholders: placeholders.map((p: any) => ({
+      documentPlaceholders: placeholders.map((p: DocumentPlaceholder) => ({
         text: p.text,
         type: p.type,
         confidence: p.confidence,
         context: p.reasoning
       })),
-      excelColumns: columns.map((c: any) => ({
+      excelColumns: columns.map((c: ExcelColumn) => ({
         column: c.column,
         header: c.header,
         dataType: c.dataType,
@@ -93,7 +105,7 @@ Focus on finding the best semantic and contextual matches. Be conservative with 
     const aiResponse = JSON.parse(completion.choices[0].message.content || '{}');
 
     // Process AI mapping proposals
-    const proposals: MappingProposal[] = (aiResponse.proposals || []).map((p: any) => ({
+    const proposals: MappingProposal[] = (aiResponse.proposals || []).map(p: DocumentPlaceholder => ({
       placeholder: p.placeholder || '',
       excelColumn: p.excelColumn || p.column || '',
       excelHeader: p.excelHeader || p.header || '',
@@ -112,11 +124,11 @@ Focus on finding the best semantic and contextual matches. Be conservative with 
     const mappedColumns = new Set(proposals.map(p => p.excelColumn));
     
     const unmappedPlaceholders = placeholders
-      .map((p: any) => p.text)
+      .map(p: DocumentPlaceholder => p.text)
       .filter((text: string) => !mappedPlaceholders.has(text));
       
     const unmappedColumns = columns
-      .map((c: any) => c.column)
+      .map(c: ExcelColumn => c.column)
       .filter((col: string) => !mappedColumns.has(col));
 
     const result: MappingIntelligence = {
@@ -128,12 +140,12 @@ Focus on finding the best semantic and contextual matches. Be conservative with 
       processingTime: Date.now() - startTime
     };
 
-    console.log(`[AI-MAPPING] Success: ${proposals.length} mappings proposed with ${overallConfidence}% confidence in ${result.processingTime}ms`);
+    log.debug(`[AI-MAPPING] Success: ${proposals.length} mappings proposed with ${overallConfidence}% confidence in ${result.processingTime}ms`);
 
     return NextResponse.json(result);
 
-  } catch (error: any) {
-    console.error('[AI-MAPPING] Error:', error);
+  } catch (error: unknown) {
+    log.error('[AI-MAPPING] Error:', error);
     
     return NextResponse.json({
       success: false,

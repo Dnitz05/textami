@@ -92,7 +92,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
           })));
         }
       } catch (error) {
-        console.error('Error loading knowledge documents:', error);
+        log.error('Error loading knowledge documents:', error);
       }
     };
 
@@ -115,7 +115,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
   };
 
   const handleMappingRemove = (header: string) => {
-    console.log('🗑️ Removing mapping for header:', header);
+    log.debug('🗑️ Removing mapping for header:', header);
     const newMappings = { ...mappings };
     delete newMappings[header];
     setMappings(newMappings);
@@ -128,7 +128,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
 
   const handleInstructionExecute = async (instruction: any) => {
     try {
-      console.log('🤖 Executing instruction:', instruction.title);
+      log.debug('🤖 Executing instruction:', instruction.title);
       setIsExecutingInstruction(true);
       setExecutingInstructionId(instruction.id);
 
@@ -138,7 +138,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
         const targetSection = analysisData.sections.find(s => s.id === instruction.target);
         if (targetSection) {
           sectionContent = targetSection.markdown;
-          console.log('🎯 Found section content for:', instruction.target, 'Length:', sectionContent?.length);
+          log.debug('🎯 Found section content for:', instruction.target, 'Length:', sectionContent?.length);
           
           // Store original content if not already stored
           if (!originalSectionContent[instruction.target]) {
@@ -146,10 +146,10 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
               ...prev,
               [instruction.target]: targetSection.markdown
             }));
-            console.log('💾 Stored original content for section:', instruction.target);
+            log.debug('💾 Stored original content for section:', instruction.target);
           }
         } else {
-          console.warn('⚠️ Section not found:', instruction.target);
+          log.warn('⚠️ Section not found:', instruction.target);
           throw new Error(`Section "${instruction.target}" not found in document`);
         }
       }
@@ -177,7 +177,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
             ...prev,
             [result.data.targetSection]: result.data.modifiedSectionContent
           }));
-          console.log('✅ Section instruction executed successfully:', {
+          log.debug('✅ Section instruction executed successfully:', {
             instruction: instruction.title,
             section: result.data.targetSection,
             executionTime: result.data.executionTime + 'ms'
@@ -186,7 +186,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
           // Update the entire document for global instructions
           setCurrentMarkdown(result.data.modifiedContent);
           setModifiedSections({}); // Clear section modifications
-          console.log('✅ Global instruction executed successfully:', {
+          log.debug('✅ Global instruction executed successfully:', {
             instruction: instruction.title,
             executionTime: result.data.executionTime + 'ms'
           });
@@ -195,7 +195,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
         throw new Error(result.error || 'Failed to execute instruction');
       }
     } catch (error) {
-      console.error('❌ Error executing instruction:', error);
+      log.error('❌ Error executing instruction:', error);
       alert('Error executant la instrucció: ' + (error instanceof Error ? error.message : 'Error desconegut'));
     } finally {
       setIsExecutingInstruction(false);
@@ -210,7 +210,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
     }
 
     try {
-      console.log('🤖 Executing custom instruction:', customInstruction);
+      log.debug('🤖 Executing custom instruction:', customInstruction);
       setIsExecutingCustom(true);
 
       // Create a custom instruction object
@@ -242,12 +242,12 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
         setCurrentMarkdown(result.data.modifiedContent);
         // Clear the input after successful execution
         setCustomInstruction('');
-        console.log('✅ Custom instruction executed successfully');
+        log.debug('✅ Custom instruction executed successfully');
       } else {
         throw new Error(result.error || 'Failed to execute custom instruction');
       }
     } catch (error) {
-      console.error('❌ Error executing custom instruction:', error);
+      log.error('❌ Error executing custom instruction:', error);
       alert('Error executant la instrucció: ' + (error instanceof Error ? error.message : 'Error desconegut'));
     } finally {
       setIsExecutingCustom(false);
@@ -255,7 +255,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
   };
 
   const handleInstructionDeactivate = (instruction: any) => {
-    console.log('🔄 Deactivating instruction:', instruction.title);
+    log.debug('🔄 Deactivating instruction:', instruction.title);
     
     if (instruction.type === 'section' && instruction.target) {
       // Restore original section content
@@ -267,16 +267,16 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
           delete updated[instruction.target];
           return updated;
         });
-        console.log('✅ Restored original content for section:', instruction.target);
+        log.debug('✅ Restored original content for section:', instruction.target);
       } else {
-        console.warn('⚠️ No original content found for section:', instruction.target);
+        log.warn('⚠️ No original content found for section:', instruction.target);
       }
     } else if (instruction.type === 'global') {
       // For global instructions, restore original markdown
       if (analysisData?.markdown) {
         setCurrentMarkdown(analysisData.markdown);
         setModifiedSections({});
-        console.log('✅ Restored original global content');
+        log.debug('✅ Restored original global content');
       }
     }
   };

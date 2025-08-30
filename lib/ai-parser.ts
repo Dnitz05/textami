@@ -11,7 +11,7 @@ export interface ParsedTag {
   confidence: number;
   page?: number;
   anchor?: string;
-  normalized?: any; // normalized value based on type
+  normalized?: string | number | boolean | Date | null; // normalized value based on type
 }
 
 export interface ParsedTable {
@@ -19,7 +19,7 @@ export interface ParsedTable {
   title: string;
   headers: string[];
   rows: string[][];
-  normalized?: Record<string, any>;
+  normalized?: Record<string, string | number | boolean>;
 }
 
 export interface ParsedSection {
@@ -110,7 +110,7 @@ export function inferTagType(name: string, example: string): TagType {
 /**
  * Normalize value based on type
  */
-export function normalizeValue(value: string, type: TagType): any {
+export function normalizeValue(value: string, type: TagType): string | number | Date | null {
   switch (type) {
     case 'currency':
       // Extract number from currency string like "101,96 €"
@@ -169,10 +169,33 @@ export function normalizeValue(value: string, type: TagType): any {
   }
 }
 
+// Raw AI response interfaces
+interface RawTag {
+  name: string;
+  example: string;
+  type?: TagType;
+  confidence?: number;
+  page?: number;
+  anchor?: string;
+}
+
+interface RawSection {
+  id: string;
+  title: string;
+  markdown: string;
+}
+
+interface RawTable {
+  id: string;
+  title: string;
+  headers: string[];
+  rows: string[][];
+}
+
 /**
  * Parse and normalize AI response tags
  */
-export function parseAndNormalizeTags(rawTags: any[]): ParsedTag[] {
+export function parseAndNormalizeTags(rawTags: RawTag[]): ParsedTag[] {
   return rawTags.map(tag => {
     const inferredType = inferTagType(tag.name, tag.example);
     const finalType = tag.type || inferredType;
@@ -193,7 +216,7 @@ export function parseAndNormalizeTags(rawTags: any[]): ParsedTag[] {
 /**
  * Parse and normalize sections
  */
-export function parseAndNormalizeSections(rawSections: any[]): ParsedSection[] {
+export function parseAndNormalizeSections(rawSections: RawSection[]): ParsedSection[] {
   return rawSections.map((section, index) => ({
     id: section.id || createTagSlug(section.title || `section_${index}`),
     title: section.title || `Section ${index + 1}`,
@@ -204,7 +227,7 @@ export function parseAndNormalizeSections(rawSections: any[]): ParsedSection[] {
 /**
  * Parse and normalize tables
  */
-export function parseAndNormalizeTables(rawTables: any[]): ParsedTable[] {
+export function parseAndNormalizeTables(rawTables: RawTable[]): ParsedTable[] {
   return rawTables.map((table, index) => ({
     id: table.id || createTagSlug(table.title || `table_${index}`),
     title: table.title || `Table ${index + 1}`,
@@ -214,10 +237,17 @@ export function parseAndNormalizeTables(rawTables: any[]): ParsedTable[] {
   }));
 }
 
+interface RawAnalysis {
+  sections?: RawSection[];
+  tables?: RawTable[];
+  tags?: RawTag[];
+  signatura?: string;
+}
+
 /**
  * Complete analysis parsing and normalization
  */
-export function parseAIAnalysis(rawAnalysis: any): ParsedAnalysis {
+export function parseAIAnalysis(rawAnalysis: RawAnalysis): ParsedAnalysis {
   return {
     sections: parseAndNormalizeSections(rawAnalysis.sections || []),
     tables: parseAndNormalizeTables(rawAnalysis.tables || []),

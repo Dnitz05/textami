@@ -66,10 +66,10 @@ const TemplatesPage: React.FC = () => {
       if (result.success) {
         setTemplates(result.data);
       } else {
-        console.error('Failed to load templates:', result.error);
+        log.error('Failed to load templates:', result.error);
       }
     } catch (error) {
-      console.error('Error loading templates:', error);
+      log.error('Error loading templates:', error);
     } finally {
       setLoading(false);
     }
@@ -89,12 +89,12 @@ const TemplatesPage: React.FC = () => {
       
       if (result.success) {
         setTemplates(prev => prev.filter(t => t.id !== templateId));
-        console.log('✅ Template deleted:', templateId);
+        log.debug('✅ Template deleted:', templateId);
       } else {
         throw new Error(result.error || 'Failed to delete template');
       }
     } catch (error) {
-      console.error('Error deleting template:', error);
+      log.error('Error deleting template:', error);
       alert('Error eliminant la plantilla: ' + (error instanceof Error ? error.message : 'Error desconegut'));
     }
   };

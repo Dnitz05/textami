@@ -59,7 +59,7 @@ export class TemplateStateManager {
       return baseState;
 
     } catch (error) {
-      console.error('Error loading template state:', error);
+      log.error('Error loading template state:', error);
       return baseState;
     }
   }
@@ -74,7 +74,7 @@ export class TemplateStateManager {
         })
       );
     } catch (error) {
-      console.error('Error saving analysis state:', error);
+      log.error('Error saving analysis state:', error);
     }
   }
 
@@ -85,7 +85,7 @@ export class TemplateStateManager {
         JSON.stringify(mappings)
       );
     } catch (error) {
-      console.error('Error saving mapping state:', error);
+      log.error('Error saving mapping state:', error);
     }
   }
 
@@ -102,7 +102,7 @@ export class TemplateStateManager {
         JSON.stringify(frozenData)
       );
     } catch (error) {
-      console.error('Error saving frozen state:', error);
+      log.error('Error saving frozen state:', error);
     }
   }
 
@@ -113,7 +113,7 @@ export class TemplateStateManager {
         localStorage.removeItem(this.getStorageKey(templateId, key));
       });
     } catch (error) {
-      console.error('Error clearing template state:', error);
+      log.error('Error clearing template state:', error);
     }
   }
 
@@ -144,7 +144,7 @@ export class TemplateStateManager {
       });
 
     } catch (error) {
-      console.error('Error getting all templates:', error);
+      log.error('Error getting all templates:', error);
       return [];
     }
   }

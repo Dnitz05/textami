@@ -49,10 +49,10 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
       setLoadingKnowledge(true);
       try {
         const userId = user?.id || 'anonymous';
-        console.log('🔍 Debug - Loading knowledge for userId:', userId);
+        log.debug('🔍 Debug - Loading knowledge for userId:', userId);
         const response = await fetch(`/api/knowledge?userId=${userId}`);
         const result = await response.json();
-        console.log('📚 Debug - Knowledge API response:', result);
+        log.debug('📚 Debug - Knowledge API response:', result);
         if (result.success) {
           setKnowledgeFiles(result.data.map((doc: any) => ({
             id: doc.id,
@@ -62,7 +62,7 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
           })));
         }
       } catch (error) {
-        console.error('Error loading knowledge files:', error);
+        log.error('Error loading knowledge files:', error);
       } finally {
         setLoadingKnowledge(false);
       }
@@ -74,7 +74,7 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
   const [instructions, setInstructions] = useState<AIInstruction[]>([]);
   const currentDocumentId = documentId || 'default';
   
-  console.log('🔍 AIPromptsPanel Debug:', {
+  log.debug('🔍 AIPromptsPanel Debug:', {
     documentId,
     currentDocumentId,
     instructionsCount: instructions.length
@@ -85,19 +85,19 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
     if (typeof window !== 'undefined') {
       const storageKey = `instructions_${currentDocumentId}`;
       const savedInstructions = sessionStorage.getItem(storageKey);
-      console.log('🔄 Loading instructions for document:', currentDocumentId, 'StorageKey:', storageKey);
+      log.debug('🔄 Loading instructions for document:', currentDocumentId, 'StorageKey:', storageKey);
       if (savedInstructions) {
         try {
           const parsed = JSON.parse(savedInstructions);
           setInstructions(parsed);
-          console.log('📋 Loaded', parsed.length, 'instructions for document:', currentDocumentId);
+          log.debug('📋 Loaded', parsed.length, 'instructions for document:', currentDocumentId);
         } catch (error) {
-          console.error('❌ Error loading saved instructions:', error);
+          log.error('❌ Error loading saved instructions:', error);
           setInstructions([]); // Reset to empty if error
         }
       } else {
         setInstructions([]); // Start fresh for new documents
-        console.log('📋 No saved instructions found - starting fresh:', currentDocumentId);
+        log.debug('📋 No saved instructions found - starting fresh:', currentDocumentId);
       }
     }
   }, [currentDocumentId]);
@@ -107,7 +107,7 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
     if (typeof window !== 'undefined' && currentDocumentId && instructions.length >= 0) {
       const storageKey = `instructions_${currentDocumentId}`;
       sessionStorage.setItem(storageKey, JSON.stringify(instructions));
-      console.log('💾 Saved', instructions.length, 'instructions for document:', currentDocumentId, 'StorageKey:', storageKey);
+      log.debug('💾 Saved', instructions.length, 'instructions for document:', currentDocumentId, 'StorageKey:', storageKey);
     }
   }, [instructions, currentDocumentId]);
 
@@ -157,7 +157,7 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
       const newInstructionWithActive = { ...instruction, isActive: true }; // Auto-activate new instructions
       
       // Debug logging
-      console.log('🔍 Creating instruction:', {
+      log.debug('🔍 Creating instruction:', {
         originalType: newInstruction.type,
         isSection,
         finalType: newInstructionWithActive.type,
@@ -250,7 +250,7 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
       
       // If instruction changed and is active, re-execute it
       if (hasChanged && updatedInstruction.isActive && onInstructionExecute) {
-        console.log('🔄 Instruction changed, re-executing:', updatedInstruction.title);
+        log.debug('🔄 Instruction changed, re-executing:', updatedInstruction.title);
         setTimeout(() => onInstructionExecute(updatedInstruction), 100);
       }
       

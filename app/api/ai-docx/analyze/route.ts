@@ -19,7 +19,7 @@ function inferPlaceholderType(text: string): string {
 // NO MORE HTML CONVERSION - Working with binary DOCX only
 
 export async function POST(request: NextRequest) {
-  console.log('📄 DOCX Analysis Request Started');
+  log.debug('📄 DOCX Analysis Request Started');
   
   try {
     // Initialize Supabase client with error handling
@@ -30,19 +30,19 @@ export async function POST(request: NextRequest) {
     if (supabaseUrl && supabaseServiceKey) {
       try {
         supabase = createClient(supabaseUrl, supabaseServiceKey);
-        console.log('✅ Supabase client initialized');
+        log.debug('✅ Supabase client initialized');
       } catch (error) {
-        console.warn('⚠️ Supabase initialization failed:', error);
+        log.warn('⚠️ Supabase initialization failed:', error);
       }
     } else {
-      console.warn('⚠️ Supabase environment variables not found, storage will be skipped');
+      log.warn('⚠️ Supabase environment variables not found, storage will be skipped');
     }
     // 1. Parse FormData amb millor error handling
     let formData: FormData;
     try {
       formData = await request.formData();
     } catch (error) {
-      console.error('❌ FormData parse error:', error);
+      log.error('❌ FormData parse error:', error);
       return NextResponse.json(
         { error: 'Invalid form data', details: error },
         { status: 400 }
@@ -52,14 +52,14 @@ export async function POST(request: NextRequest) {
     // 2. Validar fitxer DOCX
     const file = formData.get('docx') as File;
     if (!file) {
-      console.error('❌ No file uploaded');
+      log.error('❌ No file uploaded');
       return NextResponse.json(
         { error: 'No file uploaded' },
         { status: 400 }
       );
     }
 
-    console.log('📁 File received:', {
+    log.debug('📁 File received:', {
       name: file.name,
       size: file.size,
       type: file.type
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
                        file.name.toLowerCase().endsWith('.docx');
     
     if (!isValidType) {
-      console.error('❌ Invalid file type:', file.type);
+      log.error('❌ Invalid file type:', file.type);
       return NextResponse.json(
         { 
           error: 'File must be .docx format',
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     
-    console.log('🔄 Processing document...', {
+    log.debug('🔄 Processing document...', {
       bufferSize: buffer.length
     });
 
@@ -110,24 +110,24 @@ export async function POST(request: NextRequest) {
           });
 
         if (uploadError) {
-          console.error('❌ Storage upload FAILED - Cannot proceed without binary storage:', uploadError);
+          log.error('❌ Storage upload FAILED - Cannot proceed without binary storage:', uploadError);
           return NextResponse.json(
             { error: 'Storage required for DOCX processing', details: uploadError.message },
             { status: 500 }
           );
         } else {
           storageUrl = uploadData?.path;
-          console.log('✅ Original DOCX saved to storage:', storageUrl);
+          log.debug('✅ Original DOCX saved to storage:', storageUrl);
         }
       } catch (storageError) {
-        console.error('❌ Storage error - Cannot proceed:', storageError);
+        log.error('❌ Storage error - Cannot proceed:', storageError);
         return NextResponse.json(
           { error: 'Storage required for DOCX processing' },
           { status: 500 }
         );
       }
     } else {
-      console.error('❌ Supabase not available - Cannot proceed without storage');
+      log.error('❌ Supabase not available - Cannot proceed without storage');
       return NextResponse.json(
         { error: 'Storage configuration required' },
         { status: 500 }
@@ -144,14 +144,14 @@ export async function POST(request: NextRequest) {
     }> = [];
     
     try {
-      console.log('🔍 Analyzing DOCX for placeholders (preserving binary format)...');
+      log.debug('🔍 Analyzing DOCX for placeholders (preserving binary format)...');
       
       // Use PizZip to read DOCX structure
       const zip = new PizZip(buffer);
       const documentXml = zip.file('word/document.xml')?.asText();
       
       if (documentXml) {
-        console.log('📄 Scanning XML for placeholder patterns...');
+        log.debug('📄 Scanning XML for placeholder patterns...');
         
         // Extract only text content for placeholder detection (don't convert for display)
         const textContent = documentXml
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
           .replace(/<[^>]*>/g, '')
           .trim();
           
-        console.log('🔍 Text content length:', textContent.length);
+        log.debug('🔍 Text content length:', textContent.length);
         
         // Detect placeholders - focus on {{placeholder}} format for docxtemplater
         const placeholderPatterns = [
@@ -168,13 +168,13 @@ export async function POST(request: NextRequest) {
         ];
         
         placeholderPatterns.forEach((pattern, index) => {
-          console.log(`🔍 Testing pattern ${index + 1}: ${pattern.source}`);
+          log.debug(`🔍 Testing pattern ${index + 1}: ${pattern.source}`);
           let match;
           let patternMatches = 0;
           while ((match = pattern.exec(textContent)) !== null) {
             patternMatches++;
             const text = match[1].trim();
-            console.log(`✅ Found placeholder: "${match[0]}" -> "${text}"`);
+            log.debug(`✅ Found placeholder: "${match[0]}" -> "${text}"`);
             if (text && !extractedPlaceholders.some(p => p.text === text)) {
               extractedPlaceholders.push({
                 text: text,
@@ -185,11 +185,11 @@ export async function POST(request: NextRequest) {
               });
             }
           }
-          console.log(`📊 Pattern ${index + 1} found ${patternMatches} matches`);
+          log.debug(`📊 Pattern ${index + 1} found ${patternMatches} matches`);
         });
       }
     } catch (extractError) {
-      console.error('❌ Placeholder extraction failed:', extractError);
+      log.error('❌ Placeholder extraction failed:', extractError);
       return NextResponse.json(
         { error: 'Failed to analyze DOCX structure', details: extractError instanceof Error ? extractError.message : 'Unknown error' },
         { status: 500 }
@@ -211,7 +211,7 @@ export async function POST(request: NextRequest) {
       }
     };
 
-    console.log('✅ Binary analysis complete:', {
+    log.debug('✅ Binary analysis complete:', {
       templateId,
       placeholders: analysisResult.placeholders.length,
       storageUrl: analysisResult.storageUrl
@@ -224,7 +224,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('❌ Unexpected error in analyze:', error);
+    log.error('❌ Unexpected error in analyze:', error);
     return NextResponse.json(
       { 
         error: 'Internal server error',

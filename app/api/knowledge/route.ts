@@ -28,7 +28,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId') || 'anonymous';
     
-    console.log('📚 Fetching knowledge base for user:', userId);
+    log.debug('📚 Fetching knowledge base for user:', userId);
 
     // Get documents from database (would be implemented with proper user auth)
     // For now, using storage-based approach
@@ -39,11 +39,11 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
         sortBy: { column: 'created_at', order: 'desc' }
       });
       
-    console.log('📁 Debug - Storage path searched:', `${userId}/`);
-    console.log('📄 Debug - Files found:', files?.length || 0, files);
+    log.debug('📁 Debug - Storage path searched:', `${userId}/`);
+    log.debug('📄 Debug - Files found:', files?.length || 0, files);
 
     if (error) {
-      console.error('❌ Error fetching knowledge base:', error);
+      log.error('❌ Error fetching knowledge base:', error);
       return NextResponse.json(
         { success: false, error: 'Failed to fetch knowledge base' },
         { status: 500 }
@@ -66,21 +66,21 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
         url: undefined // Will be populated when needed
       }));
 
-    console.log('✅ Retrieved knowledge base:', documents.length, 'documents');
+    log.debug('✅ Retrieved knowledge base:', documents.length, 'documents');
     
     // DEBUG: Also check if there are documents in the root or other folders
     if (documents.length === 0) {
-      console.log('🔍 Debug - No documents found for user, checking root folder...');
+      log.debug('🔍 Debug - No documents found for user, checking root folder...');
       const { data: rootFiles } = await supabase.storage
         .from('knowledge-base')
         .list('', { limit: 50 });
-      console.log('📁 Debug - Root folder contents:', rootFiles?.length || 0, rootFiles?.map(f => f.name));
+      log.debug('📁 Debug - Root folder contents:', rootFiles?.length || 0, rootFiles?.map(f => f.name));
       
       // Check anonymous folder too
       const { data: anonymousFiles } = await supabase.storage
         .from('knowledge-base')
         .list('anonymous/', { limit: 50 });
-      console.log('📁 Debug - Anonymous folder contents:', anonymousFiles?.length || 0, anonymousFiles?.map(f => f.name));
+      log.debug('📁 Debug - Anonymous folder contents:', anonymousFiles?.length || 0, anonymousFiles?.map(f => f.name));
     }
     
     return NextResponse.json({
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     });
 
   } catch (error) {
-    console.error('❌ Knowledge base GET error:', error);
+    log.error('❌ Knowledge base GET error:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }
@@ -100,7 +100,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 // POST - Upload new PDF to knowledge base
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<KnowledgeDocument>>> {
   try {
-    console.log('📚 Uploading PDF to knowledge base...');
+    log.debug('📚 Uploading PDF to knowledge base...');
 
     const formData = await request.formData();
     const file = formData.get('pdf') as File;
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const documentType = formData.get('type') as KnowledgeDocument['type'] || 'referencia';
     const description = formData.get('description') as string || 'Document de referència per contexte IA';
 
-    console.log('📄 Form data received:', {
+    log.debug('📄 Form data received:', {
       hasFile: !!file,
       fileName: file?.name,
       fileSize: file?.size,
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     });
 
     if (!file) {
-      console.error('❌ No file provided');
+      log.error('❌ No file provided');
       return NextResponse.json(
         { success: false, error: 'No file provided' },
         { status: 400 }
@@ -127,14 +127,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     }
 
     if (file.type !== 'application/pdf') {
-      console.error('❌ Invalid file type:', file.type);
+      log.error('❌ Invalid file type:', file.type);
       return NextResponse.json(
         { success: false, error: `Invalid file type: ${file.type}. PDF required.` },
         { status: 400 }
       );
     }
 
-    console.log('📄 Processing knowledge PDF:', {
+    log.debug('📄 Processing knowledge PDF:', {
       filename: file.name,
       size: file.size,
       userId,
@@ -151,7 +151,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       });
 
     if (uploadError) {
-      console.error('❌ Upload error:', uploadError);
+      log.error('❌ Upload error:', uploadError);
       return NextResponse.json(
         { success: false, error: 'Failed to upload PDF', details: uploadError.message },
         { status: 500 }
@@ -176,7 +176,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       url: urlData?.signedUrl
     };
 
-    console.log('✅ PDF uploaded to knowledge base:', storagePath);
+    log.debug('✅ PDF uploaded to knowledge base:', storagePath);
 
     return NextResponse.json({
       success: true,
@@ -184,7 +184,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     });
 
   } catch (error) {
-    console.error('❌ Knowledge base POST error:', error);
+    log.error('❌ Knowledge base POST error:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }
@@ -207,21 +207,21 @@ export async function DELETE(request: NextRequest): Promise<NextResponse<ApiResp
       );
     }
 
-    console.log('🗑️ Deleting knowledge document:', storagePath);
+    log.debug('🗑️ Deleting knowledge document:', storagePath);
 
     const { error } = await supabase.storage
       .from('knowledge-base')
       .remove([storagePath]);
 
     if (error) {
-      console.error('❌ Delete error:', error);
+      log.error('❌ Delete error:', error);
       return NextResponse.json(
         { success: false, error: 'Failed to delete document' },
         { status: 500 }
       );
     }
 
-    console.log('✅ Knowledge document deleted:', storagePath);
+    log.debug('✅ Knowledge document deleted:', storagePath);
 
     return NextResponse.json({
       success: true,
@@ -229,7 +229,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse<ApiResp
     });
 
   } catch (error) {
-    console.error('❌ Knowledge base DELETE error:', error);
+    log.error('❌ Knowledge base DELETE error:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }

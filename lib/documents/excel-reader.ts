@@ -18,7 +18,7 @@ export interface ExcelData {
  * SIMPLIFICAT per MVP - només funcionalitat essencial
  */
 export async function readExcelFromStorage(excelStoragePath: string): Promise<ExcelData> {
-  console.log(`[readExcelFromStorage] Llegint: ${excelStoragePath}`);
+  log.debug(`[readExcelFromStorage] Llegint: ${excelStoragePath}`);
   
   // Client amb service role
   const serviceClient = createClient(
@@ -79,7 +79,7 @@ export async function readExcelFromStorage(excelStoragePath: string): Promise<Ex
         return rowObj;
       });
 
-    console.log(`[readExcelFromStorage] ✅ Processat: ${headers.length} columnes, ${processedRows.length} files`);
+    log.debug(`[readExcelFromStorage] ✅ Processat: ${headers.length} columnes, ${processedRows.length} files`);
 
     return {
       headers,
@@ -88,7 +88,7 @@ export async function readExcelFromStorage(excelStoragePath: string): Promise<Ex
     };
 
   } catch (error) {
-    console.error('[readExcelFromStorage] ❌ Error:', error);
+    log.error('[readExcelFromStorage] ❌ Error:', error);
     throw new Error(`Error processant Excel: ${error instanceof Error ? error.message : 'Error desconegut'}`);
   }
 }

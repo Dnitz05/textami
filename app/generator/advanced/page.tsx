@@ -55,7 +55,7 @@ function AdvancedGeneratorContent() {
     const storedMappings = localStorage.getItem('textami_mappings');
     const storedGeneration = localStorage.getItem('generationData');
 
-    console.log('🔍 ADVANCED PAGE DEBUG:', {
+    log.debug('🔍 ADVANCED PAGE DEBUG:', {
       templateId,
       hasStoredDoc: !!storedDoc,
       hasStoredExcel: !!storedExcel,
@@ -64,7 +64,7 @@ function AdvancedGeneratorContent() {
       url: window.location.href
     });
 
-    console.log('📦 RAW LOCALSTORAGE DATA:', {
+    log.debug('📦 RAW LOCALSTORAGE DATA:', {
       storedDoc: storedDoc ? storedDoc.substring(0, 100) + '...' : null,
       storedExcel: storedExcel ? storedExcel.substring(0, 100) + '...' : null,
       storedMappings: storedMappings ? storedMappings.substring(0, 100) + '...' : null,
@@ -73,26 +73,26 @@ function AdvancedGeneratorContent() {
 
     if (storedDoc) {
       const docData = JSON.parse(storedDoc);
-      console.log('📄 Document data loaded:', docData);
+      log.debug('📄 Document data loaded:', docData);
       setDocumentData(docData);
     }
     if (storedExcel) {
       const excelData = JSON.parse(storedExcel);
-      console.log('📊 Excel data loaded:', excelData);
+      log.debug('📊 Excel data loaded:', excelData);
       setExcelData(excelData);
     }
     if (storedMappings) {
       const mappingData = JSON.parse(storedMappings);
-      console.log('🔗 Mappings loaded:', mappingData);
+      log.debug('🔗 Mappings loaded:', mappingData);
       setMappings(mappingData);
     }
     if (storedGeneration) {
       const genData = JSON.parse(storedGeneration);
-      console.log('💾 Generation data loaded:', genData);
+      log.debug('💾 Generation data loaded:', genData);
     }
 
     // Final state debug
-    console.log('🎯 FINAL STATE AFTER LOADING:', {
+    log.debug('🎯 FINAL STATE AFTER LOADING:', {
       documentData,
       excelData: !!excelData,
       mappings: mappings.length,
@@ -102,7 +102,7 @@ function AdvancedGeneratorContent() {
 
   const handleGenerate = async () => {
     if (!documentData?.templateId || !mappings.length || !excelData) {
-      console.error('🚨 Cannot generate - missing required data:', {
+      log.error('🚨 Cannot generate - missing required data:', {
         hasDocument: !!documentData?.templateId,
         hasMappings: mappings.length > 0,
         hasExcel: !!excelData
@@ -113,7 +113,7 @@ function AdvancedGeneratorContent() {
     setGenerateState({ loading: true, error: null, success: false });
 
     try {
-      console.log('🚀 Starting document generation from advanced interface...');
+      log.debug('🚀 Starting document generation from advanced interface...');
 
       // Create sample data from Excel for generation (first 5 rows for testing)
       const sampleData = Array.from({ length: Math.min(5, 10) }, (_, i) => {
@@ -140,7 +140,7 @@ function AdvancedGeneratorContent() {
       });
 
       const result = await response.json();
-      console.log('📄 Advanced generation response:', result);
+      log.debug('📄 Advanced generation response:', result);
 
       if (!response.ok) {
         throw new Error(result.error || 'Error en document generation');
@@ -152,7 +152,7 @@ function AdvancedGeneratorContent() {
         success: true 
       });
 
-      console.log('✅ Documents generated from advanced interface:', result.totalGenerated);
+      log.debug('✅ Documents generated from advanced interface:', result.totalGenerated);
 
       // Show success notification
       setTimeout(() => {
@@ -160,7 +160,7 @@ function AdvancedGeneratorContent() {
       }, 5000);
 
     } catch (error) {
-      console.error('❌ Advanced generation error:', error);
+      log.error('❌ Advanced generation error:', error);
       setGenerateState({
         loading: false,
         error: error instanceof Error ? error.message : 'Error desconegut en generation',

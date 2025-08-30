@@ -40,7 +40,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId') || 'anonymous';
     
-    console.log('📋 Fetching templates for user:', userId);
+    log.debug('📋 Fetching templates for user:', userId);
 
     // Get templates from storage (would be database in production)
     const { data: files, error } = await supabase.storage
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
       });
 
     if (error) {
-      console.error('❌ Error fetching templates:', error);
+      log.error('❌ Error fetching templates:', error);
       return NextResponse.json(
         { success: false, error: 'Failed to fetch templates' },
         { status: 500 }
@@ -89,12 +89,12 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
             });
           }
         } catch (parseError) {
-          console.error('❌ Error parsing template file:', file.name, parseError);
+          log.error('❌ Error parsing template file:', file.name, parseError);
         }
       }
     }
 
-    console.log('✅ Retrieved templates:', templates.length, 'templates');
+    log.debug('✅ Retrieved templates:', templates.length, 'templates');
     
     return NextResponse.json({
       success: true,
@@ -102,7 +102,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     });
 
   } catch (error) {
-    console.error('❌ Templates GET error:', error);
+    log.error('❌ Templates GET error:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }
@@ -113,7 +113,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 // POST - Save new template
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<SavedTemplate>>> {
   try {
-    console.log('📋 Saving template...');
+    log.debug('📋 Saving template...');
 
     const templateData = await request.json();
     const {
@@ -135,7 +135,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       );
     }
 
-    console.log('📄 Saving template:', {
+    log.debug('📄 Saving template:', {
       name,
       userId,
       documentType,
@@ -172,14 +172,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       });
 
     if (uploadError) {
-      console.error('❌ Upload error:', uploadError);
+      log.error('❌ Upload error:', uploadError);
       return NextResponse.json(
         { success: false, error: 'Failed to save template', details: uploadError.message },
         { status: 500 }
       );
     }
 
-    console.log('✅ Template saved:', storagePath);
+    log.debug('✅ Template saved:', storagePath);
 
     return NextResponse.json({
       success: true,
@@ -187,7 +187,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     });
 
   } catch (error) {
-    console.error('❌ Templates POST error:', error);
+    log.error('❌ Templates POST error:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }
@@ -209,7 +209,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse<ApiResp
       );
     }
 
-    console.log('🗑️ Deleting template:', templateId);
+    log.debug('🗑️ Deleting template:', templateId);
 
     const storagePath = `${userId}/${templateId}.json`;
     const { error } = await supabase.storage
@@ -217,14 +217,14 @@ export async function DELETE(request: NextRequest): Promise<NextResponse<ApiResp
       .remove([storagePath]);
 
     if (error) {
-      console.error('❌ Delete error:', error);
+      log.error('❌ Delete error:', error);
       return NextResponse.json(
         { success: false, error: 'Failed to delete template' },
         { status: 500 }
       );
     }
 
-    console.log('✅ Template deleted:', storagePath);
+    log.debug('✅ Template deleted:', storagePath);
 
     return NextResponse.json({
       success: true,
@@ -232,7 +232,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse<ApiResp
     });
 
   } catch (error) {
-    console.error('❌ Templates DELETE error:', error);
+    log.error('❌ Templates DELETE error:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }

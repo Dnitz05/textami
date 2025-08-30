@@ -433,8 +433,8 @@ export function logError(error: Error, additionalContext?: Record<string, unknow
   }
 
   if (error instanceof AppError && error.isOperational) {
-    console.warn('Operational Error:', JSON.stringify(logData, null, 2))
+    log.warn('Operational Error:', JSON.stringify(logData, null, 2))
   } else {
-    console.error('System Error:', JSON.stringify(logData, null, 2))
+    log.error('System Error:', JSON.stringify(logData, null, 2))
   }
 }

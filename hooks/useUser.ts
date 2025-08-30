@@ -64,7 +64,7 @@ function checkProfileComplete(profile: UserProfile | null): boolean {
 export function useUser(): UseUserReturn {
   const [state, setState] = useState<UserState>(initialState)
   const [supabase] = useState<SupabaseClient>(() => {
-    console.log('🔧 Creating unified Supabase client with proper SSR configuration')
+    log.debug('🔧 Creating unified Supabase client with proper SSR configuration')
     return createBrowserSupabaseClient()
   })
 
@@ -589,7 +589,7 @@ export function useUser(): UseUserReturn {
         await initializeUser()
         
       } catch (error) {
-        console.error('🔥 Auth initialization error:', error)
+        log.error('🔥 Auth initialization error:', error)
       }
     }
 

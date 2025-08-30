@@ -125,12 +125,12 @@ For each column, determine the data type and provide intelligent insights about 
       processingTime: Date.now() - startTime
     };
 
-    console.log(`[AI-EXCEL-ANALYZE] Success: ${columns.length} columns analyzed in ${result.processingTime}ms`);
+    log.debug(`[AI-EXCEL-ANALYZE] Success: ${columns.length} columns analyzed in ${result.processingTime}ms`);
 
     return NextResponse.json(result);
 
   } catch (error: any) {
-    console.error('[AI-EXCEL-ANALYZE] Error:', error);
+    log.error('[AI-EXCEL-ANALYZE] Error:', error);
     
     return NextResponse.json({
       success: false,

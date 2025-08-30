@@ -54,7 +54,7 @@ function validateDocxBuffer(buffer: Buffer): { isValid: boolean; error?: string 
  * SIMPLIFICAT per MVP - només funcionalitat essencial
  */
 export async function readDocxFromStorage(storagePath: string): Promise<Buffer> {
-  console.log(`[readDocxFromStorage] Llegint: "${storagePath}"`);
+  log.debug(`[readDocxFromStorage] Llegint: "${storagePath}"`);
   
   // Client amb service role
   const supabaseAdmin = createClient(
@@ -92,11 +92,11 @@ export async function readDocxFromStorage(storagePath: string): Promise<Buffer> 
       throw new Error(`Buffer invàlid: ${bufferValidation.error}`);
     }
     
-    console.log(`[readDocxFromStorage] ✅ Llegit correctament: ${buffer.length} bytes`);
+    log.debug(`[readDocxFromStorage] ✅ Llegit correctament: ${buffer.length} bytes`);
     return buffer;
 
   } catch (error: any) {
-    console.error(`[readDocxFromStorage] ❌ Error:`, error);
+    log.error(`[readDocxFromStorage] ❌ Error:`, error);
     throw new Error(`Error llegint DOCX: ${error.message}`);
   }
 }

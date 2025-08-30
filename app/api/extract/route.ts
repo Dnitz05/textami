@@ -63,7 +63,7 @@ interface AIAnalysisResponse {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<ExtractionResponse>>> {
-  console.log('🚀 AI-FIRST Extract Request Started');
+  log.debug('🚀 AI-FIRST Extract Request Started');
   
   try {
     // Initialize Supabase client
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('❌ Supabase environment variables missing');
+      log.error('❌ Supabase environment variables missing');
       return NextResponse.json(
         { success: false, error: 'Storage configuration required' },
         { status: 500 }
@@ -79,12 +79,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    console.log('✅ Supabase client initialized for AI analysis');
+    log.debug('✅ Supabase client initialized for AI analysis');
 
     // Parse request
     const { pdfPath, pdfUrl, templateId, fileName } = await request.json() as ExtractRequest;
     
-    console.log('📝 AI Extract request:', {
+    log.debug('📝 AI Extract request:', {
       templateId,
       pdfPath: pdfPath || 'none',
       pdfUrl: pdfUrl || 'none',
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         .createSignedUrl(pdfPath, 3600); // 1 hour expiry
 
       if (urlError || !signedUrlData) {
-        console.error('❌ Failed to create signed URL:', urlError);
+        log.error('❌ Failed to create signed URL:', urlError);
         return NextResponse.json(
           { success: false, error: 'Failed to access PDF file', details: urlError?.message },
           { status: 500 }
@@ -116,15 +116,15 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       }
 
       pdfSignedUrl = signedUrlData.signedUrl;
-      console.log('✅ PDF signed URL created for AI analysis');
+      log.debug('✅ PDF signed URL created for AI analysis');
     } else {
       // Mock mode: use sample municipal report for development
-      console.log('🧪 MOCK MODE: Using sample municipal report data');
+      log.debug('🧪 MOCK MODE: Using sample municipal report data');
       pdfSignedUrl = 'MOCK_PDF_URL';
     }
 
     // Call GPT-5 multimodal for document analysis
-    console.log('🤖 Calling GPT-5 multimodal for document analysis...');
+    log.debug('🤖 Calling GPT-5 multimodal for document analysis...');
 
     let analysisResult: AIAnalysisResponse;
 
@@ -279,7 +279,7 @@ Return ONLY the JSON response, no additional text.`
         throw new Error('Empty response from GPT-5');
       }
 
-      console.log('🤖 GPT-5 response length:', aiResponse.length);
+      log.debug('🤖 GPT-5 response length:', aiResponse.length);
 
       try {
         // Parse the JSON response
@@ -295,7 +295,7 @@ Return ONLY the JSON response, no additional text.`
           }
         };
 
-        console.log('✅ GPT-5 JSON parsed successfully:', {
+        log.debug('✅ GPT-5 JSON parsed successfully:', {
           markdownLength: analysisResult.markdown.length,
           sectionsFound: analysisResult.json.sections.length,
           tablesFound: analysisResult.json.tables.length,
@@ -303,8 +303,8 @@ Return ONLY the JSON response, no additional text.`
         });
 
       } catch (parseError) {
-        console.error('❌ Failed to parse GPT-5 JSON response:', parseError);
-        console.error('Raw response:', aiResponse.substring(0, 1000));
+        log.error('❌ Failed to parse GPT-5 JSON response:', parseError);
+        log.error('Raw response:', aiResponse.substring(0, 1000));
         throw new Error('Invalid JSON response from GPT-5');
       }
     }
@@ -339,12 +339,12 @@ Return ONLY the JSON response, no additional text.`
       });
 
     if (saveError) {
-      console.warn('⚠️ Failed to save analysis (non-critical):', saveError);
+      log.warn('⚠️ Failed to save analysis (non-critical):', saveError);
     } else {
-      console.log('✅ Analysis saved to storage:', analysisPath);
+      log.debug('✅ Analysis saved to storage:', analysisPath);
     }
 
-    console.log('✅ AI analysis complete:', {
+    log.debug('✅ AI analysis complete:', {
       templateId,
       sectionsFound: parsedAnalysis.sections.length,
       tablesFound: parsedAnalysis.tables.length,
@@ -372,7 +372,7 @@ Return ONLY the JSON response, no additional text.`
     });
 
   } catch (error) {
-    console.error('❌ AI analysis error:', error);
+    log.error('❌ AI analysis error:', error);
     return NextResponse.json(
       { 
         success: false,
