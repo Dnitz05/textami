@@ -2,6 +2,7 @@
 // Left sidebar panel for AI instructions to modify document content
 import React, { useState } from 'react';
 import { useUser } from '../../hooks/useUser';
+import { log } from '@/lib/logger';
 
 interface AIInstruction {
   id: string;
