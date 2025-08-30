@@ -6,18 +6,32 @@ import OpenAI from 'openai';
 import { ApiResponse } from '../../../lib/types';
 import { log } from '@/lib/logger';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
+// Initialize OpenAI client lazily to avoid build errors
+const getOpenAI = () => {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY not configured');
+  }
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+};
 
-// Debug: Check API key availability
-log.debug('🔑 OpenAI API Key available:', !!process.env.OPENAI_API_KEY);
-log.debug('🔑 API Key length:', process.env.OPENAI_API_KEY?.length || 0);
+// Debug: Check API key availability (only in runtime)
+if (process.env.NODE_ENV !== 'production') {
+  log.debug('🔑 OpenAI API Key available:', !!process.env.OPENAI_API_KEY);
+  log.debug('🔑 API Key length:', process.env.OPENAI_API_KEY?.length || 0);
+}
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Initialize Supabase client lazily to avoid build errors
+const getSupabaseForInstructions = () => {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('Supabase environment variables not configured');
+  }
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+};
 
 interface AIInstruction {
   id: string;
@@ -85,7 +99,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
             log.debug(`📄 Reading content from: ${doc.filename}`);
             
             // Get signed URL and fetch PDF content
-            const { data: urlData } = await supabase.storage
+            const { data: urlData } = await getSupabaseForInstructions().storage
               .from('knowledge-base')
               .createSignedUrl(doc.storagePath, 3600);
               
@@ -218,6 +232,7 @@ Modifica només el paràgraf indicat i retorna el document complet:`;
     log.debug('🔄 Calling OpenAI GPT-5...');
     log.debug('📊 Prompt lengths:', { systemPrompt: systemPrompt.length, userPrompt: userPrompt.length });
     
+    const openai = getOpenAI();
     const completion = await openai.chat.completions.create({
       model: "gpt-4-turbo",
       messages: [

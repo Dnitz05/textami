@@ -5,10 +5,16 @@ import { createClient } from '@supabase/supabase-js';
 import { ApiResponse } from '../../../lib/types';
 import { log } from '@/lib/logger';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Initialize Supabase client lazily to avoid build errors
+const getSupabase = () => {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('Supabase environment variables not configured');
+  }
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+};
 
 interface SavedTemplate {
   id: string;
@@ -44,7 +50,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     log.debug('📋 Fetching templates for user:', userId);
 
     // Get templates from storage (would be database in production)
-    const { data: files, error } = await supabase.storage
+    const { data: files, error } = await getSupabase().storage
       .from('templates')
       .list(`${userId}/`, {
         limit: 100,
@@ -66,7 +72,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
       if (file.name.endsWith('.json')) {
         try {
           // Download template data
-          const { data: templateData, error: downloadError } = await supabase.storage
+          const { data: templateData, error: downloadError } = await getSupabase().storage
             .from('templates')
             .download(`${userId}/${file.name}`);
 
@@ -165,7 +171,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     };
 
     // Save to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { data: uploadData, error: uploadError } = await getSupabase().storage
       .from('templates')
       .upload(storagePath, JSON.stringify(template, null, 2), {
         contentType: 'application/json',
@@ -213,7 +219,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse<ApiResp
     log.debug('🗑️ Deleting template:', templateId);
 
     const storagePath = `${userId}/${templateId}.json`;
-    const { error } = await supabase.storage
+    const { error } = await getSupabase().storage
       .from('templates')
       .remove([storagePath]);
 

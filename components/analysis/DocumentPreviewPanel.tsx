@@ -42,7 +42,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
   tags = [],
   signatura,
   isProcessing = false,
-  fileName = 'Document.pdf',
+  fileName = 'Document.docx',
   onSave,
   onSaveAs,
   onClose,

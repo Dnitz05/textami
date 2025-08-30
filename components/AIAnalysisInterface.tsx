@@ -32,7 +32,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
   onMappingUpdate,
   onFreeze,
   pipelineStatus = 'uploaded',
-  fileName = 'Document.pdf',
+  fileName = 'Document.docx',
   onSave,
   onSaveAs,
   onClose,

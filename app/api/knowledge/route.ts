@@ -5,10 +5,16 @@ import { createClient } from '@supabase/supabase-js';
 import { ApiResponse } from '../../../lib/types';
 import { log } from '@/lib/logger';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Initialize Supabase client lazily to avoid build errors
+const getSupabase = () => {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('Supabase environment variables not configured');
+  }
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+};
 
 interface KnowledgeDocument {
   id: string;
@@ -33,7 +39,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 
     // Get documents from database (would be implemented with proper user auth)
     // For now, using storage-based approach
-    const { data: files, error } = await supabase.storage
+    const { data: files, error } = await getSupabase().storage
       .from('knowledge-base')
       .list(`${userId}/`, {
         limit: 100,
@@ -72,13 +78,13 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     // DEBUG: Also check if there are documents in the root or other folders
     if (documents.length === 0) {
       log.debug('🔍 Debug - No documents found for user, checking root folder...');
-      const { data: rootFiles } = await supabase.storage
+      const { data: rootFiles } = await getSupabase().storage
         .from('knowledge-base')
         .list('', { limit: 50 });
       log.debug('📁 Debug - Root folder contents:', { count: rootFiles?.length || 0, files: rootFiles?.map(f => f.name) });
       
       // Check anonymous folder too
-      const { data: anonymousFiles } = await supabase.storage
+      const { data: anonymousFiles } = await getSupabase().storage
         .from('knowledge-base')
         .list('anonymous/', { limit: 50 });
       log.debug('📁 Debug - Anonymous folder contents:', { count: anonymousFiles?.length || 0, files: anonymousFiles?.map(f => f.name) });
@@ -144,7 +150,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
     // Upload to Supabase Storage
     const storagePath = `${userId}/${Date.now()}-${file.name}`;
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { data: uploadData, error: uploadError } = await getSupabase().storage
       .from('knowledge-base')
       .upload(storagePath, file, {
         contentType: 'application/pdf',
@@ -160,7 +166,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     }
 
     // Get signed URL for future access
-    const { data: urlData } = await supabase.storage
+    const { data: urlData } = await getSupabase().storage
       .from('knowledge-base')
       .createSignedUrl(storagePath, 3600 * 24 * 365); // 1 year expiry
 
@@ -210,7 +216,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse<ApiResp
 
     log.debug('🗑️ Deleting knowledge document:', storagePath);
 
-    const { error } = await supabase.storage
+    const { error } = await getSupabase().storage
       .from('knowledge-base')
       .remove([storagePath]);
 

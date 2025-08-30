@@ -2,6 +2,9 @@
 // Templates management page - save and load document templates
 'use client';
 
+// Force dynamic rendering to avoid SSR issues with Supabase
+export const dynamic = 'force-dynamic';
+
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import TopNavBar from '../../components/TopNavBar';

@@ -1,6 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+
+// Force dynamic rendering to avoid SSR issues with Supabase
+export const dynamic = 'force-dynamic';
 import { useRouter } from 'next/navigation';
 import AIAnalysisInterface from '../../components/AIAnalysisInterface';
 import TopNavBar from '../../components/TopNavBar';
@@ -130,7 +133,7 @@ export default function AnalyzePage() {
         analysisData,
         excelHeaders,
         mappings: {}, // Would get current mappings from the interface
-        documentType: 'pdf', // Could be detected from original upload
+        documentType: 'docx', // DOCX is now the primary format
         documentSize: 0 // Would be from original file
       };
 
@@ -158,8 +161,14 @@ export default function AnalyzePage() {
   };
 
   const uploadFile = async (file: File) => {
-    if (file.type !== 'application/pdf') {
-      setError('Please upload a PDF file');
+    const validTypes = [
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/docx',
+      'application/msword'
+    ];
+    
+    if (!validTypes.includes(file.type) && !file.name.toLowerCase().endsWith('.docx')) {
+      setError('Please upload a DOCX file');
       return;
     }
 
@@ -169,7 +178,7 @@ export default function AnalyzePage() {
     try {
       const templateId = `template_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      log.debug('🚀 Real GPT-5 Analysis: Uploading PDF to Supabase and calling /api/extract...');
+      log.debug('🚀 Real GPT-5 Analysis: Analyzing DOCX with /api/ai-docx/analyze...');
       
       // Rest of the upload logic will continue...
       await performAnalysis(file, templateId);
@@ -192,50 +201,25 @@ export default function AnalyzePage() {
 
   const performAnalysis = async (file: File, templateId: string) => {
     setOriginalFileName(file.name);
-    log.debug('🚀 Real GPT-5 Analysis: Uploading PDF to Supabase and calling /api/extract...');
+    log.debug('🚀 Real GPT-5 Analysis: Analyzing DOCX with /api/ai-docx/analyze...');
     
-    // 1. Upload PDF to Supabase Storage
+    // 1. Analyze DOCX directly
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('docx', file);
     formData.append('templateId', templateId);
     
-    const uploadResponse = await fetch('/api/upload-pdf', {
+    const analysisResponse = await fetch('/api/ai-docx/analyze', {
       method: 'POST',
       body: formData
     });
     
-    if (!uploadResponse.ok) {
-      const uploadError = await uploadResponse.json() as ApiResponse;
-      throw new Error(uploadError.error || 'Failed to upload PDF');
-    }
-    
-    const uploadResult = await uploadResponse.json() as ApiResponse<UploadResponse>;
-    log.debug('✅ PDF uploaded successfully:', uploadResult);
-    
-    if (!uploadResult.success || !uploadResult.data) {
-      throw new Error('Upload response invalid');
-    }
-    
-    // 2. Call GPT-5 analysis API
-    const analysisResponse = await fetch('/api/extract', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        templateId: templateId,
-        pdfUrl: uploadResult.data.pdfUrl,
-        fileName: file.name
-      })
-    });
-    
     if (!analysisResponse.ok) {
       const analysisError = await analysisResponse.json() as ApiResponse;
-      throw new Error(analysisError.error || 'GPT-5 analysis failed');
+      throw new Error(analysisError.error || 'Failed to analyze DOCX');
     }
     
-    const analysisResult = await analysisResponse.json() as ApiResponse<ExtractionResponse>;
-    log.debug('✅ GPT-5 analysis completed:', analysisResult);
+    const analysisResult = await analysisResponse.json();
+    log.debug('✅ DOCX analysis completed:', analysisResult);
     
     if (!analysisResult.success || !analysisResult.data) {
       throw new Error('Analysis response invalid');
@@ -244,13 +228,17 @@ export default function AnalyzePage() {
     // 3. Process and display results
     const result = analysisResult.data;
     const analysisData: AnalysisData = {
-      templateId,
-      title: result.title,
-      markdown: result.markdown || `# ${file.name}\n\nDocument processed successfully.`,
-      sections: result.sections || [],
-      tables: result.tables || [],
-      tags: result.tags || [],
-      signatura: result.signatura
+      templateId: result.templateId,
+      title: result.fileName,
+      markdown: `# ${result.fileName}\n\n**Placeholders detectats:** ${result.placeholders.length}\n\nAquest document DOCX té ${result.placeholders.length} placeholders detectats per a personalització.`,
+      sections: [],
+      tables: [],
+      tags: result.placeholders.map((p: any) => ({
+        text: p.text,
+        type: p.type,
+        confidence: p.confidence
+      })),
+      signatura: undefined
     };
 
     setAnalysisData(analysisData);
@@ -526,14 +514,14 @@ export default function AnalyzePage() {
             <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Upload Document for Analysis</h2>
-            <p className="text-gray-600 mb-6">Upload a PDF document to start AI analysis with GPT-5</p>
+            <p className="text-gray-600 mb-6">Upload a DOCX document to start AI analysis with GPT-5</p>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">PDF Document</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">DOCX Document</label>
                 <input
                   type="file"
-                  accept="application/pdf"
+                  accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                   onChange={handleFileUpload}
                   disabled={isAnalyzing}
                   className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
@@ -556,7 +544,7 @@ export default function AnalyzePage() {
             {isAnalyzing && (
               <div className="mt-6">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="text-blue-600 mt-2">Analyzing document with GPT-5...</p>
+                <p className="text-blue-600 mt-2">Analyzing DOCX with GPT-5...</p>
               </div>
             )}
 

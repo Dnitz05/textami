@@ -64,9 +64,14 @@ function checkProfileComplete(profile: UserProfile | null): boolean {
 // Main useUser hook
 export function useUser(): UseUserReturn {
   const [state, setState] = useState<UserState>(initialState)
-  const [supabase] = useState<SupabaseClient>(() => {
-    log.debug('🔧 Creating unified Supabase client with proper SSR configuration')
-    return createBrowserSupabaseClient()
+  const [supabase] = useState<SupabaseClient | null>(() => {
+    try {
+      log.debug('🔧 Creating unified Supabase client with proper SSR configuration')
+      return createBrowserSupabaseClient()
+    } catch (error) {
+      log.debug('⚠️ Supabase client initialization failed (build time?):', error)
+      return null
+    }
   })
 
   // Update state helper with proper typing
@@ -90,6 +95,11 @@ export function useUser(): UseUserReturn {
 
   // Fetch user profile from database
   const fetchProfile = useCallback(async (userId: string): Promise<UserProfile | null> => {
+    if (!supabase) {
+      log.debug('⚠️ Supabase client not available, skipping profile fetch')
+      return null
+    }
+    
     try {
       // First try to get a single profile
       const { data: profiles, error } = await supabase
@@ -157,6 +167,11 @@ export function useUser(): UseUserReturn {
 
   // Initialize user session - FAST for landing page
   const initializeUser = useCallback(async () => {
+    if (!supabase) {
+      log.debug('⚠️ Supabase client not available, skipping user initialization')
+      return
+    }
+    
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -193,10 +208,14 @@ export function useUser(): UseUserReturn {
         isProfileComplete: false
       })
     }
-  }, [supabase.auth, updateState])
+  }, [supabase, updateState])
 
   // Sign in action
   const signIn = useCallback(async (email: string, password: string): Promise<void> => {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
+    
     try {
       updateState({ loading: true, error: null })
 
@@ -288,10 +307,14 @@ export function useUser(): UseUserReturn {
       }
       throw error
     }
-  }, [supabase.auth, updateState, setError])
+  }, [supabase, updateState, setError])
 
   // Sign up action
   const signUp = useCallback(async (email: string, password: string, fullName?: string): Promise<void> => {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
+    
     try {
       updateState({ loading: true, error: null })
 
@@ -386,10 +409,14 @@ export function useUser(): UseUserReturn {
       }
       throw error
     }
-  }, [supabase.auth, updateState, setError])
+  }, [supabase, updateState, setError])
 
   // Sign out action
   const signOut = useCallback(async (): Promise<void> => {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
+    
     try {
       updateState({ loading: true, error: null })
 
@@ -438,10 +465,14 @@ export function useUser(): UseUserReturn {
       }
       throw error
     }
-  }, [supabase.auth, updateState, setError])
+  }, [supabase, updateState, setError])
 
   // Update profile action
   const updateProfile = useCallback(async (updates: Partial<UserProfile>): Promise<void> => {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
+    
     try {
       if (!state.user) {
         throw AuthError.required({ 
@@ -553,14 +584,14 @@ export function useUser(): UseUserReturn {
 
     // Initialize user session
     const initialize = async () => {
-      if (!isMounted) return
+      if (!isMounted || !supabase) return
       
       
       try {
         // First, set up the auth listener to avoid race conditions
         const {
           data: { subscription }
-        } = supabase.auth.onAuthStateChange((event, session) => {
+        } = supabase.auth.onAuthStateChange((event: any, session: any) => {
           if (!isMounted) return
 
           if (event === 'SIGNED_IN' && session?.user) {
@@ -600,7 +631,7 @@ export function useUser(): UseUserReturn {
       isMounted = false
       authSubscription?.unsubscribe()
     }
-  }, [supabase.auth, fetchProfile, updateState, initializeUser])
+  }, [supabase, fetchProfile, updateState, initializeUser])
 
   return {
     // State

@@ -1,4 +1,8 @@
 'use client';
+
+// Force dynamic rendering to avoid SSR issues with Supabase
+export const dynamic = 'force-dynamic';
+
 import { useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import TopNavBar from '@/components/TopNavBar';
@@ -34,7 +38,7 @@ export default function Dashboard() {
         }
       };
       sessionStorage.setItem('selectedFile', JSON.stringify(fileData));
-      sessionStorage.setItem('templateName', file.name.replace('.pdf', ''));
+      sessionStorage.setItem('templateName', file.name.replace('.docx', ''));
       
       // Create FileReader to store file content
       const reader = new FileReader();
@@ -88,7 +92,7 @@ export default function Dashboard() {
             <div className="text-6xl mb-6">📄</div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Nova Plantilla</h2>
             <p className="text-gray-600 mb-6">
-              Puja un document PDF i deixa que la IA analitzi automàticament les variables i l'estructura
+              Puja un document DOCX i deixa que la IA analitzi automàticament les variables i l'estructura
             </p>
             <div className="flex items-center justify-center space-x-2 text-blue-600 font-medium">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,7 +144,7 @@ export default function Dashboard() {
         <input
           ref={fileInputRef}
           type="file"
-          accept=".pdf,.docx"
+          accept=".docx"
           onChange={handleFileSelect}
           className="hidden"
         />

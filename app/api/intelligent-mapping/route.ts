@@ -5,9 +5,15 @@ import OpenAI from 'openai';
 import { ApiResponse, ParsedTag } from '../../../lib/types';
 import { log } from '@/lib/logger';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
+// Initialize OpenAI client lazily to avoid build errors
+const getOpenAI = () => {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY not configured');
+  }
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+};
 
 interface IntelligentMappingRequest {
   tags: ParsedTag[];
@@ -171,6 +177,7 @@ RESPOSTA OBLIGATÒRIA EN JSON:
 8. Pensa com un expert: cada capçalera CONTÉ alguna informació, i aquesta informació SEMPRE correspon a algun dels tags disponibles`;
 
     // Call GPT-4o with enhanced reasoning (fallback from GPT-5)
+    const openai = getOpenAI();
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
