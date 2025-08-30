@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { User, AuthError as SupabaseAuthError } from '@supabase/supabase-js'
 import { createBrowserSupabaseClient } from '@/lib/supabase/browserClient'
 import { AuthError, ValidationError, DatabaseError, ErrorCode, logError } from '@/lib/errors/custom-errors'
+import { log } from '@/lib/logger'
 import type { Database } from '@/types/database.types'
 
 // Strict types from our database schema
