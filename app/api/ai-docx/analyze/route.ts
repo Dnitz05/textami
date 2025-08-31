@@ -26,6 +26,58 @@ interface DocumentElement {
   level?: number;
   rows?: string[][];
   items?: string[];
+  formatting?: {
+    bold?: boolean;
+    italic?: boolean;
+    centered?: boolean;
+    fontSize?: number;
+  };
+}
+
+function extractFormattingInfo(paragraph: string): DocumentElement['formatting'] {
+  const formatting: DocumentElement['formatting'] = {};
+  
+  // Check for bold text
+  if (paragraph.includes('<w:b/>') || paragraph.includes('<w:b>')) {
+    formatting.bold = true;
+  }
+  
+  // Check for italic text
+  if (paragraph.includes('<w:i/>') || paragraph.includes('<w:i>')) {
+    formatting.italic = true;
+  }
+  
+  // Check for centered alignment
+  if (paragraph.includes('<w:jc w:val="center"/>') || paragraph.includes('<w:jc w:val="centre"/>')) {
+    formatting.centered = true;
+  }
+  
+  // Extract font size
+  const fontSizeMatch = paragraph.match(/<w:sz w:val="(\d+)"\/>/);
+  if (fontSizeMatch) {
+    // Word stores font size in half-points, convert to points
+    formatting.fontSize = parseInt(fontSizeMatch[1]) / 2;
+  }
+  
+  return Object.keys(formatting).length > 0 ? formatting : undefined;
+}
+
+function extractSpacingInfo(paragraph: string): { spaceBefore?: number; spaceAfter?: number } {
+  const spacing: { spaceBefore?: number; spaceAfter?: number } = {};
+  
+  // Extract space before paragraph (in twips, 1440 twips = 1 inch)
+  const spaceBeforeMatch = paragraph.match(/<w:spacing[^>]*w:before="(\d+)"/);
+  if (spaceBeforeMatch) {
+    spacing.spaceBefore = parseInt(spaceBeforeMatch[1]);
+  }
+  
+  // Extract space after paragraph
+  const spaceAfterMatch = paragraph.match(/<w:spacing[^>]*w:after="(\d+)"/);
+  if (spaceAfterMatch) {
+    spacing.spaceAfter = parseInt(spaceAfterMatch[1]);
+  }
+  
+  return spacing;
 }
 
 function extractDocumentStructure(documentXml: string): DocumentElement[] {
@@ -49,13 +101,20 @@ function extractDocumentStructure(documentXml: string): DocumentElement[] {
     const styleMatch = paragraph.match(/<w:pStyle[^>]*w:val="([^"]*)"[^>]*>/);
     const styleName = styleMatch ? styleMatch[1] : 'Normal';
     
-    // Classify element type based on style and content
-    const elementType = classifyElement(text, styleName);
+    // Extract formatting information
+    const formatting = extractFormattingInfo(paragraph);
+    
+    // Extract spacing information
+    const spacing = extractSpacingInfo(paragraph);
+    
+    // Classify element type based on style, content, formatting, and spacing
+    const elementType = classifyElement(text, styleName, formatting, spacing);
     
     elements.push({
       type: elementType,
       text: text,
-      style: styleName
+      style: styleName,
+      formatting: formatting
     });
   }
   
@@ -68,7 +127,7 @@ function extractDocumentStructure(documentXml: string): DocumentElement[] {
     if (rows.length > 0) {
       elements.push({
         type: 'table',
-        text: `Taula amb ${rows.length} files`,
+        text: table, // Store the raw XML for enhanced processing
         rows: rows
       });
     }
@@ -77,10 +136,118 @@ function extractDocumentStructure(documentXml: string): DocumentElement[] {
   return elements;
 }
 
-function classifyElement(text: string, styleName: string): DocumentElement['type'] {
-  // Check for signature patterns
+function detectSpecialContent(text: string): { type: string; patterns: string[] } {
+  const patterns: string[] = [];
+  let contentType = 'text';
+  
+  // Detect dates (various formats)
+  const datePatterns = [
+    /\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/g, // DD/MM/YYYY or MM/DD/YYYY
+    /\b\d{1,2}-\d{1,2}-\d{2,4}\b/g,   // DD-MM-YYYY
+    /\b\d{1,2}\s+de\s+(gener|febrer|març|abril|maig|juny|juliol|agost|setembre|octubre|novembre|desembre)\s+de\s+\d{4}\b/gi,
+    /\b\d{1,2}\s+(de\s+)?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+(de\s+)?\d{4}\b/gi,
+    /\b(lunes|martes|miércoles|jueves|viernes|sábado|domingo),?\s+\d{1,2}\s+de\s+\w+\s+de\s+\d{4}\b/gi
+  ];
+  
+  datePatterns.forEach(pattern => {
+    const matches = text.match(pattern);
+    if (matches) {
+      patterns.push(...matches);
+      contentType = 'date';
+    }
+  });
+  
+  // Detect addresses
+  const addressPatterns = [
+    /\b(carrer|calle|c\/|avinguda|avenida|av\.?|plaça|plaza|pl\.?)\s+[\w\s]+,?\s*\d+/gi,
+    /\b\d{5}\s+[A-ZÀ-ÿ][a-zà-ÿ\s]+,\s*[A-ZÀ-ÿ][a-zà-ÿ\s]+/g, // Postal code + city, province
+    /\bCP\s*:?\s*\d{5}/gi, // CP: 08001
+    /\b[A-Z]{2}\s*-?\s*\d{4,5}\s+[A-ZÀ-ÿ][a-zà-ÿ\s]+/g // License plate format + location
+  ];
+  
+  addressPatterns.forEach(pattern => {
+    const matches = text.match(pattern);
+    if (matches) {
+      patterns.push(...matches);
+      if (contentType !== 'date') contentType = 'address';
+    }
+  });
+  
+  // Detect phone numbers
+  const phonePatterns = [
+    /\b(\+34\s?)?[6-9]\d{2}\s?\d{2}\s?\d{2}\s?\d{2}\b/g, // Spanish mobile
+    /\b(\+34\s?)?[8-9]\d{2}\s?\d{2}\s?\d{2}\s?\d{2}\b/g, // Spanish landline
+    /\btel\.?\s*:?\s*[\d\s\-\+\(\)]+/gi
+  ];
+  
+  phonePatterns.forEach(pattern => {
+    const matches = text.match(pattern);
+    if (matches) {
+      patterns.push(...matches);
+      if (contentType === 'text') contentType = 'contact';
+    }
+  });
+  
+  // Detect emails
+  const emailPattern = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
+  const emails = text.match(emailPattern);
+  if (emails) {
+    patterns.push(...emails);
+    if (contentType === 'text') contentType = 'contact';
+  }
+  
+  return { type: contentType, patterns };
+}
+
+function classifyElement(text: string, styleName: string, formatting?: DocumentElement['formatting'], spacing?: { spaceBefore?: number; spaceAfter?: number }): DocumentElement['type'] {
+  // Check for signature patterns first
   if (text.match(/signat per|firmat per|signature|signatura|atentament|cordialmente|salutacions/i)) {
     return 'signature';
+  }
+  
+  // Detect special content (dates, addresses, etc.)
+  const specialContent = detectSpecialContent(text);
+  // Note: We could add special handling for date/address content here if needed
+  
+  // USE SPACING INFORMATION TO DETECT SECTION BREAKS
+  // Large space before (> 720 twips = 0.5 inch) often indicates a new section
+  const hasLargeSpaceBefore = spacing?.spaceBefore && spacing.spaceBefore > 720;
+  const hasLargeSpaceAfter = spacing?.spaceAfter && spacing.spaceAfter > 720;
+  
+  // USE FORMATTING INFORMATION TO IMPROVE CLASSIFICATION
+  // Large, bold, centered text is likely a title
+  if (formatting?.centered && formatting?.bold && formatting?.fontSize && formatting.fontSize >= 14) {
+    return 'title';
+  }
+  
+  // Text with large spacing before is likely a section heading
+  if (hasLargeSpaceBefore && text.length < 100) {
+    if (formatting?.bold || formatting?.fontSize && formatting.fontSize >= 12) {
+      return 'heading1';
+    } else if (text.length < 60) {
+      return 'heading2';
+    }
+  }
+  
+  // Bold text with larger font size suggests headings
+  if (formatting?.bold && formatting?.fontSize && formatting.fontSize >= 12) {
+    if (text.length < 100) {
+      if (formatting.fontSize >= 14) {
+        return 'title';
+      } else {
+        return 'heading1';
+      }
+    }
+  }
+  
+  // Centered text (even without bold) can be titles if short
+  if (formatting?.centered && text.length < 80 && !text.endsWith('.')) {
+    return 'title';
+  }
+  
+  // Bold text without other criteria might still be a heading
+  if (formatting?.bold && text.length < 60 && !text.endsWith('.')) {
+    return 'heading2';
   }
   
   // Check style names for headings (prioritat alta)
@@ -163,13 +330,25 @@ function classifyElement(text: string, styleName: string): DocumentElement['type
   return 'paragraph';
 }
 
-function extractTableRows(tableXml: string): string[][] {
-  const rows: string[][] = [];
+interface TableCell {
+  text: string;
+  isHeader?: boolean;
+  formatting?: DocumentElement['formatting'];
+}
+
+interface TableRow {
+  cells: TableCell[];
+  isHeader?: boolean;
+}
+
+function extractEnhancedTableRows(tableXml: string): TableRow[] {
+  const rows: TableRow[] = [];
   const rowRegex = /<w:tr[^>]*>([\s\S]*?)<\/w:tr>/g;
   const rowMatches = tableXml.match(rowRegex) || [];
   
-  for (const row of rowMatches) {
-    const cells: string[] = [];
+  for (let rowIndex = 0; rowIndex < rowMatches.length; rowIndex++) {
+    const row = rowMatches[rowIndex];
+    const cells: TableCell[] = [];
     const cellRegex = /<w:tc[^>]*>([\s\S]*?)<\/w:tc>/g;
     const cellMatches = row.match(cellRegex) || [];
     
@@ -179,15 +358,47 @@ function extractTableRows(tableXml: string): string[][] {
         .map(match => match.replace(/<w:t[^>]*>([^<]*)<\/w:t>/, '$1'))
         .join(' ')
         .trim();
-      cells.push(cellText);
+      
+      // Extract cell formatting
+      const cellFormatting = extractFormattingInfo(cell);
+      
+      // Determine if it's a header cell (first row or bold text)
+      const isHeader = rowIndex === 0 || cellFormatting?.bold || false;
+      
+      cells.push({
+        text: cellText,
+        isHeader,
+        formatting: cellFormatting
+      });
     }
     
     if (cells.length > 0) {
-      rows.push(cells);
+      rows.push({
+        cells,
+        isHeader: rowIndex === 0
+      });
     }
   }
   
   return rows;
+}
+
+function extractTableRows(tableXml: string): string[][] {
+  const enhancedRows = extractEnhancedTableRows(tableXml);
+  return enhancedRows.map(row => row.cells.map(cell => cell.text));
+}
+
+function generateInlineStyle(formatting?: DocumentElement['formatting']): string {
+  if (!formatting) return '';
+  
+  const styles: string[] = [];
+  
+  if (formatting.bold) styles.push('font-weight: bold');
+  if (formatting.italic) styles.push('font-style: italic'); 
+  if (formatting.centered) styles.push('text-align: center');
+  if (formatting.fontSize) styles.push(`font-size: ${formatting.fontSize}pt`);
+  
+  return styles.length > 0 ? ` style="${styles.join('; ')}"` : '';
 }
 
 function generateStructuredHTML(elements: DocumentElement[], fileName: string): string {
@@ -205,35 +416,55 @@ function generateStructuredHTML(elements: DocumentElement[], fileName: string): 
     `th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }`,
     `th { background-color: #f8f9fa; font-weight: bold; }`,
     `.signature { border: 2px solid #e74c3c; background-color: #fdf2f2; padding: 15px; margin: 20px 0; border-radius: 5px; }`,
+    `.detected-date { background-color: #e1f5fe; border-bottom: 2px solid #0288d1; padding: 1px 3px; border-radius: 3px; }`,
+    `.detected-address { background-color: #f3e5f5; border-bottom: 2px solid #7b1fa2; padding: 1px 3px; border-radius: 3px; }`,
+    `.detected-contact { background-color: #e8f5e8; border-bottom: 2px solid #388e3c; padding: 1px 3px; border-radius: 3px; }`,
     `</style>`,
     `</head>`,
     `<body>`
   ];
   
   for (const element of elements) {
+    const inlineStyle = generateInlineStyle(element.formatting);
+    
     switch (element.type) {
       case 'title':
-        htmlParts.push(`<h1>${escapeHtml(element.text)}</h1>`);
+        htmlParts.push(`<h1${inlineStyle}>${enhanceTextWithDetection(element.text)}</h1>`);
         break;
       case 'heading1':
-        htmlParts.push(`<h2>${escapeHtml(element.text)}</h2>`);
+        htmlParts.push(`<h2${inlineStyle}>${enhanceTextWithDetection(element.text)}</h2>`);
         break;
       case 'heading2':
-        htmlParts.push(`<h3>${escapeHtml(element.text)}</h3>`);
+        htmlParts.push(`<h3${inlineStyle}>${enhanceTextWithDetection(element.text)}</h3>`);
         break;
       case 'heading3':
-        htmlParts.push(`<h4>${escapeHtml(element.text)}</h4>`);
+        htmlParts.push(`<h4${inlineStyle}>${enhanceTextWithDetection(element.text)}</h4>`);
         break;
       case 'paragraph':
-        htmlParts.push(`<p>${escapeHtml(element.text)}</p>`);
+        htmlParts.push(`<p${inlineStyle}>${enhanceTextWithDetection(element.text)}</p>`);
         break;
       case 'table':
         if (element.rows && element.rows.length > 0) {
           htmlParts.push(`<table>`);
-          element.rows.forEach((row, index) => {
-            const tag = index === 0 ? 'th' : 'td';
-            htmlParts.push(`<tr>${row.map(cell => `<${tag}>${escapeHtml(cell)}</${tag}>`).join('')}</tr>`);
-          });
+          // Use enhanced table data if available
+          const enhancedRows = extractEnhancedTableRows(element.text || '');
+          if (enhancedRows.length > 0) {
+            enhancedRows.forEach((row, rowIndex) => {
+              htmlParts.push(`<tr>`);
+              row.cells.forEach((cell) => {
+                const tag = cell.isHeader ? 'th' : 'td';
+                const cellStyle = generateInlineStyle(cell.formatting);
+                htmlParts.push(`<${tag}${cellStyle}>${escapeHtml(cell.text)}</${tag}>`);
+              });
+              htmlParts.push(`</tr>`);
+            });
+          } else {
+            // Fallback to simple table generation
+            element.rows.forEach((row, index) => {
+              const tag = index === 0 ? 'th' : 'td';
+              htmlParts.push(`<tr>${row.map(cell => `<${tag}>${escapeHtml(cell)}</${tag}>`).join('')}</tr>`);
+            });
+          }
           htmlParts.push(`</table>`);
         }
         break;
@@ -259,6 +490,38 @@ function escapeHtml(text: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+function enhanceTextWithDetection(text: string): string {
+  const specialContent = detectSpecialContent(text);
+  let enhancedText = escapeHtml(text);
+  
+  // Highlight detected patterns
+  specialContent.patterns.forEach(pattern => {
+    const escapedPattern = escapeHtml(pattern);
+    let cssClass = '';
+    
+    switch (specialContent.type) {
+      case 'date':
+        cssClass = 'detected-date';
+        break;
+      case 'address':
+        cssClass = 'detected-address';
+        break;
+      case 'contact':
+        cssClass = 'detected-contact';
+        break;
+    }
+    
+    if (cssClass) {
+      enhancedText = enhancedText.replace(
+        new RegExp(escapedPattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'),
+        `<span class="${cssClass}" title="${specialContent.type.charAt(0).toUpperCase() + specialContent.type.slice(1)} detectat">${escapedPattern}</span>`
+      );
+    }
+  });
+  
+  return enhancedText;
 }
 
 // AI Analysis helper function

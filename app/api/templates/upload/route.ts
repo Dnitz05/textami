@@ -19,6 +19,40 @@ interface DocumentElement {
   level?: number;
   rows?: string[][];
   items?: string[];
+  formatting?: {
+    bold?: boolean;
+    italic?: boolean;
+    centered?: boolean;
+    fontSize?: number;
+  };
+}
+
+function extractFormattingInfo(paragraph: string): DocumentElement['formatting'] {
+  const formatting: DocumentElement['formatting'] = {};
+  
+  // Check for bold text
+  if (paragraph.includes('<w:b/>') || paragraph.includes('<w:b>')) {
+    formatting.bold = true;
+  }
+  
+  // Check for italic text
+  if (paragraph.includes('<w:i/>') || paragraph.includes('<w:i>')) {
+    formatting.italic = true;
+  }
+  
+  // Check for centered alignment
+  if (paragraph.includes('<w:jc w:val="center"/>') || paragraph.includes('<w:jc w:val="centre"/>')) {
+    formatting.centered = true;
+  }
+  
+  // Extract font size
+  const fontSizeMatch = paragraph.match(/<w:sz w:val="(\d+)"\/>/);
+  if (fontSizeMatch) {
+    // Word stores font size in half-points, convert to points
+    formatting.fontSize = parseInt(fontSizeMatch[1]) / 2;
+  }
+  
+  return Object.keys(formatting).length > 0 ? formatting : undefined;
 }
 
 function extractDocumentStructure(documentXml: string): DocumentElement[] {
@@ -42,13 +76,17 @@ function extractDocumentStructure(documentXml: string): DocumentElement[] {
     const styleMatch = paragraph.match(/<w:pStyle[^>]*w:val="([^"]*)"[^>]*>/);
     const styleName = styleMatch ? styleMatch[1] : 'Normal';
     
-    // Classify element type based on style and content
-    const elementType = classifyElement(text, styleName);
+    // Extract formatting information
+    const formatting = extractFormattingInfo(paragraph);
+    
+    // Classify element type based on style, content, and formatting
+    const elementType = classifyElement(text, styleName, formatting);
     
     elements.push({
       type: elementType,
       text: text,
-      style: styleName
+      style: styleName,
+      formatting: formatting
     });
   }
   
@@ -70,10 +108,37 @@ function extractDocumentStructure(documentXml: string): DocumentElement[] {
   return elements;
 }
 
-function classifyElement(text: string, styleName: string): DocumentElement['type'] {
+function classifyElement(text: string, styleName: string, formatting?: DocumentElement['formatting']): DocumentElement['type'] {
   // Check for signature patterns
   if (text.match(/signat per|firmat per|signature|signatura|atentament|cordialmente|salutacions/i)) {
     return 'signature';
+  }
+  
+  // USE FORMATTING INFORMATION TO IMPROVE CLASSIFICATION
+  // Large, bold, centered text is likely a title
+  if (formatting?.centered && formatting?.bold && formatting?.fontSize && formatting.fontSize >= 14) {
+    return 'title';
+  }
+  
+  // Bold text with larger font size suggests headings
+  if (formatting?.bold && formatting?.fontSize && formatting.fontSize >= 12) {
+    if (text.length < 100) {
+      if (formatting.fontSize >= 14) {
+        return 'title';
+      } else {
+        return 'heading1';
+      }
+    }
+  }
+  
+  // Centered text (even without bold) can be titles if short
+  if (formatting?.centered && text.length < 80 && !text.endsWith('.')) {
+    return 'title';
+  }
+  
+  // Bold text without other criteria might still be a heading
+  if (formatting?.bold && text.length < 60 && !text.endsWith('.')) {
+    return 'heading2';
   }
   
   // Check style names for headings (prioritat alta)
