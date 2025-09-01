@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerComponentClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createServerSupabaseClient } from '@/lib/supabase/serverClient';
 import { getValidGoogleTokens } from '@/lib/google/token-manager';
 import { createAuthenticatedClient } from '@/lib/google/auth';
 import { GoogleDriveClient } from '@/lib/google/drive-client';
@@ -8,7 +7,7 @@ import { GoogleDriveClient } from '@/lib/google/drive-client';
 // GET /api/google/drive/files - List Google Drive files
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createServerComponentClient({ cookies });
+    const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
@@ -95,7 +94,7 @@ export async function GET(request: NextRequest) {
 // POST /api/google/drive/files - Get specific file metadata
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerComponentClient({ cookies });
+    const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {

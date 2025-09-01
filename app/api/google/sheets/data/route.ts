@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerComponentClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createServerSupabaseClient } from '@/lib/supabase/serverClient';
 import { getValidGoogleTokens } from '@/lib/google/token-manager';
 import { createAuthenticatedClient } from '@/lib/google/auth';
 import { GoogleSheetsService } from '@/lib/google/sheets-service';
@@ -8,7 +7,7 @@ import { GoogleSheetsService } from '@/lib/google/sheets-service';
 // GET /api/google/sheets/data - Get spreadsheet data
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createServerComponentClient({ cookies });
+    const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {

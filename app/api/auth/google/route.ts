@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getGoogleAuthUrl } from '@/lib/google/auth';
-import { createServerComponentClient } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { validateUserSession, checkRateLimit } from '@/lib/security/auth-middleware';
 import { generateSecureToken } from '@/lib/security/encryption';
