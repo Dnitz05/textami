@@ -1,0 +1,20 @@
+{
+  "scripts": {
+    // Add these to your existing package.json scripts
+    "test:instructions": "jest --config=lib/instructions/__tests__/jest.config.js",
+    "test:instructions:watch": "jest --config=lib/instructions/__tests__/jest.config.js --watch",
+    "test:instructions:coverage": "jest --config=lib/instructions/__tests__/jest.config.js --coverage",
+    "test:google-integration": "jest --config=lib/instructions/__tests__/jest.config.js --testNamePattern='Google.*Integration'",
+    "test:instructions:ci": "jest --config=lib/instructions/__tests__/jest.config.js --ci --coverage --watchAll=false"
+  },
+  
+  "devDependencies": {
+    // Add these to your existing devDependencies if not already present
+    "@jest/globals": "^29.7.0",
+    "@types/jest": "^29.5.8",
+    "jest": "^29.7.0",
+    "jest-environment-node": "^29.7.0",
+    "jest-junit": "^16.0.0",
+    "ts-jest": "^29.1.1"
+  }
+}

@@ -5,6 +5,8 @@ export const dynamic = 'force-dynamic';
 
 import { useState, useEffect } from 'react';
 import TopNavBar from '../../components/TopNavBar';
+import TemplateSourceSelector from '../../components/TemplateSourceSelector';
+import GoogleDrivePicker from '../../components/google/GoogleDrivePicker';
 import { log } from '../../lib/logger';
 
 interface TemplateUploadResponse {
@@ -55,6 +57,24 @@ export default function GeneratorPage() {
     };
   }, []);
   
+  const [sourceSelector, setSourceSelector] = useState<{
+    show: boolean;
+    selectedSource: 'docx' | 'google-docs' | null;
+  }>({
+    show: false,
+    selectedSource: null
+  });
+
+  const [googleDriveState, setGoogleDriveState] = useState<{
+    show: boolean;
+    processing: boolean;
+    error: string | null;
+  }>({
+    show: false,
+    processing: false,
+    error: null
+  });
+
   const [aiState, setAiState] = useState<{
     processing: boolean;
     template: TemplateUploadResponse | null;
@@ -70,6 +90,8 @@ export default function GeneratorPage() {
       htmlPreview?: string;
     } | null;
     error: string | null;
+    sourceType?: 'docx' | 'google-docs';
+    googleDocId?: string;
   }>({
     processing: false,
     template: null,
@@ -245,6 +267,123 @@ export default function GeneratorPage() {
         error: error instanceof Error ? error.message : 'Error desconegut en Excel AI'
       });
     }
+  };
+
+  // Google Docs handlers
+  const handleShowSourceSelector = () => {
+    setSourceSelector({ show: true, selectedSource: null });
+  };
+
+  const handleSourceSelected = (sourceType: 'docx' | 'google-docs') => {
+    setSourceSelector({ show: false, selectedSource: sourceType });
+    
+    if (sourceType === 'google-docs') {
+      setGoogleDriveState({ show: true, processing: false, error: null });
+    }
+    // For DOCX, the existing file input will be used
+  };
+
+  const handleGoogleDocSelected = async (file: any) => {
+    try {
+      setGoogleDriveState({ show: false, processing: true, error: null });
+      setAiState(prev => ({ 
+        ...prev, 
+        processing: true, 
+        error: null,
+        sourceType: 'google-docs',
+        googleDocId: file.id
+      }));
+
+      log.debug('📄 Google Doc selected:', {
+        id: file.id,
+        name: file.name,
+        mimeType: file.mimeType
+      });
+
+      // Call Google Docs analysis endpoint
+      const response = await fetch('/api/google/docs/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          documentId: file.id,
+          fileName: file.name,
+          useGemini: false, // Can make this configurable later
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Google authentication required. Please sign in with Google.');
+        }
+        throw new Error(result.error || 'Failed to analyze Google Doc');
+      }
+
+      if (result.success) {
+        const analysisData = result.data;
+        
+        // Format the response to match existing UI expectations
+        const newAiState = {
+          processing: false,
+          template: {
+            templateId: analysisData.templateId,
+            fileName: analysisData.fileName,
+            size: 0, // Google Docs don't have traditional file size
+            storagePath: '',
+            success: true,
+            message: 'Google Doc analyzed successfully'
+          },
+          aiAnalysis: {
+            placeholders: analysisData.placeholders || [],
+            transcription: analysisData.markdown || analysisData.transcription,
+            htmlPreview: analysisData.transcription || `<div class="p-8 text-center">
+              <div class="text-4xl mb-4">📝</div>
+              <h3 class="text-lg font-semibold mb-2">${analysisData.fileName}</h3>
+              <p class="text-gray-600">Google Doc imported successfully.</p>
+              <p class="text-sm text-green-600 mt-2">✅ ${analysisData.placeholders?.length || 0} placeholders detected</p>
+            </div>`
+          },
+          error: null,
+          sourceType: 'google-docs' as const,
+          googleDocId: file.id
+        };
+
+        setAiState(newAiState);
+        
+        log.debug('✅ Google Doc analysis complete:', {
+          templateId: analysisData.templateId,
+          placeholders: analysisData.placeholders?.length || 0,
+          sections: analysisData.sections?.length || 0,
+          confidence: analysisData.confidence
+        });
+
+      } else {
+        throw new Error(result.error || 'Analysis failed');
+      }
+
+    } catch (error) {
+      log.error('❌ Google Doc analysis failed:', error);
+      setAiState(prev => ({
+        ...prev,
+        processing: false,
+        error: error instanceof Error ? error.message : 'Google Doc analysis failed'
+      }));
+      setGoogleDriveState(prev => ({ ...prev, processing: false }));
+    }
+  };
+
+  const handleGoogleAuthRequired = () => {
+    // Redirect to Google auth
+    window.location.href = '/api/auth/google';
+  };
+
+  const handleCancelGoogleDrive = () => {
+    setGoogleDriveState({ show: false, processing: false, error: null });
+    setSourceSelector({ show: true, selectedSource: null });
   };
 
   // AUTO-TRIGGER MAPPINGS when both files are uploaded  
@@ -487,38 +626,59 @@ export default function GeneratorPage() {
           )}
 
           <div className={`grid gap-8 ${aiState.template ? 'md:grid-cols-1 max-w-2xl mx-auto' : 'md:grid-cols-2'}`}>
-            {/* DOCX Upload - Independent */}
+            {/* Document Upload - DOCX or Google Docs */}
             <div className="bg-white rounded-lg p-6 shadow-lg">
               <div className="text-center">
-                <div className="text-4xl mb-4">📄</div>
-                <h3 className="text-xl font-semibold mb-3">Upload Document</h3>
+                <div className="text-4xl mb-4">{aiState.sourceType === 'google-docs' ? '📝' : '📄'}</div>
+                <h3 className="text-xl font-semibold mb-3">
+                  {aiState.template 
+                    ? (aiState.sourceType === 'google-docs' ? 'Google Doc Loaded' : 'Document Uploaded')
+                    : 'Choose Template Source'
+                  }
+                </h3>
                 <p className="text-gray-600 mb-4">
-                  Upload DOCX for instant preview & placeholder detection
+                  {aiState.template 
+                    ? `${aiState.sourceType === 'google-docs' ? 'Google Doc' : 'DOCX'} analyzed with AI placeholder detection`
+                    : 'Select DOCX upload or Google Docs import for instant AI analysis'
+                  }
                 </p>
                 
-                {!aiState.template && (
-                  <>
-                    <label 
-                      onClick={() => log.debug('🖱️ DOCX Label clicked!')}
-                      className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors cursor-pointer block text-center"
+                {!aiState.template ? (
+                  // Show source selection button
+                  <div>
+                    <button
+                      onClick={handleShowSourceSelector}
+                      disabled={aiState.processing || googleDriveState.processing}
+                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200"
                     >
-                      {aiState.processing ? 'GPT-5 Analitzant...' : 'Upload per AI Analysis'}
-                      <input
-                        type="file"
-                        accept=".docx"
-                        onChange={(e) => {
-                          log.debug('📁 Document Input activated!', e.target.files?.[0]?.name);
-                          handleAiDocumentAnalysis(e);
-                        }}
-                        disabled={aiState.processing}
-                        className="hidden"
-                      />
-                    </label>
-                    {aiState.error && (
-                      <p className="text-xs text-red-600 mt-2">{aiState.error}</p>
+                      {aiState.processing || googleDriveState.processing ? (
+                        <span className="flex items-center justify-center">
+                          <svg className="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                          </svg>
+                          {aiState.processing ? '🧠 Analyzing...' : '📝 Loading Google Drive...'}
+                        </span>
+                      ) : (
+                        '📄 Choose Template Source'
+                      )}
+                    </button>
+                    
+                    {/* Hidden file input for DOCX upload when selected */}
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept=".docx,.doc"
+                      onChange={handleAiDocumentAnalysis}
+                      disabled={aiState.processing}
+                      id="docx-upload"
+                    />
+                    
+                    {(aiState.error || googleDriveState.error) && (
+                      <p className="text-xs text-red-600 mt-2">{aiState.error || googleDriveState.error}</p>
                     )}
-                  </>
-                )}
+                  </div>
+                ) : null}
 
                 {aiState.template && aiState.aiAnalysis && (
                   <div className="space-y-3">
@@ -526,7 +686,10 @@ export default function GeneratorPage() {
                       ✅ {aiState.template.fileName}
                     </div>
                     <div className="text-xs text-gray-500">
-                      {Math.round(aiState.template.size / 1024)} KB
+                      {aiState.sourceType === 'google-docs' 
+                        ? `📝 Google Doc • ${aiState.aiAnalysis?.placeholders?.length || 0} placeholders`
+                        : `${Math.round(aiState.template.size / 1024)} KB`
+                      }
                     </div>
                     <div className="text-xs text-blue-600">
                       📄 Transcription ready for smart mapping
@@ -952,6 +1115,34 @@ export default function GeneratorPage() {
           </div>
         </div>
       </div>
+      
+      {/* Modals */}
+      {sourceSelector.show && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50">
+          <TemplateSourceSelector
+            onSourceSelected={(sourceType) => {
+              handleSourceSelected(sourceType);
+              // If DOCX selected, trigger file input
+              if (sourceType === 'docx') {
+                setTimeout(() => {
+                  document.getElementById('docx-upload')?.click();
+                }, 100);
+              }
+            }}
+            onClose={() => setSourceSelector({ show: false, selectedSource: null })}
+          />
+        </div>
+      )}
+      
+      {googleDriveState.show && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+          <GoogleDrivePicker
+            onFileSelect={handleGoogleDocSelected}
+            onCancel={handleCancelGoogleDrive}
+            onAuthRequired={handleGoogleAuthRequired}
+          />
+        </div>
+      )}
     </div>
   );
 }

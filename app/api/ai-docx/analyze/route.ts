@@ -820,9 +820,25 @@ export async function POST(request: NextRequest) {
         storageUrl
       });
       
+      // EMERGENCY: Apply unified compatibility layer
+      const { convertDOCXToUnified, validateUnifiedTemplate } = await import('@/lib/compatibility/unified-system');
+      
+      const unifiedResult = convertDOCXToUnified(analysisResult);
+      const validatedResult = validateUnifiedTemplate(unifiedResult);
+      
+      if (!validatedResult) {
+        log.error('❌ Failed to create valid unified template for DOCX');
+        const { createFallbackTemplate } = await import('@/lib/compatibility/unified-system');
+        const fallbackResult = createFallbackTemplate('docx', file.name);
+        return NextResponse.json({
+          success: true,
+          data: fallbackResult
+        });
+      }
+      
       return NextResponse.json({
         success: true,
-        data: analysisResult
+        data: validatedResult
       });
       
     } catch (ooxmlError) {

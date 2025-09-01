@@ -28,7 +28,14 @@
       "Bash(python -m pip install:*)",
       "Bash(python test_ooxml_parser.py:*)",
       "Bash(python:*)",
-      "Bash(PYTHONIOENCODING=utf-8 python ingest_docx.py sample_document.docx --output-dir ./test_output)"
+      "Bash(PYTHONIOENCODING=utf-8 python ingest_docx.py sample_document.docx --output-dir ./test_output)",
+      "Bash(npm run type-check:*)",
+      "Bash(npm outdated)",
+      "Bash(npm audit:*)",
+      "Bash(npm test)",
+      "Bash(npx jest:*)",
+      "Bash(npm test:*)",
+      "Bash(npm run test:*)"
     ],
     "additionalDirectories": [
       "C:\\mnt\\c\\projects",

@@ -3,16 +3,19 @@
 // Force dynamic rendering to avoid SSR issues with Supabase
 export const dynamic = 'force-dynamic';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import TopNavBar from '@/components/TopNavBar';
 import { useUser } from '@/hooks/useUser';
 import { useEffect } from 'react';
+import TemplateSourceSelector from '@/components/TemplateSourceSelector';
+import GoogleAuthButton from '@/components/google/GoogleAuthButton';
 
 export default function Dashboard() {
   const router = useRouter();
   const { isAuthenticated, user } = useUser();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showTemplateSourceModal, setShowTemplateSourceModal] = useState(false);
 
   // Redirect unauthenticated users to landing page
   useEffect(() => {
@@ -22,7 +25,20 @@ export default function Dashboard() {
   }, [isAuthenticated, user, router]);
 
   const handleNovaPlantillaClick = () => {
-    fileInputRef.current?.click();
+    setShowTemplateSourceModal(true);
+  };
+
+  const handleTemplateSourceSelection = (sourceType: 'docx' | 'google-docs') => {
+    setShowTemplateSourceModal(false);
+    
+    if (sourceType === 'docx') {
+      // Traditional DOCX upload
+      fileInputRef.current?.click();
+    } else if (sourceType === 'google-docs') {
+      // TODO: Implement Google Docs picker
+      // For now, show coming soon message
+      alert('Google Docs integration coming soon!');
+    }
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -165,6 +181,14 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Google Account Integration */}
+        <div className="mt-16 max-w-md mx-auto">
+          <div className="bg-white rounded-lg p-6 shadow-md">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Google Integration</h3>
+            <GoogleAuthButton />
+          </div>
+        </div>
+
         {/* Footer */}
         <footer className="mt-16 text-center text-gray-500">
           <div className="inline-flex items-center gap-4 bg-white rounded-lg p-4 shadow-sm">
@@ -174,6 +198,14 @@ export default function Dashboard() {
           <p className="mt-4">© 2025 Textami - Document Intelligence Platform</p>
         </footer>
       </div>
+
+      {/* Template Source Selector Modal */}
+      {showTemplateSourceModal && (
+        <TemplateSourceSelector
+          onSourceSelected={handleTemplateSourceSelection}
+          onClose={() => setShowTemplateSourceModal(false)}
+        />
+      )}
     </div>
   );
 }

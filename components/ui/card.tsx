@@ -5,7 +5,7 @@
 
 import React from 'react'
 
-interface CardProps {
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
   className?: string
   padding?: 'sm' | 'md' | 'lg'
@@ -26,7 +26,7 @@ interface CardFooterProps {
   className?: string
 }
 
-export function Card({ children, className = '', padding = 'md' }: CardProps) {
+export function Card({ children, className = '', padding = 'md', ...props }: CardProps) {
   const paddingStyles = {
     sm: 'p-4',
     md: 'p-6',
@@ -34,7 +34,10 @@ export function Card({ children, className = '', padding = 'md' }: CardProps) {
   }
   
   return (
-    <div className={`bg-white rounded-lg border border-gray-200 shadow-sm ${paddingStyles[padding]} ${className}`}>
+    <div 
+      className={`bg-white rounded-lg border border-gray-200 shadow-sm ${paddingStyles[padding]} ${className}`}
+      {...props}
+    >
       {children}
     </div>
   )

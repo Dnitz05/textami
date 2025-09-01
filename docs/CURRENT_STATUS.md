@@ -1,8 +1,8 @@
 # ESTAT ACTUAL DEL PROJECTE TEXTAMI
 
-**Data:** 30 Agost 2025  
-**Status:** Migració Arquitectònica OOXML-Centric - READY FOR IMPLEMENTATION  
-**Decisió:** Arquitectura OOXML-centric aprovada
+**Data:** 1 Setembre 2025  
+**Status:** Arquitectura Híbrida Universal - READY FOR IMPLEMENTATION  
+**Decisió:** Sistema Universal DOCX + Google Docs aprovat
 
 ---
 
@@ -37,19 +37,27 @@
 
 ---
 
-## 🔄 PRIORITATS IMPLEMENTACIÓ OOXML (2 setmanes)
+## 🔄 PRIORITATS IMPLEMENTACIÓ HÍBRIDA (4-5 setmanes)
 
-### **Fase 1: OOXML Parser (Setmana 1)**
-- **Python Script:** Crear `scripts/ingest_docx.py` 
-- **OOXML Parsing:** Extracció styles.xml + numbering.xml
-- **StyleManifest:** Auto-generació JSON amb mappings
-- **API Integration:** Endpoint per parsing DOCX
+### **Fase 1: Google Docs Input (1-2 setmanes)**
+- **Google Docs API:** Integration per import de documents
+- **HTML Processing:** Parsing estructura des de Google Docs HTML
+- **Template Selector:** UI per escollir DOCX vs Google Docs
+- **Source Adapters:** Unificar AnalysisData interface
 
-### **Fase 2: HTML Generation (Setmana 2)**
-- **Nunjucks Templates:** Vocabulari HTML semàntic estàndard
-- **Style Mapping:** Connectar HTML elements amb Word styles
-- **Docxtemplater PRO:** Integració amb HTML Module (quan es compri)
-- **Preview System:** HTML preview dels documents generats
+### **Fase 2: Google Sheets Integration (1 setmana)**  
+- **Google Sheets API:** Lectura de dades per mapping
+- **Data Source Selector:** UI per escollir Excel vs Sheets
+- **Universal Mapping:** Reutilitzar ExcelMappingPanel logic
+
+### **Fase 3: Universal Generation (1 setmana)**
+- **Google Docs Output:** HTML → Google Doc generation
+- **Output Format Selection:** User choice DOCX vs Google Docs
+- **Universal Generator:** Unified generation pipeline
+
+### **Fase 4: Polish & Testing (1 setmana)**
+- **Error Handling:** Google APIs rate limits i permisos
+- **Testing:** Comprehensive testing amb documents reals
 
 ---
 

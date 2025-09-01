@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { AnalysisData, ParsedTag, PipelineStatus } from '../lib/types';
 import DocumentPreviewPanel from './analysis/DocumentPreviewPanel';
-import ExcelMappingPanel from './analysis/ExcelMappingPanel';
+import DataMappingPanel from './analysis/DataMappingPanel';
 import AIPromptsPanel from './analysis/AIPromptsPanel';
 import { MappingProvider } from '../contexts/MappingContext';
 import { log } from '../lib/logger';
@@ -402,9 +402,9 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                     </h3>
                   </div>
                   
-                  {/* Excel Mapping Content with ethereal spacing */}
+                  {/* Data Mapping Content with ethereal spacing */}
                   <div className="flex-1 overflow-y-auto px-6 py-6 bg-gray-50/40 backdrop-blur-sm">
-                    <ExcelMappingPanel 
+                    <DataMappingPanel 
                       tags={analysisData.tags}
                       placeholders={analysisData.placeholders}
                       excelHeaders={excelHeaders}
