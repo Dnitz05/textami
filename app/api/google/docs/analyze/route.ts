@@ -73,6 +73,15 @@ export async function POST(request: NextRequest) {
     }
     
     const { documentId, fileName, useGemini } = sanitizedData!;
+    
+    // Ensure documentId is a string (should be guaranteed by validation)
+    if (typeof documentId !== 'string') {
+      return NextResponse.json(
+        { error: 'Invalid document ID type' },
+        { status: 400 }
+      );
+    }
+    
     log.debug('📋 Request parameters:', { documentId, userId: user.id, fileName, useGemini });
 
     // 4. Get valid Google tokens (with automatic refresh)
