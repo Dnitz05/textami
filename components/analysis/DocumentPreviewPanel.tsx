@@ -112,12 +112,11 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         alert('El nom de la plantilla no pot estar buit.');
         return false;
       }
-    }
-    
-    setTemplateName(newName);
-    sessionStorage.setItem('templateName', newName);
-    log.debug('✅ Template name saved:', newName);
-    return true;
+      
+      setTemplateName(newName);
+      sessionStorage.setItem('templateName', newName);
+      log.debug('✅ Template name saved:', newName);
+      return true;
     } catch (error) {
       log.error('Failed to save template name:', error);
       return false;
