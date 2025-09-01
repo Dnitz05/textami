@@ -70,7 +70,9 @@ export async function GET(request: NextRequest) {
       console.error('Google Drive API error:', driveError);
       
       // Check if it's an authentication error
-      if (driveError.message?.includes('401') || driveError.message?.includes('unauthorized')) {
+      const errorMessage = driveError instanceof Error ? driveError.message : String(driveError);
+      
+      if (errorMessage?.includes('401') || errorMessage?.includes('unauthorized')) {
         return NextResponse.json(
           { error: 'Google authentication expired. Please reconnect your account.' },
           { status: 401 }
@@ -78,7 +80,7 @@ export async function GET(request: NextRequest) {
       }
       
       return NextResponse.json(
-        { error: `Failed to access Google Drive: ${driveError.message}` },
+        { error: `Failed to access Google Drive: ${errorMessage}` },
         { status: 500 }
       );
     }
@@ -149,7 +151,9 @@ export async function POST(request: NextRequest) {
     } catch (driveError) {
       console.error('Error getting file metadata:', driveError);
       
-      if (driveError.message?.includes('404')) {
+      const errorMessage = driveError instanceof Error ? driveError.message : String(driveError);
+      
+      if (errorMessage?.includes('404')) {
         return NextResponse.json(
           { error: 'File not found or access denied' },
           { status: 404 }
@@ -157,7 +161,7 @@ export async function POST(request: NextRequest) {
       }
       
       return NextResponse.json(
-        { error: `Failed to get file metadata: ${driveError.message}` },
+        { error: `Failed to get file metadata: ${errorMessage}` },
         { status: 500 }
       );
     }

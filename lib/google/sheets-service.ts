@@ -327,7 +327,7 @@ export class GoogleSheetsService {
     // Number
     if (!isNaN(Number(strValue)) && strValue !== '') {
       const numValue = Number(strValue);
-      return Number.isInteger(numValue) ? numValue : parseFloat(numValue);
+      return Number.isInteger(numValue) ? numValue : parseFloat(strValue);
     }
 
     // Date (basic detection)
@@ -375,7 +375,7 @@ export class GoogleSheetsService {
 // Factory function for creating Google Sheets service
 export async function createGoogleSheetsService(
   tokens: any,
-  onTokenRefresh?: (tokens: any) => void
+  onTokenRefresh?: (tokens: any) => Promise<void>
 ): Promise<GoogleSheetsService> {
   const { createAuthenticatedClient } = await import('./auth');
   const oauth2Client = await createAuthenticatedClient(tokens, onTokenRefresh);

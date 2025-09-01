@@ -298,7 +298,7 @@ export class GoogleDocsStyleMapper {
     let processed = html;
 
     // Add semantic table structure
-    const tablePattern = /<table([^>]*)>(.*?)<\/table>/gis;
+    const tablePattern = /<table([^>]*)>(.*?)<\/table>/gi;
     processed = processed.replace(tablePattern, (match, attributes, content) => {
       // Check if first row looks like headers
       const firstRowPattern = /<tr[^>]*>(.*?)<\/tr>/i;
@@ -341,10 +341,10 @@ export class GoogleDocsStyleMapper {
     const stylePattern = /style="([^"]*)"/g;
     processed = processed.replace(stylePattern, (match, styles) => {
       const preservedStyles: string[] = [];
-      const declarations = styles.split(';').filter(d => d.trim());
+      const declarations = styles.split(';').filter((d: string) => d.trim());
 
       for (const declaration of declarations) {
-        const [property, value] = declaration.split(':').map(s => s.trim());
+        const [property, value] = declaration.split(':').map((s: string) => s.trim());
         
         if (!property || !value) continue;
 

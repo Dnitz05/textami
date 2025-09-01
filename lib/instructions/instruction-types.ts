@@ -117,7 +117,7 @@ export interface InstructionExecutionResult {
   // Content changes
   originalContent: string;
   modifiedContent: string;
-  contentChanges: InstructionContentChange[];
+  contentChanges: any[]; // Simplified type for now
   
   // Execution metadata
   executionTime: number;

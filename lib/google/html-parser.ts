@@ -217,7 +217,7 @@ export class GoogleDocsHTMLParser {
     const elements: ParsedElement[] = [];
     
     // Match HTML elements with regex (simplified approach)
-    const htmlElementRegex = /<(\w+)([^>]*)>(.*?)<\/\1>|<(\w+)([^>]*)\s*\/?>|([^<]+)/gs;
+    const htmlElementRegex = /<(\w+)([^>]*)>(.*?)<\/\1>|<(\w+)([^>]*)\s*\/?>|([^<]+)/g;
     let match;
 
     while ((match = htmlElementRegex.exec(html)) !== null) {

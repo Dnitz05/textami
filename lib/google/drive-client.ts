@@ -44,11 +44,11 @@ export class GoogleDriveClient {
         id: file.id!,
         name: file.name!,
         mimeType: file.mimeType!,
-        size: file.size,
+        size: file.size || undefined,
         createdTime: file.createdTime!,
         modifiedTime: file.modifiedTime!,
-        parents: file.parents,
-        thumbnailLink: file.thumbnailLink,
+        parents: file.parents || undefined,
+        thumbnailLink: file.thumbnailLink || undefined,
         webViewLink: file.webViewLink!,
       }));
     } catch (error) {
@@ -73,7 +73,7 @@ export class GoogleDriveClient {
         mimeType: file.mimeType!,
         createdTime: file.createdTime!,
         modifiedTime: file.modifiedTime!,
-        size: file.size,
+        size: file.size || undefined,
         owners: file.owners?.map(owner => ({
           displayName: owner.displayName || '',
           emailAddress: owner.emailAddress || '',

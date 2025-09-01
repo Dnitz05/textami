@@ -76,14 +76,16 @@ export async function GET(request: NextRequest) {
     } catch (sheetsError) {
       console.error('Google Sheets API error:', sheetsError);
       
-      if (sheetsError.message?.includes('404')) {
+      const errorMessage = sheetsError instanceof Error ? sheetsError.message : String(sheetsError);
+      
+      if (errorMessage?.includes('404')) {
         return NextResponse.json(
           { error: 'Spreadsheet not found or access denied' },
           { status: 404 }
         );
       }
       
-      if (sheetsError.message?.includes('403')) {
+      if (errorMessage?.includes('403')) {
         return NextResponse.json(
           { error: 'Insufficient permissions to access this spreadsheet' },
           { status: 403 }
@@ -91,7 +93,7 @@ export async function GET(request: NextRequest) {
       }
       
       return NextResponse.json(
-        { error: `Failed to access Google Sheets: ${sheetsError.message}` },
+        { error: `Failed to access Google Sheets: ${errorMessage}` },
         { status: 500 }
       );
     }
@@ -120,14 +122,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Check rate limiting
-    const clientIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
-    const rateLimitResult = checkRateLimit(clientIp, 'google-sheets');
-    if (!rateLimitResult.allowed) {
-      return rateLimitResult.response || NextResponse.json(
-        { error: 'Rate limit exceeded' },
-        { status: 429 }
-      );
+    const { allowed, response: rateLimitResponse } = checkRateLimit(
+      authResult.user.id,
+      5, // 5 requests per minute
+      60000
+    );
+    if (!allowed) {
+      return rateLimitResponse!;
     }
+
+    const user = authResult.user;
 
     const body = await request.json();
     const { 
@@ -181,59 +185,30 @@ export async function POST(request: NextRequest) {
     try {
       let responseData: any = {};
 
-      switch (action) {
-        case 'search':
-          if (!searchTerm) {
-            return NextResponse.json(
-              { error: 'searchTerm is required for search action' },
-              { status: 400 }
-            );
-          }
-          
-          const searchResults = await sheetsService.searchValues(
-            spreadsheetId, 
-            searchTerm, 
-            sheetName
-          );
-          responseData.searchResults = searchResults;
-          break;
-
-        case 'analyze':
-          // Get full data for analysis
-          const sheetData = await sheetsService.getSheetData(spreadsheetId, range, sheetName);
-          const validation = await sheetsService.validateSheetData(spreadsheetId, range);
-          
-          // Basic analysis
-          const analysis = {
-            totalRows: sheetData.data.length,
-            totalColumns: sheetData.headers.length,
-            headers: sheetData.headers,
-            dataTypes: analyzeDataTypes(sheetData.data, sheetData.headers),
-            sampleData: sheetData.data.slice(0, 3), // First 3 rows as sample
-            validation,
-          };
-          
-          responseData.analysis = analysis;
-          responseData.sheetData = sheetData;
-          break;
-
-        case 'preview':
-          const previewData = await sheetsService.getDataPreview(spreadsheetId, sheetName, 5);
-          responseData.preview = previewData;
-          break;
-
-        default:
-          return NextResponse.json(
-            { error: `Unknown action: ${action}` },
-            { status: 400 }
-          );
-      }
+      // Default to analyze action
+      // Get full data for analysis
+      const sheetData = await sheetsService.getSheetData(spreadsheetId, range, sheetName);
+      const validation = await sheetsService.validateSheetData(spreadsheetId, range);
+      
+      // Basic analysis
+      const analysis = {
+        totalRows: sheetData.data.length,
+        totalColumns: sheetData.headers.length,
+        headers: sheetData.headers,
+        dataTypes: analyzeDataTypes(sheetData.data, sheetData.headers),
+        sampleData: sheetData.data.slice(0, 3), // First 3 rows as sample
+        validation,
+      };
+      
+      responseData.analysis = analysis;
+      responseData.sheetData = sheetData;
 
       return NextResponse.json(responseData);
     } catch (sheetsError) {
       console.error('Google Sheets operation error:', sheetsError);
+      const errorMessage = sheetsError instanceof Error ? sheetsError.message : String(sheetsError);
       return NextResponse.json(
-        { error: `Operation failed: ${sheetsError.message}` },
+        { error: `Operation failed: ${errorMessage}` },
         { status: 500 }
       );
     }

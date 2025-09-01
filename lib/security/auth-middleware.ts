@@ -299,7 +299,7 @@ export function checkRateLimit(
 
   // Add current request
   rateLimitData.requests.push(now);
-  global[key as keyof typeof global] = rateLimitData as any;
+  (global as any)[key] = rateLimitData;
   
   return { allowed: true };
 }

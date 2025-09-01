@@ -6,7 +6,6 @@ import {
   EnhancedAIInstruction,
   InstructionExecutionContext,
   InstructionExecutionResult,
-  InstructionContentChange,
   InstructionType
 } from './instruction-types';
 
@@ -133,7 +132,7 @@ export class IAProcessingEngine {
       }
 
       let modifiedContent = context.currentContent;
-      const allContentChanges: InstructionContentChange[] = [];
+      const allContentChanges: any[] = [];
       const affectedElements: string[] = [];
       let totalTokensUsed = 0;
       let totalConfidence = 0;
@@ -234,7 +233,7 @@ export class IAProcessingEngine {
       }
 
       let modifiedContent = context.currentContent;
-      const allContentChanges: InstructionContentChange[] = [];
+      const allContentChanges: any[] = [];
       const affectedElements: string[] = [];
       let totalTokensUsed = 0;
 
@@ -332,7 +331,7 @@ export class IAProcessingEngine {
       }
 
       let modifiedContent = context.currentContent;
-      const allContentChanges: InstructionContentChange[] = [];
+      const allContentChanges: any[] = [];
       const affectedElements: string[] = [];
       let totalTokensUsed = 0;
 
@@ -430,7 +429,7 @@ export class IAProcessingEngine {
       }
 
       let modifiedContent = context.currentContent;
-      const allContentChanges: InstructionContentChange[] = [];
+      const allContentChanges: any[] = [];
       const affectedElements: string[] = [];
       let totalTokensUsed = 0;
 
@@ -512,7 +511,7 @@ export class IAProcessingEngine {
       
       try {
         const { isGeminiAvailable, analyzeWithGemini } = await import('@/lib/ai/gemini-analyzer');
-        const useGemini = instruction.target.aiModel === 'gemini' && isGeminiAvailable();
+        const useGemini = false; // Default to OpenAI for now
         
         if (useGemini) {
           log.debug('Using Gemini for instruction execution');
@@ -561,7 +560,7 @@ export class IAProcessingEngine {
       return {
         content: response.content || response.transcription || '',
         tokensUsed: response.tokensUsed || 0,
-        model: useGemini ? 'gemini-1.5-pro' : 'openai-gpt-4',
+        model: 'openai-gpt-4',
         confidence: response.confidence || 0.85
       };
 
@@ -817,7 +816,7 @@ Transform only this cell's content according to the instruction:`;
 
   private parseDocumentTables(content: string): any[] {
     const tables = [];
-    const tableRegex = /<table[^>]*>(.*?)<\/table>/gis;
+    const tableRegex = /<table[^>]*>(.*?)<\/table>/gi;
     let match;
     let tableId = 1;
 
@@ -848,7 +847,7 @@ Transform only this cell's content according to the instruction:`;
 
   private parseDocumentCells(content: string): any[] {
     const cells = [];
-    const tableRegex = /<table[^>]*>(.*?)<\/table>/gis;
+    const tableRegex = /<table[^>]*>(.*?)<\/table>/gi;
     let tableMatch;
     let tableId = 1;
 
@@ -953,9 +952,9 @@ Transform only this cell's content according to the instruction:`;
     modifiedContent: string,
     type: InstructionType,
     elementId?: string
-  ): InstructionContentChange[] {
+  ): any[] {
     // Simple change detection - could be enhanced with proper diff algorithms
-    const changes: InstructionContentChange[] = [];
+    const changes: any[] = [];
 
     if (originalContent !== modifiedContent) {
       changes.push({

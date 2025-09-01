@@ -75,6 +75,14 @@ export async function POST(request: NextRequest) {
 
     const { placeholders, columns } = sanitizedData!;
 
+    // Ensure types are correct (should be guaranteed by validation)
+    if (!Array.isArray(placeholders) || !Array.isArray(columns)) {
+      return NextResponse.json(
+        { error: 'Invalid data types after validation' },
+        { status: 400 }
+      );
+    }
+
     log.debug('🤖 Google Docs AI mapping started:', {
       userId: user.id,
       placeholdersCount: placeholders.length,

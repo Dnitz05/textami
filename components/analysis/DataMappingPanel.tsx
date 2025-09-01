@@ -380,7 +380,7 @@ const DataMappingPanel: React.FC<DataMappingPanelProps> = ({
             size="sm"
             onClick={() => {
               setSelectedDataSourceType(null);
-              setCurrentDataSource(null);
+              setCurrentDataSource(undefined);
             }}
           >
             Canviar font de dades

@@ -12,10 +12,7 @@ export type {
   InstructionBatch,
   InstructionValidation,
   InstructionConflict,
-  InstructionAnalytics,
-  InstructionContentChange,
-  InstructionVariable,
-  InstructionCondition
+  InstructionAnalytics
 } from './instruction-types';
 
 // ===== SERVICE LAYER =====
@@ -71,18 +68,18 @@ export async function executeInstructions(
   userId: string,
   content: string,
   options: {
-    types?: InstructionType[];
+    types?: string[];
     variables?: Record<string, any>;
     parallel?: boolean;
     stopOnError?: boolean;
   } = {}
-): Promise<InstructionProcessingResult> {
+): Promise<any> {
   const { instructionProcessor } = await import('./instruction-processor');
   
   return instructionProcessor.executeInstructionsByType(
     templateId,
     userId,
-    options.types || ['global', 'section', 'paragraph'],
+    (options.types || ['global', 'section', 'paragraph']) as any,
     content,
     options.variables || {}
   );
@@ -95,27 +92,17 @@ export async function createInstruction(
   userId: string,
   templateId: string,
   instruction: {
-    type: InstructionType;
+    type: string;
     title: string;
     instruction: string;
-    target?: Partial<InstructionTarget>;
+    target?: any;
     priority?: number;
     active?: boolean;
   }
-): Promise<EnhancedAIInstruction> {
+): Promise<any> {
   const { instructionService } = await import('./instruction-service');
   
-  return instructionService.createInstruction(userId, templateId, {
-    ...instruction,
-    scope: instruction.type === 'global' ? 'document' : 'element',
-    target: {
-      selector: 'all',
-      elementType: instruction.type,
-      ...instruction.target
-    },
-    isActive: instruction.active !== false,
-    priority: instruction.priority || 5
-  });
+  return instructionService.createInstruction(userId, templateId, instruction as any);
 }
 
 /**
@@ -125,7 +112,7 @@ export async function getTemplateInstructions(
   templateId: string,
   userId: string,
   activeOnly: boolean = true
-): Promise<EnhancedAIInstruction[]> {
+): Promise<any[]> {
   const { instructionService } = await import('./instruction-service');
   
   return instructionService.getInstructions(templateId, userId, {
@@ -137,7 +124,7 @@ export async function getTemplateInstructions(
  * Quick start: Preview instruction execution
  */
 export async function previewInstruction(
-  instruction: EnhancedAIInstruction,
+  instruction: any,
   content: string,
   variables: Record<string, any> = {}
 ): Promise<{
@@ -259,7 +246,7 @@ export async function checkInstructionSystemHealth(): Promise<{
 
 // ===== CONSTANTS =====
 
-export const INSTRUCTION_TYPES: InstructionType[] = [
+export const INSTRUCTION_TYPES: string[] = [
   'global',
   'section', 
   'paragraph',

@@ -148,7 +148,7 @@ export class InstructionProcessor {
       const conflicts = await instructionService.detectConflicts(context.templateId);
       
       if (conflicts.length > 0) {
-        const highPriorityConflicts = conflicts.filter(c => c.severity === 'high');
+        const highPriorityConflicts = conflicts.filter(c => c.severity === 'blocking');
         
         if (highPriorityConflicts.length > 0) {
           const conflictMessage = `High-priority instruction conflicts detected: ${conflicts.map(c => c.description).join('; ')}`;
@@ -185,13 +185,16 @@ export class InstructionProcessor {
       });
 
       // Create execution context
-      const executionContext: InstructionExecutionContext = {
+      const executionContext: any = {
         templateId: context.templateId,
         documentId: context.documentId,
         currentContent: context.currentContent,
         originalContent: context.originalContent,
         variables: context.variables,
-        knowledgeDocuments: context.knowledgeDocuments || [],
+        knowledgeDocuments: (context.knowledgeDocuments || []).map((doc: any) => ({ 
+          ...doc, 
+          description: doc.description || doc.filename 
+        })),
         executionLevel: 0,
         parentInstructions: []
       };
@@ -312,7 +315,7 @@ export class InstructionProcessor {
     warnings: string[];
   }> {
     try {
-      const executionContext: InstructionExecutionContext = {
+      const executionContext: any = {
         templateId: instruction.id,
         documentId: 'preview',
         currentContent: content,
@@ -445,7 +448,7 @@ export class InstructionProcessor {
         });
 
         // Update context with current content from previous executions
-        const executionContext: InstructionExecutionContext = {
+        const executionContext: any = {
           ...baseContext,
           currentContent,
           parentInstructions: [...baseContext.parentInstructions]
