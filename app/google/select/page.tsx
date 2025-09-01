@@ -1,17 +1,42 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import TopNavBar from '@/components/TopNavBar';
 import GoogleAuthButton from '@/components/google/GoogleAuthButton';
 import GoogleDriveFilePicker from '@/components/google/GoogleDriveFilePicker';
 import { useUser } from '@/hooks/useUser';
+import { GoogleDriveFile } from '@/lib/google/types';
 
 export default function GoogleSelectPage() {
   const { user, isAuthenticated } = useUser();
+  const router = useRouter();
   const [isGoogleConnected, setIsGoogleConnected] = useState(false);
+  const [fileType, setFileType] = useState<'documents' | 'spreadsheets'>('documents');
 
   const handleGoogleConnection = (connected: boolean) => {
     setIsGoogleConnected(connected);
+  };
+
+  const handleFileSelected = async (file: GoogleDriveFile) => {
+    try {
+      // Store selected Google Drive file info
+      sessionStorage.setItem('selectedGoogleFile', JSON.stringify({
+        id: file.id,
+        name: file.name,
+        mimeType: file.mimeType,
+        type: 'google-drive'
+      }));
+
+      // Redirect to analysis page
+      router.push('/analyze');
+    } catch (error) {
+      console.error('Error processing selected file:', error);
+    }
+  };
+
+  const handleCancel = () => {
+    router.back();
   };
 
   return (
@@ -86,7 +111,47 @@ export default function GoogleSelectPage() {
                   </div>
                 </div>
               </div>
-              <GoogleDriveFilePicker />
+
+              {/* File Type Selector */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Tipus de document:
+                </label>
+                <div className="flex space-x-4">
+                  <button
+                    onClick={() => setFileType('documents')}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
+                      fileType === 'documents' 
+                        ? 'bg-blue-50 border-blue-300 text-blue-700' 
+                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" />
+                    </svg>
+                    <span>Google Docs</span>
+                  </button>
+                  <button
+                    onClick={() => setFileType('spreadsheets')}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
+                      fileType === 'spreadsheets' 
+                        ? 'bg-green-50 border-green-300 text-green-700' 
+                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" />
+                    </svg>
+                    <span>Google Sheets</span>
+                  </button>
+                </div>
+              </div>
+
+              <GoogleDriveFilePicker 
+                fileType={fileType}
+                onFileSelected={handleFileSelected}
+                onCancel={handleCancel}
+              />
             </div>
           )}
         </div>
