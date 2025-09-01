@@ -11,7 +11,11 @@ interface GoogleConnectionStatus {
   needsReauth?: boolean;
 }
 
-export default function GoogleAuthButton() {
+interface GoogleAuthButtonProps {
+  onConnectionChange?: (connected: boolean) => void;
+}
+
+export default function GoogleAuthButton({ onConnectionChange }: GoogleAuthButtonProps = {}) {
   const [status, setStatus] = useState<GoogleConnectionStatus>({ connected: false });
   const [loading, setLoading] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(true);
@@ -47,6 +51,7 @@ export default function GoogleAuthButton() {
       if (response.ok) {
         const data = await response.json();
         setStatus(data.status);
+        onConnectionChange?.(data.status.connected);
       }
     } catch (error) {
       console.error('Error checking Google connection status:', error);
