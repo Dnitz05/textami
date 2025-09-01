@@ -156,6 +156,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 9. Save template to database
+    const supabase = getSupabase();
     const { data: template, error: templateError } = await supabase
       .from('templates')
       .insert({
