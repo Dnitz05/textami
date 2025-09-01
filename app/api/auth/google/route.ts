@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     
     log.info('Google OAuth initiated:', {
       userId: user.id.substring(0, 8) + '...',
-      ip: request.ip || 'unknown'
+      ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
     });
 
     // 5. Store secure session data for callback
@@ -146,7 +146,7 @@ export async function DELETE(request: NextRequest) {
 
     log.info('Google account disconnected:', {
       userId: user.id.substring(0, 8) + '...',
-      ip: request.ip || 'unknown'
+      ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
     });
 
     return NextResponse.json({ 

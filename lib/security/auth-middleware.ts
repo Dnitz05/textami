@@ -50,7 +50,7 @@ export async function validateUserSession(
       log.security('Missing authentication credentials - unauthorized access attempt:', {
         path: request.nextUrl.pathname,
         method: request.method,
-        ip: request.ip || 'unknown',
+        ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
         userAgent: request.headers.get('user-agent')?.substring(0, 100)
       });
       
@@ -97,7 +97,7 @@ export async function validateUserSession(
         error: authError?.message,
         tokenHash: token ? hashForLogging(token) : undefined,
         path: request.nextUrl.pathname,
-        ip: request.ip || 'unknown'
+        ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
       });
 
       return {
@@ -131,7 +131,7 @@ export async function validateUserSession(
         userRole: authenticatedUser.role,
         requiredRole: options.requiredRole,
         path: request.nextUrl.pathname,
-        ip: request.ip || 'unknown'
+        ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
       });
 
       return {
@@ -150,7 +150,7 @@ export async function validateUserSession(
         email: user.email,
         path: request.nextUrl.pathname,
         method: request.method,
-        ip: request.ip || 'unknown',
+        ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
         sessionId: authenticatedUser.sessionId
       });
     }

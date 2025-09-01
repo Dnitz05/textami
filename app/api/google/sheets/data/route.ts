@@ -121,7 +121,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check rate limiting
-    const rateLimitResult = checkRateLimit(request.ip || 'unknown', 'google-sheets');
+    const clientIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const rateLimitResult = checkRateLimit(clientIp, 'google-sheets');
     if (!rateLimitResult.allowed) {
       return rateLimitResult.response || NextResponse.json(
         { error: 'Rate limit exceeded' },

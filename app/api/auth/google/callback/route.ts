@@ -7,7 +7,9 @@ import { log } from '@/lib/logger';
 
 // GET /api/auth/google/callback - Secure Google OAuth callback handler
 export async function GET(request: NextRequest) {
-  const clientIp = request.ip || 'unknown';
+  const clientIp = request.headers.get('x-forwarded-for') || 
+                   request.headers.get('x-real-ip') || 
+                   'unknown';
   
   try {
     // 1. Rate limiting - prevent callback abuse
