@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       templateId,
       mappingsCount: mappings.length,
-      rowsToProcess: excelData.columns?.[0]?.sampleData?.length || 0
+      rowsToProcess: (excelData as any).columns?.[0]?.sampleData?.length || 0
     });
 
     // 4. Get valid Google tokens
