@@ -75,6 +75,9 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
   const isContentModified = markdown !== originalMarkdown;
   const hasSectionModifications = Object.keys(modifiedSections).length > 0;
   
+  // State for highlighted HTML to avoid hydration mismatch
+  const [highlightedHtml, setHighlightedHtml] = useState(markdown);
+  
   // Template name state for inline editing in header
   const [templateName, setTemplateName] = useState('');
   const [isEditingName, setIsEditingName] = useState(false);
@@ -84,6 +87,11 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
     const storedName = sessionStorage.getItem('templateName') || '';
     setTemplateName(storedName);
   }, []);
+  
+  // Update highlighted HTML on client side only to prevent hydration mismatch
+  useEffect(() => {
+    setHighlightedHtml(highlightTags(markdown));
+  }, [markdown, highlightTags, mappedTags, manualTextMappings]);
 
   // Save template name to sessionStorage when changed
   const handleNameChange = (newName: string) => {
@@ -697,7 +705,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
               {/* Always show the structured HTML content from markdown field */}
               <div 
                 className="document-content"
-                dangerouslySetInnerHTML={{ __html: highlightTags(markdown) }}
+                dangerouslySetInnerHTML={{ __html: highlightedHtml }}
               />
             </div>
 

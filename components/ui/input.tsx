@@ -3,7 +3,7 @@
 
 "use client"
 
-import React from 'react'
+import React, { useId } from 'react'
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string
@@ -19,7 +19,8 @@ export function Input({
   id,
   ...props 
 }: InputProps) {
-  const inputId = id || `input-${Math.random().toString(36).substring(7)}`
+  const generatedId = useId()
+  const inputId = id || generatedId
   
   const baseStyles = 'block w-full rounded-md border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
   const errorStyles = error ? 'border-red-300 focus:ring-red-500' : ''
