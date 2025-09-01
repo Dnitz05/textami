@@ -35,9 +35,8 @@ export default function Dashboard() {
       // Traditional DOCX upload
       fileInputRef.current?.click();
     } else if (sourceType === 'google-docs') {
-      // TODO: Implement Google Docs picker
-      // For now, show coming soon message
-      alert('Google Docs integration coming soon!');
+      // Redirect to Google Docs selection flow
+      router.push('/google/select');
     }
   };
 
