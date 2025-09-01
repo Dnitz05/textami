@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 5. Validate session cookies and CSRF state
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const userId = cookieStore.get('google_auth_user_id')?.value;
     const storedState = cookieStore.get('google_auth_state')?.value;
 
