@@ -72,6 +72,14 @@ export async function POST(request: NextRequest) {
 
     const { templateId, mappings, excelData } = sanitizedData!;
 
+    // Ensure types are correct (should be guaranteed by validation)
+    if (typeof templateId !== 'string' || !Array.isArray(mappings) || !excelData || typeof excelData !== 'object') {
+      return NextResponse.json(
+        { error: 'Invalid data types after validation' },
+        { status: 400 }
+      );
+    }
+
     log.debug('🚀 Google Docs generation started:', {
       userId: user.id,
       templateId,
