@@ -82,6 +82,9 @@ export async function POST(request: NextRequest) {
       );
     }
     
+    // Ensure fileName is string or undefined
+    const safeFileName = (typeof fileName === 'string' && fileName.trim()) ? fileName : undefined;
+    
     log.debug('📋 Request parameters:', { documentId, userId: user.id, fileName, useGemini });
 
     // 4. Get valid Google tokens (with automatic refresh)
@@ -136,7 +139,7 @@ export async function POST(request: NextRequest) {
       log.debug('🤖 Using Gemini analyzer...');
       analysisResult = await analyzeWithGemini(docResult.cleanedHtml, {
         templateId,
-        fileName: fileName || docResult.metadata.name,
+        fileName: safeFileName || docResult.metadata.name,
         performAIAnalysis: true,
         cleanHtml: false, // Already cleaned
         mapStyles: false, // Already mapped
@@ -145,7 +148,7 @@ export async function POST(request: NextRequest) {
       log.debug('🤖 Using OpenAI analyzer...');
       analysisResult = await analyzeGoogleDocsHTML(docResult.cleanedHtml, {
         templateId,
-        fileName: fileName || docResult.metadata.name,
+        fileName: safeFileName || docResult.metadata.name,
         performAIAnalysis: true,
         cleanHtml: false, // Already cleaned
         mapStyles: false, // Already mapped
@@ -158,7 +161,7 @@ export async function POST(request: NextRequest) {
       .insert({
         id: templateId,
         user_id: user.id,
-        name: fileName || docResult.metadata.name,
+        name: safeFileName || docResult.metadata.name,
         source_type: 'google-docs',
         source_id: documentId,
         source_metadata: {
@@ -224,7 +227,7 @@ export async function POST(request: NextRequest) {
       if (!validatedResult) {
         log.error('❌ Failed to create valid unified template for Google Docs');
         const { createFallbackTemplate } = await import('@/lib/compatibility/unified-system');
-        const fallbackResult = createFallbackTemplate('google-docs', fileName || docResult.metadata.name);
+        const fallbackResult = createFallbackTemplate('google-docs', safeFileName || docResult.metadata.name);
         
         return NextResponse.json({
           success: true,
