@@ -83,7 +83,9 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
 
   // Load instructions from storage when component mounts or document changes
   React.useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (!currentDocumentId) return;
+    
+    try {
       const storageKey = `instructions_${currentDocumentId}`;
       const savedInstructions = sessionStorage.getItem(storageKey);
       log.debug('🔄 Loading instructions for document:', { currentDocumentId, storageKey });
@@ -100,15 +102,22 @@ const AIPromptsPanel: React.FC<AIPromptsPanelProps> = ({
         setInstructions([]); // Start fresh for new documents
         log.debug('📋 No saved instructions found - starting fresh:', currentDocumentId);
       }
+    } catch (error) {
+      log.error('❌ Error accessing sessionStorage:', error);
+      setInstructions([]);
     }
   }, [currentDocumentId]);
 
   // Save instructions to storage whenever they change
   React.useEffect(() => {
-    if (typeof window !== 'undefined' && currentDocumentId && instructions.length >= 0) {
+    if (!currentDocumentId) return;
+    
+    try {
       const storageKey = `instructions_${currentDocumentId}`;
       sessionStorage.setItem(storageKey, JSON.stringify(instructions));
       log.debug('💾 Saved instructions for document:', { count: instructions.length, currentDocumentId, storageKey });
+    } catch (error) {
+      log.error('❌ Error saving instructions:', error);
     }
   }, [instructions, currentDocumentId]);
 

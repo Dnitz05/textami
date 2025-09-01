@@ -87,7 +87,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
 
   // Save template name to sessionStorage when changed
   const handleNameChange = (newName: string) => {
-    if (typeof window !== 'undefined') {
+    try {
       const existingTemplates = Object.keys(sessionStorage)
         .filter(key => key.startsWith('instructions_'))
         .map(key => key.replace('instructions_', ''));
@@ -118,6 +118,10 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
     sessionStorage.setItem('templateName', newName);
     log.debug('✅ Template name saved:', newName);
     return true;
+    } catch (error) {
+      log.error('Failed to save template name:', error);
+      return false;
+    }
   };
 
   // Handle text selection for manual mapping

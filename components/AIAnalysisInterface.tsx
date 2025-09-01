@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AnalysisData, ParsedTag, PipelineStatus } from '../lib/types';
 import DocumentPreviewPanel from './analysis/DocumentPreviewPanel';
 import DataMappingPanel from './analysis/DataMappingPanel';
@@ -43,6 +43,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
   const [mappings, setMappings] = useState<Record<string, string>>({});
   const [showLeftSidebar, setShowLeftSidebar] = useState(true);
   const [showRightSidebar, setShowRightSidebar] = useState(true);
+  const [documentId, setDocumentId] = useState<string>('');
   
   // State for AI instruction execution
   const [currentMarkdown, setCurrentMarkdown] = useState(analysisData?.markdown || '');
@@ -54,6 +55,17 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
   // State for custom instruction input
   const [customInstruction, setCustomInstruction] = useState('');
   const [isExecutingCustom, setIsExecutingCustom] = useState(false);
+
+  // Set document ID on client side only to avoid hydration mismatch
+  useEffect(() => {
+    const templateName = sessionStorage.getItem('templateName');
+    if (templateName) {
+      setDocumentId(templateName);
+    } else {
+      // Fallback to a stable identifier based on analysis data
+      setDocumentId(`doc_${analysisData?.title || fileName || 'untitled'}`.replace(/[^a-zA-Z0-9_]/g, '_'));
+    }
+  }, [analysisData?.title, fileName]);
   
   // Removed: section-specific instructions state (no longer needed)
   
@@ -215,7 +227,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
 
       // Create a custom instruction object
       const instruction = {
-        id: `custom_${Date.now()}`,
+        id: 'custom_instruction',
         type: 'global' as const,
         title: 'Instrucció personalitzada',
         instruction: customInstruction.trim()
@@ -372,17 +384,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                       executingInstructionId={executingInstructionId}
                       documentSections={analysisData?.sections?.map(s => ({id: s.id || s.title, title: s.title})) || []}
                       openFormWithSection={selectedSectionForInstruction}
-                      documentId={(() => {
-                        // Always use a consistent identifier - prefer templateName but fallback to a stable ID
-                        if (typeof window !== 'undefined') {
-                          const templateName = sessionStorage.getItem('templateName');
-                          if (templateName) {
-                            return templateName;
-                          }
-                        }
-                        // Fallback to a stable identifier based on analysis data
-                        return `doc_${analysisData?.title || fileName || 'untitled'}`.replace(/[^a-zA-Z0-9_]/g, '_');
-                      })()}
+                      documentId={documentId}
                     />
                   </div>
                 </div>

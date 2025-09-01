@@ -22,7 +22,7 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
   
   // Clean up duplicate templates on component mount
   React.useEffect(() => {
-    if (typeof window !== 'undefined') {
+    try {
       const existingTemplates = Object.keys(sessionStorage)
         .filter(key => key.startsWith('instructions_'))
         .map(key => key.replace('instructions_', ''));
@@ -34,6 +34,8 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
       if (duplicates.length > 0) {
         log.warn('⚠️ Duplicate template names detected:', duplicates);
       }
+    } catch (error) {
+      log.error('Failed to clean up templates:', error);
     }
   }, []);
 
