@@ -27,13 +27,15 @@ export async function GET(request: NextRequest) {
     // Create response with redirect
     const response = NextResponse.redirect(googleAuthUrl);
     
-    // Set secure state cookie with enhanced security
+    // Cross-domain compatible cookie settings for Vercel
+    const isProduction = process.env.NODE_ENV === 'production';
     response.cookies.set('google_signin_state', stateToken, {
       httpOnly: true,
-      secure: true, // Always secure for OAuth
+      secure: isProduction,
       maxAge: 60 * 10, // 10 minutes
-      sameSite: 'strict', // Strict for better security
-      path: '/api/auth/google'
+      sameSite: 'lax' as const, // Lax for Vercel cross-domain compatibility  
+      path: '/',
+      ...(isProduction && { domain: '.vercel.app' }) // Share across Vercel subdomains
     });
 
     return response;

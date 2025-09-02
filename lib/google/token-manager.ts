@@ -36,10 +36,58 @@ export async function saveGoogleTokens(
   tokens: GoogleAuthTokens
 ): Promise<void> {
   try {
+    // 🚨 CRITICAL VALIDATION
+    if (!userId || userId.trim() === '') {
+      throw new Error('Invalid userId provided to saveGoogleTokens');
+    }
+
+    if (!tokens.access_token) {
+      throw new Error('Invalid tokens provided - missing access_token');
+    }
+
+    log.info('🔐 Attempting to save Google tokens:', {
+      userId: userId.substring(0, 8) + '...',
+      hasAccessToken: !!tokens.access_token,
+      hasRefreshToken: !!tokens.refresh_token,
+      tokenExpiresIn: tokens.expires_in
+    });
+
+    // 🚨 ENSURE USER PROFILE EXISTS FIRST
+    const { data: existingProfile, error: profileError } = await getSupabaseClient()
+      .from('profiles')
+      .select('id')
+      .eq('id', userId)
+      .single();
+
+    if (profileError || !existingProfile) {
+      log.warn('🔥 Profile not found, creating one:', {
+        userId: userId.substring(0, 8) + '...',
+        profileError: profileError?.message
+      });
+
+      // Create profile if it doesn't exist
+      const { error: insertError } = await getSupabaseClient()
+        .from('profiles')
+        .insert({
+          id: userId,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+
+      if (insertError) {
+        log.error('❌ Failed to create user profile:', {
+          userId: userId.substring(0, 8) + '...',
+          error: insertError.message,
+          code: insertError.code
+        });
+        throw new Error(`Failed to create user profile: ${insertError.message}`);
+      }
+    }
+
     // Encrypt tokens before storing
     const encryptedTokens = encryptGoogleTokens(tokens);
     
-    const { error } = await getSupabaseClient()
+    const { error, data } = await getSupabaseClient()
       .from('profiles')
       .update({
         google_tokens: encryptedTokens,
@@ -48,25 +96,33 @@ export async function saveGoogleTokens(
         google_connected_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
-      .eq('id', userId);
+      .eq('id', userId)
+      .select();
 
     if (error) {
-      log.error('Failed to save encrypted Google tokens:', {
+      log.error('❌ Failed to save encrypted Google tokens:', {
         userId: userId.substring(0, 8) + '...',
-        error: error.message
+        error: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
       });
-      throw new Error('Failed to save Google tokens');
+      throw new Error(`Failed to save Google tokens: ${error.message}`);
     }
 
-    log.debug('Google tokens saved securely:', {
+    log.info('✅ Google tokens saved securely:', {
       userId: userId.substring(0, 8) + '...',
       hasAccessToken: !!tokens.access_token,
-      hasRefreshToken: !!tokens.refresh_token
+      hasRefreshToken: !!tokens.refresh_token,
+      rowsUpdated: data?.length || 0
     });
 
-    console.log('Google tokens saved successfully for user:', userId);
   } catch (error) {
-    console.error('Error in saveGoogleTokens:', error);
+    log.error('💥 CRITICAL ERROR in saveGoogleTokens:', {
+      userId: userId?.substring(0, 8) + '...' || 'NULL',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
     throw error;
   }
 }
@@ -243,22 +299,37 @@ export async function initializeGoogleConnection(
   tokens: GoogleAuthTokens
 ): Promise<void> {
   try {
-    // Save initial tokens
+    // 🚨 CRITICAL VALIDATION
+    if (!userId || userId.trim() === '') {
+      throw new Error('Invalid userId provided to initializeGoogleConnection');
+    }
+
+    if (!tokens || !tokens.access_token) {
+      throw new Error('Invalid tokens provided to initializeGoogleConnection');
+    }
+
+    log.info('🚀 Initializing Google connection:', {
+      userId: userId.substring(0, 8) + '...',
+      hasTokens: !!tokens,
+      hasAccessToken: !!tokens.access_token,
+      hasRefreshToken: !!tokens.refresh_token
+    });
+
+    // Save initial tokens (this handles profile creation if needed)
     await saveGoogleTokens(userId, tokens);
     
-    // Update user profile to mark Google as connected
-    await getSupabaseClient()
-      .from('profiles')
-      .update({
-        google_connected: true,
-        google_connected_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', userId);
+    log.info('✅ Google connection initialized successfully:', {
+      userId: userId.substring(0, 8) + '...'
+    });
 
-    console.log('Google connection initialized for user:', userId);
   } catch (error) {
-    console.error('Error initializing Google connection:', error);
+    log.error('💥 CRITICAL ERROR initializing Google connection:', {
+      userId: userId?.substring(0, 8) + '...' || 'NULL',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      hasTokens: !!tokens,
+      hasAccessToken: !!tokens?.access_token
+    });
     throw error;
   }
 }

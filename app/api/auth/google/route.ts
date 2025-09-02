@@ -41,13 +41,15 @@ export async function GET(request: NextRequest) {
     // 5. Store secure session data for callback with improved security
     const response = NextResponse.redirect(authUrl);
     
-    // Enhanced cookie security settings
+    // Cross-domain compatible cookie settings for Vercel
+    const isProduction = process.env.NODE_ENV === 'production';
     const cookieConfig = {
       httpOnly: true,
-      secure: true, // Always secure for OAuth
+      secure: isProduction,
       maxAge: 60 * 10, // 10 minutes
-      sameSite: 'strict' as const, // Strict for better security
-      path: '/api/auth/google'
+      sameSite: 'lax' as const, // Lax for Vercel cross-domain compatibility
+      path: '/',
+      ...(isProduction && { domain: '.vercel.app' }) // Share across Vercel subdomains
     };
     
     if (user) {

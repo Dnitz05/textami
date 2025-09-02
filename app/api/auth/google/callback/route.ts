@@ -5,12 +5,16 @@ import { cookies } from 'next/headers';
 import { checkRateLimit } from '@/lib/security/auth-middleware';
 import { createServerClient } from '@supabase/ssr';
 import { log } from '@/lib/logger';
+import { createOAuthRedirectUrl, logDomainInfo, isVercelPreview } from '@/lib/vercel/domain-utils';
 
 // GET /api/auth/google/callback - Secure Google OAuth callback handler
 export async function GET(request: NextRequest) {
   const clientIp = request.headers.get('x-forwarded-for') || 
                    request.headers.get('x-real-ip') || 
                    'unknown';
+  
+  // 🚨 LOG DOMAIN INFORMATION FOR DEBUGGING
+  logDomainInfo(request, 'OAuth Callback');
   
   try {
     // 1. Rate limiting - prevent callback abuse
@@ -23,7 +27,10 @@ export async function GET(request: NextRequest) {
     if (!allowed) {
       log.warn('OAuth callback rate limit exceeded:', { ip: clientIp });
       return NextResponse.redirect(
-        new URL('/dashboard?google_auth=error&message=Too_many_attempts', request.url)
+        createOAuthRedirectUrl(request, '/dashboard', {
+          google_auth: 'error',
+          message: 'Too_many_attempts'
+        })
       );
     }
 
@@ -41,7 +48,10 @@ export async function GET(request: NextRequest) {
         userAgent: request.headers.get('user-agent')?.substring(0, 100)
       });
       return NextResponse.redirect(
-        new URL(`/dashboard?google_auth=error&message=${encodeURIComponent(error)}`, request.url)
+        createOAuthRedirectUrl(request, '/dashboard', {
+          google_auth: 'error',
+          message: error
+        })
       );
     }
 
@@ -49,7 +59,10 @@ export async function GET(request: NextRequest) {
     if (!code) {
       log.error('Missing authorization code in callback:', { ip: clientIp });
       return NextResponse.redirect(
-        new URL('/dashboard?google_auth=error&message=Invalid_callback_parameters', request.url)
+        createOAuthRedirectUrl(request, '/dashboard', {
+          google_auth: 'error',
+          message: 'Invalid_callback_parameters'
+        })
       );
     }
 
@@ -86,6 +99,38 @@ export async function GET(request: NextRequest) {
     const finalStoredState = storedState || localStorageState;
     const finalUserId = userId || localStorageUserId;
 
+    // 🚨 CRITICAL DEBUG LOGGING FOR STATE VALIDATION
+    log.info('🔍 OAUTH STATE VALIDATION DEBUG:', {
+      ip: clientIp,
+      callbackState: state,
+      storedState: storedState,
+      localStorageState: localStorageState,
+      finalStoredState: finalStoredState,
+      statesMatch: finalStoredState === state,
+      stateComparison: {
+        stored: finalStoredState ? finalStoredState.substring(0, 10) + '...' : 'NULL',
+        callback: state ? state.substring(0, 10) + '...' : 'NULL',
+        lengthMatch: finalStoredState?.length === state?.length,
+        exactMatch: finalStoredState === state
+      },
+      cookieData: {
+        hasUserId: !!userId,
+        hasSigninState: !!signinState,
+        hasAuthState: !!storedState,
+        allCookiesCount: cookieStore.getAll().length
+      },
+      localStorageData: {
+        hasLSState: !!localStorageState,
+        hasLSUserId: !!localStorageUserId,
+        lsFlow: localStorageFlow
+      },
+      domainInfo: {
+        host: request.headers.get('host'),
+        origin: request.headers.get('origin'),
+        referrer: request.headers.get('referer')
+      }
+    });
+
     // Check if this is a signin flow - prioritize signin state or no user ID as signin
     const isSigninFlow = !finalUserId || !!signinState || localStorageFlow === 'signin';
     let treatAsSigninFlow: boolean = isSigninFlow;
@@ -98,7 +143,10 @@ export async function GET(request: NextRequest) {
         hasLocalStorageFallback: !!localStorageState
       });
       return NextResponse.redirect(
-        new URL('/dashboard?google_auth=error&message=Session_expired', request.url)
+        createOAuthRedirectUrl(request, '/dashboard', {
+          google_auth: 'error',
+          message: 'Session_expired'
+        })
       );
     }
 
@@ -120,7 +168,10 @@ export async function GET(request: NextRequest) {
         isSigninFlow
       });
       return NextResponse.redirect(
-        new URL('/dashboard?google_auth=error&message=Security_validation_failed', request.url)
+        createOAuthRedirectUrl(request, '/dashboard', {
+          google_auth: 'error',
+          message: 'Security_validation_failed'
+        })
       );
     }
 
@@ -260,16 +311,52 @@ export async function GET(request: NextRequest) {
       }
 
       // 9. Initialize secure Google connection
-      log.debug('Initializing encrypted Google connection:', {
+      // 🚨 CRITICAL VALIDATION BEFORE TOKEN STORAGE
+      if (!actualFinalUserId || actualFinalUserId.trim() === '') {
+        log.error('❌ CRITICAL: No valid userId for token storage:', {
+          actualFinalUserId,
+          treatAsSigninFlow,
+          ip: clientIp,
+          googleEmail: profile.email
+        });
+        return NextResponse.redirect(
+          createOAuthRedirectUrl(request, '/dashboard', {
+            google_auth: 'error',
+            message: 'User_creation_failed'
+          })
+        );
+      }
+
+      if (!tokens || !tokens.access_token) {
+        log.error('❌ CRITICAL: No valid tokens received:', {
+          userId: actualFinalUserId.substring(0, 8) + '...',
+          hasTokens: !!tokens,
+          hasAccessToken: !!tokens?.access_token,
+          ip: clientIp
+        });
+        return NextResponse.redirect(
+          createOAuthRedirectUrl(request, '/dashboard', {
+            google_auth: 'error',
+            message: 'Invalid_tokens'
+          })
+        );
+      }
+
+      log.info('🚀 Initializing encrypted Google connection:', {
         userId: actualFinalUserId.substring(0, 8) + '...',
-        googleEmail: profile.email
+        googleEmail: profile.email,
+        hasValidTokens: !!tokens.access_token,
+        treatAsSigninFlow,
+        ip: clientIp
       });
       
       await initializeGoogleConnection(actualFinalUserId, tokens);
 
       // 10. Set up proper session and clean up temporary cookies
       const response = NextResponse.redirect(
-        new URL('/dashboard?google_auth=success', request.url)
+        createOAuthRedirectUrl(request, '/dashboard', {
+          google_auth: 'success'
+        })
       );
 
       // For signin flow, create proper Supabase session cookies
