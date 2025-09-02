@@ -73,19 +73,16 @@ export async function GET(request: NextRequest) {
 // POST /api/auth/google - Secure connection status check
 export async function POST(request: NextRequest) {
   try {
-    // 1. Validate user session
-    const { user, error: authError, response: authResponse } = await validateUserSession(
+    // 1. Allow anonymous access for status checks
+    const { user } = await validateUserSession(
       request,
-      { logAccess: false }
+      { allowAnonymous: true, logAccess: false }
     );
-    
-    if (authError || !user) {
-      return authResponse!;
-    }
 
-    // 2. Rate limiting
+    // 2. Use IP for rate limiting if no user
+    const rateLimitId = user?.id || request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'anonymous';
     const { allowed, response: rateLimitResponse } = checkRateLimit(
-      user.id,
+      rateLimitId,
       20, // 20 status checks per minute
       60000
     );
@@ -95,13 +92,20 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. Get connection status
-    const { getGoogleConnectionStatus } = await import('@/lib/google/token-manager');
-    const status = await getGoogleConnectionStatus(user.id);
+    let status = { connected: false };
+    if (user) {
+      const { getGoogleConnectionStatus } = await import('@/lib/google/token-manager');
+      status = await getGoogleConnectionStatus(user.id);
 
-    log.debug('Google connection status checked:', {
-      userId: user.id.substring(0, 8) + '...',
-      connected: status.connected
-    });
+      log.debug('Google connection status checked:', {
+        userId: user.id.substring(0, 8) + '...',
+        connected: status.connected
+      });
+    } else {
+      log.debug('Google connection status checked for anonymous user:', {
+        connected: false
+      });
+    }
 
     return NextResponse.json({ status });
   } catch (error) {
