@@ -64,9 +64,14 @@ export async function GET(request: NextRequest) {
 
     if (!userId && !isSigninFlow) {
       log.error('No user ID found in OAuth session:', { ip: clientIp });
-      return NextResponse.redirect(
-        new URL('/dashboard?google_auth=error&message=Session_expired', request.url)
-      );
+      // Allow sign-in flow to proceed even without user ID if state matches
+      if (storedState && storedState === state) {
+        log.info('Allowing sign-in flow without user ID due to valid state match:', { ip: clientIp });
+      } else {
+        return NextResponse.redirect(
+          new URL('/dashboard?google_auth=error&message=Session_expired', request.url)
+        );
+      }
     }
 
     if (!storedState || storedState !== state) {
