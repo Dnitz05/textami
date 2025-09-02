@@ -59,30 +59,25 @@ export async function GET(request: NextRequest) {
     const signinState = cookieStore.get('google_signin_state')?.value;
     const storedState = cookieStore.get('google_auth_state')?.value || signinState;
 
-    // Check if this is a signin flow (no existing user session)
-    const isSigninFlow = !userId && signinState;
-    let treatAsSigninFlow: boolean = !!isSigninFlow;
+    // Check if this is a signin flow - prioritize signin state or no user ID as signin
+    const isSigninFlow = !userId || !!signinState;
+    let treatAsSigninFlow: boolean = isSigninFlow;
 
-    if (!userId && !isSigninFlow) {
-      // Since we now allow anonymous OAuth initiation, treat this as signin flow if state is valid
-      if (storedState && storedState === state) {
-        log.info('Treating anonymous OAuth as signin flow due to valid state match:', { ip: clientIp });
-        treatAsSigninFlow = true; // Treat as sign-in flow if state matches
-      } else {
-        log.error('No user ID found in OAuth session and invalid state:', { ip: clientIp });
-        log.warn('Session expired or invalid, redirecting to error page with detailed diagnostics:', { 
-          ip: clientIp, 
-          cookiesPresent: {
-            google_auth_user_id: !!userId,
-            google_auth_state: !!storedState,
-            google_signin_state: !!signinState
-          },
-          cookiesReceived: cookieStore.getAll().map(c => ({ name: c.name, value: c.value ? 'present' : 'empty' }))
-        });
-        return NextResponse.redirect(
-          new URL('/dashboard?google_auth=error&message=Session_expired', request.url)
-        );
-      }
+    // For signin flows without cookies (cross-domain issues), validate with state token
+    if (!userId && !signinState && !storedState) {
+      log.error('No cookies or state found - possible cross-domain issue:', { 
+        ip: clientIp,
+        allCookies: cookieStore.getAll().map(c => ({ name: c.name, hasValue: !!c.value }))
+      });
+      return NextResponse.redirect(
+        new URL('/dashboard?google_auth=error&message=Session_expired', request.url)
+      );
+    }
+
+    // If we have a valid state but no user ID, treat as signin flow
+    if (!userId && storedState && storedState === state) {
+      log.info('Treating OAuth as signin flow due to missing user ID but valid state:', { ip: clientIp });
+      treatAsSigninFlow = true;
     }
 
     if (!storedState || storedState !== state) {

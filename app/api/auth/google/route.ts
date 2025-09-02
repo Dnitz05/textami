@@ -30,8 +30,8 @@ export async function GET(request: NextRequest) {
     // 3. Generate secure state token for CSRF protection
     const stateToken = generateSecureToken(32);
 
-    // 4. Generate Google OAuth URL
-    const authUrl = getGoogleAuthUrl();
+    // 4. Generate Google OAuth URL with custom state
+    const authUrl = getGoogleAuthUrl(stateToken);
     
     log.info('Google OAuth initiated:', {
       userId: user ? user.id.substring(0, 8) + '...' : 'anonymous',
@@ -44,17 +44,17 @@ export async function GET(request: NextRequest) {
       response.cookies.set('google_auth_user_id', user.id, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60, // 1 hour
-        sameSite: 'none',
-        path: '/'
+        maxAge: 60 * 10, // 10 minutes
+        sameSite: 'lax',
+        path: '/api/auth/google'
       });
     }
     response.cookies.set('google_auth_state', stateToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60, // 1 hour
-      sameSite: 'none',
-      path: '/'
+      maxAge: 60 * 10, // 10 minutes
+      sameSite: 'lax',
+      path: '/api/auth/google'
     });
 
     return response;
