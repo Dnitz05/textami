@@ -29,7 +29,7 @@ export function encrypt(text: string): EncryptedData {
   try {
     const key = getEncryptionKey();
     const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipher('aes-256-cbc', key);
+    const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
 
     let encrypted = cipher.update(text, 'utf8', 'hex');
     encrypted += cipher.final('hex');
@@ -50,7 +50,8 @@ export function encrypt(text: string): EncryptedData {
 export function decrypt(data: EncryptedData): string {
   try {
     const key = getEncryptionKey();
-    const decipher = crypto.createDecipher('aes-256-cbc', key);
+    const iv = Buffer.from(data.iv, 'hex');
+    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
 
     let decrypted = decipher.update(data.encrypted, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
