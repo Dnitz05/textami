@@ -2,7 +2,7 @@
 // Secure token encryption system for Google OAuth tokens
 import crypto from 'crypto';
 
-const ALGORITHM = 'aes-256-gcm';
+const ALGORITHM = 'aes-256-cbc';
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || process.env.NEXTAUTH_SECRET || 'dev-key-32-chars-minimum-length';
 
 // Ensure key is exactly 32 bytes
@@ -29,18 +29,15 @@ export function encrypt(text: string): EncryptedData {
   try {
     const key = getEncryptionKey();
     const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipher(ALGORITHM, key);
-    cipher.setAAD(Buffer.from('google-oauth-tokens', 'utf8'));
+    const cipher = crypto.createCipher('aes-256-cbc', key);
 
     let encrypted = cipher.update(text, 'utf8', 'hex');
     encrypted += cipher.final('hex');
-    
-    const tag = cipher.getAuthTag();
 
     return {
       encrypted,
       iv: iv.toString('hex'),
-      tag: tag.toString('hex')
+      tag: '' // Not used for CBC mode
     };
   } catch (error) {
     throw new Error(`Encryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -53,10 +50,7 @@ export function encrypt(text: string): EncryptedData {
 export function decrypt(data: EncryptedData): string {
   try {
     const key = getEncryptionKey();
-    const decipher = crypto.createDecipher(ALGORITHM, key);
-    
-    decipher.setAuthTag(Buffer.from(data.tag, 'hex'));
-    decipher.setAAD(Buffer.from('google-oauth-tokens', 'utf8'));
+    const decipher = crypto.createDecipher('aes-256-cbc', key);
 
     let decrypted = decipher.update(data.encrypted, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
