@@ -38,24 +38,37 @@ export async function GET(request: NextRequest) {
       ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
     });
 
-    // 5. Store secure session data for callback
+    // 5. Store secure session data for callback with improved security
     const response = NextResponse.redirect(authUrl);
+    
+    // Enhanced cookie security settings
+    const cookieConfig = {
+      httpOnly: true,
+      secure: true, // Always secure for OAuth
+      maxAge: 60 * 10, // 10 minutes
+      sameSite: 'strict' as const, // Strict for better security
+      path: '/api/auth/google'
+    };
+    
     if (user) {
-      response.cookies.set('google_auth_user_id', user.id, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 10, // 10 minutes
-        sameSite: 'lax',
-        path: '/api/auth/google'
+      response.cookies.set('google_auth_user_id', user.id, cookieConfig);
+    }
+    response.cookies.set('google_auth_state', stateToken, cookieConfig);
+
+    // Add localStorage instruction for client-side fallback
+    const isClientRequest = request.headers.get('x-requested-with') === 'XMLHttpRequest' || 
+                           request.headers.get('accept')?.includes('application/json');
+    
+    if (isClientRequest) {
+      // For AJAX requests, return data to store in localStorage
+      return NextResponse.json({
+        success: true,
+        redirectUrl: authUrl,
+        state: stateToken,
+        userId: user?.id,
+        flow: 'connect'
       });
     }
-    response.cookies.set('google_auth_state', stateToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 10, // 10 minutes
-      sameSite: 'lax',
-      path: '/api/auth/google'
-    });
 
     return response;
   } catch (error) {

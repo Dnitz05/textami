@@ -53,21 +53,49 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 5. Validate session cookies and CSRF state
+    // 5. Validate session cookies and CSRF state with localStorage fallback
     const cookieStore = await cookies();
     const userId = cookieStore.get('google_auth_user_id')?.value;
     const signinState = cookieStore.get('google_signin_state')?.value;
     const storedState = cookieStore.get('google_auth_state')?.value || signinState;
 
+    // Try localStorage fallback if cookies are missing (cross-domain issues)
+    let localStorageState: string | undefined;
+    let localStorageUserId: string | undefined;
+    let localStorageFlow: 'signin' | 'connect' | undefined;
+    
+    if (!storedState) {
+      // Check for localStorage state in URL parameters (passed by client-side)
+      const lsState = url.searchParams.get('ls_state');
+      const lsUserId = url.searchParams.get('ls_user_id');
+      const lsFlow = url.searchParams.get('ls_flow') as 'signin' | 'connect' | undefined;
+      
+      if (lsState && state && lsState === state) {
+        localStorageState = lsState;
+        localStorageUserId = lsUserId || undefined;
+        localStorageFlow = lsFlow;
+        
+        log.info('Using localStorage fallback for OAuth state:', {
+          ip: clientIp,
+          hasUserId: !!localStorageUserId,
+          flow: localStorageFlow
+        });
+      }
+    }
+    
+    const finalStoredState = storedState || localStorageState;
+    const finalUserId = userId || localStorageUserId;
+
     // Check if this is a signin flow - prioritize signin state or no user ID as signin
-    const isSigninFlow = !userId || !!signinState;
+    const isSigninFlow = !finalUserId || !!signinState || localStorageFlow === 'signin';
     let treatAsSigninFlow: boolean = isSigninFlow;
 
     // For signin flows without cookies (cross-domain issues), validate with state token
-    if (!userId && !signinState && !storedState) {
+    if (!finalUserId && !signinState && !finalStoredState) {
       log.error('No cookies or state found - possible cross-domain issue:', { 
         ip: clientIp,
-        allCookies: cookieStore.getAll().map(c => ({ name: c.name, hasValue: !!c.value }))
+        allCookies: cookieStore.getAll().map(c => ({ name: c.name, hasValue: !!c.value })),
+        hasLocalStorageFallback: !!localStorageState
       });
       return NextResponse.redirect(
         new URL('/dashboard?google_auth=error&message=Session_expired', request.url)
@@ -75,12 +103,15 @@ export async function GET(request: NextRequest) {
     }
 
     // If we have a valid state but no user ID, treat as signin flow
-    if (!userId && storedState && storedState === state) {
-      log.info('Treating OAuth as signin flow due to missing user ID but valid state:', { ip: clientIp });
+    if (!finalUserId && finalStoredState && finalStoredState === state) {
+      log.info('Treating OAuth as signin flow due to missing user ID but valid state:', { 
+        ip: clientIp,
+        usingLocalStorage: !!localStorageState
+      });
       treatAsSigninFlow = true;
     }
 
-    if (!storedState || storedState !== state) {
+    if (!finalStoredState || finalStoredState !== state) {
       log.error('CSRF state validation failed:', { 
         userId: userId ? userId.substring(0, 8) + '...' : 'signin-flow',
         ip: clientIp,
@@ -124,7 +155,7 @@ export async function GET(request: NextRequest) {
       }
 
       // 8. Handle user authentication/creation based on flow type
-      let finalUserId: string = userId || '';
+      let actualFinalUserId: string = finalUserId || '';
 
       if (treatAsSigninFlow) {
         // For signin flow, create or authenticate user with Supabase
@@ -203,7 +234,7 @@ export async function GET(request: NextRequest) {
             );
           }
 
-          finalUserId = userData.user.id;
+          actualFinalUserId = userData.user.id;
 
           // Create session for the user
           const { error: sessionError } = await supabase.auth.admin.generateLink({
@@ -214,7 +245,7 @@ export async function GET(request: NextRequest) {
           if (sessionError) {
             log.error('Failed to generate session for user:', {
               error: sessionError.message,
-              userId: finalUserId.substring(0, 8) + '...'
+              userId: actualFinalUserId.substring(0, 8) + '...'
             });
           }
         } catch (authError) {
@@ -230,11 +261,11 @@ export async function GET(request: NextRequest) {
 
       // 9. Initialize secure Google connection
       log.debug('Initializing encrypted Google connection:', {
-        userId: finalUserId.substring(0, 8) + '...',
+        userId: actualFinalUserId.substring(0, 8) + '...',
         googleEmail: profile.email
       });
       
-      await initializeGoogleConnection(finalUserId, tokens);
+      await initializeGoogleConnection(actualFinalUserId, tokens);
 
       // 10. Set up proper session and clean up temporary cookies
       const response = NextResponse.redirect(
@@ -242,13 +273,13 @@ export async function GET(request: NextRequest) {
       );
 
       // For signin flow, create proper Supabase session cookies
-      if (treatAsSigninFlow && finalUserId) {
+      if (treatAsSigninFlow && actualFinalUserId) {
         // Create a simple session token (this is a simplified approach)
-        response.cookies.set('sb-user-id', finalUserId, {
+        response.cookies.set('sb-user-id', actualFinalUserId, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
+          secure: true, // Always secure for session cookies
           maxAge: 60 * 60 * 24 * 7, // 7 days
-          sameSite: 'lax',
+          sameSite: 'strict',
           path: '/'
         });
       }
@@ -259,10 +290,11 @@ export async function GET(request: NextRequest) {
       response.cookies.delete('google_signin_state');
 
       log.info('Google authentication completed successfully:', {
-        userId: finalUserId.substring(0, 8) + '...',
+        userId: actualFinalUserId.substring(0, 8) + '...',
         googleEmail: profile.email,
         ip: clientIp,
-        isSigninFlow
+        isSigninFlow,
+        usedLocalStorageFallback: !!localStorageState
       });
 
       return response;

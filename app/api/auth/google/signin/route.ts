@@ -27,12 +27,12 @@ export async function GET(request: NextRequest) {
     // Create response with redirect
     const response = NextResponse.redirect(googleAuthUrl);
     
-    // Set secure state cookie
+    // Set secure state cookie with enhanced security
     response.cookies.set('google_signin_state', stateToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true, // Always secure for OAuth
       maxAge: 60 * 10, // 10 minutes
-      sameSite: 'lax',
+      sameSite: 'strict', // Strict for better security
       path: '/api/auth/google'
     });
 
