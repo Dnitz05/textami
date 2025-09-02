@@ -8,7 +8,22 @@ import { log } from '@/lib/logger';
 import { createOAuthRedirectUrl, logDomainInfo, isVercelPreview } from '@/lib/vercel/domain-utils';
 
 // GET /api/auth/google/callback - Secure Google OAuth callback handler
+// Handle both GET and HEAD requests for OAuth callback
 export async function GET(request: NextRequest) {
+  return handleOAuthCallback(request);
+}
+
+export async function HEAD(request: NextRequest) {
+  // HEAD requests should not process OAuth, just return OK
+  const clientIp = request.headers.get('x-forwarded-for') || 'unknown';
+  log.warn('HEAD request to OAuth callback - returning 200 without processing:', {
+    ip: clientIp,
+    url: request.url
+  });
+  return new Response(null, { status: 200 });
+}
+
+async function handleOAuthCallback(request: NextRequest) {
   const clientIp = request.headers.get('x-forwarded-for') || 
                    request.headers.get('x-real-ip') || 
                    'unknown';
@@ -40,6 +55,25 @@ export async function GET(request: NextRequest) {
     const state = url.searchParams.get('state');
     const error = url.searchParams.get('error');
 
+    // 🚨 CRITICAL DEBUG: Log all callback parameters
+    log.info('🔍 OAUTH CALLBACK DEBUG - All parameters:', {
+      ip: clientIp,
+      fullUrl: request.url,
+      hasCode: !!code,
+      hasState: !!state,
+      hasError: !!error,
+      codePreview: code ? code.substring(0, 20) + '...' : null,
+      statePreview: state ? state.substring(0, 20) + '...' : null,
+      errorValue: error,
+      allParams: Object.fromEntries(url.searchParams.entries()),
+      method: request.method,
+      headers: {
+        host: request.headers.get('host'),
+        userAgent: request.headers.get('user-agent')?.substring(0, 100),
+        referer: request.headers.get('referer')
+      }
+    });
+
     // 3. Check for OAuth errors from Google
     if (error) {
       log.error('Google OAuth error received:', { 
@@ -57,11 +91,27 @@ export async function GET(request: NextRequest) {
 
     // 4. Validate required parameters
     if (!code) {
-      log.error('Missing authorization code in callback:', { ip: clientIp });
+      // Check if this was a user cancellation or other specific error
+      const errorDescription = url.searchParams.get('error_description');
+      const errorReason = url.searchParams.get('error_reason');
+      
+      log.error('❌ Missing authorization code in callback:', { 
+        ip: clientIp,
+        error: error || 'no_error_param',
+        errorDescription: errorDescription || 'no_description',
+        errorReason: errorReason || 'no_reason',
+        allParams: Object.fromEntries(url.searchParams.entries()),
+        possibleCause: !error ? 'direct_access_or_invalid_request' : 'oauth_error'
+      });
+      
+      const errorMessage = error === 'access_denied' 
+        ? 'User_cancelled_authentication'
+        : 'Invalid_callback_parameters';
+        
       return NextResponse.redirect(
         createOAuthRedirectUrl(request, '/dashboard', {
           google_auth: 'error',
-          message: 'Invalid_callback_parameters'
+          message: errorMessage
         })
       );
     }
