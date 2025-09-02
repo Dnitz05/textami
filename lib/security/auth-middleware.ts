@@ -5,8 +5,14 @@ import { createClient } from '@supabase/supabase-js';
 import { log } from '../logger';
 import { hashForLogging } from './encryption';
 
-// Initialize Supabase client
+// Initialize Supabase client lazily
+let supabaseClient: any = null;
+
 function getSupabaseClient() {
+  if (supabaseClient) {
+    return supabaseClient;
+  }
+  
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   
@@ -14,7 +20,8 @@ function getSupabaseClient() {
     throw new Error('Supabase configuration missing');
   }
   
-  return createClient(supabaseUrl, supabaseServiceKey);
+  supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
+  return supabaseClient;
 }
 
 export interface AuthenticatedUser {

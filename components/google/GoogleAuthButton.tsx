@@ -52,9 +52,15 @@ export default function GoogleAuthButton({ onConnectionChange }: GoogleAuthButto
         const data = await response.json();
         setStatus(data.status);
         onConnectionChange?.(data.status.connected);
+      } else if (response.status === 401) {
+        // User not authenticated - this is expected for new users
+        setStatus({ connected: false });
+        onConnectionChange?.(false);
       }
     } catch (error) {
       console.error('Error checking Google connection status:', error);
+      setStatus({ connected: false });
+      onConnectionChange?.(false);
     } finally {
       setCheckingStatus(false);
     }
@@ -64,8 +70,18 @@ export default function GoogleAuthButton({ onConnectionChange }: GoogleAuthButto
     try {
       setLoading(true);
       
-      // Redirect to Google OAuth
-      window.location.href = '/api/auth/google';
+      // Check if user is authenticated first
+      const authResponse = await fetch('/api/auth/google', {
+        method: 'POST',
+      });
+
+      if (authResponse.ok) {
+        // User is authenticated, use secure endpoint
+        window.location.href = '/api/auth/google';
+      } else {
+        // User not authenticated, use public signin endpoint
+        window.location.href = '/api/auth/google/signin';
+      }
     } catch (error) {
       console.error('Error connecting to Google:', error);
       toast.error('Failed to connect to Google');

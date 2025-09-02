@@ -55,9 +55,13 @@ export async function GET(request: NextRequest) {
     // 5. Validate session cookies and CSRF state
     const cookieStore = await cookies();
     const userId = cookieStore.get('google_auth_user_id')?.value;
-    const storedState = cookieStore.get('google_auth_state')?.value;
+    const signinState = cookieStore.get('google_signin_state')?.value;
+    const storedState = cookieStore.get('google_auth_state')?.value || signinState;
 
-    if (!userId) {
+    // Check if this is a signin flow (no existing user session)
+    const isSigninFlow = !userId && signinState;
+
+    if (!userId && !isSigninFlow) {
       log.error('No user ID found in OAuth session:', { ip: clientIp });
       return NextResponse.redirect(
         new URL('/dashboard?google_auth=error&message=Session_expired', request.url)
@@ -66,10 +70,11 @@ export async function GET(request: NextRequest) {
 
     if (!storedState || storedState !== state) {
       log.error('CSRF state validation failed:', { 
-        userId: userId.substring(0, 8) + '...',
+        userId: userId ? userId.substring(0, 8) + '...' : 'signin-flow',
         ip: clientIp,
         hasStoredState: !!storedState,
-        hasCallbackState: !!state
+        hasCallbackState: !!state,
+        isSigninFlow
       });
       return NextResponse.redirect(
         new URL('/dashboard?google_auth=error&message=Security_validation_failed', request.url)
@@ -79,23 +84,26 @@ export async function GET(request: NextRequest) {
     try {
       // 6. Exchange authorization code for tokens
       log.debug('Exchanging authorization code for tokens:', {
-        userId: userId.substring(0, 8) + '...',
-        ip: clientIp
+        userId: userId ? userId.substring(0, 8) + '...' : 'signin-flow',
+        ip: clientIp,
+        isSigninFlow
       });
       
       const tokens = await exchangeCodeForTokens(code);
 
       // 7. Validate tokens by getting user profile
       log.debug('Validating tokens with user profile request:', {
-        userId: userId.substring(0, 8) + '...'
+        userId: userId ? userId.substring(0, 8) + '...' : 'signin-flow',
+        isSigninFlow
       });
       
       const profile = await getUserProfile(tokens.access_token);
 
       if (!profile.verified_email) {
         log.warn('Google account email not verified:', {
-          userId: userId.substring(0, 8) + '...',
-          email: profile.email
+          userId: userId ? userId.substring(0, 8) + '...' : 'signin-flow',
+          email: profile.email,
+          isSigninFlow
         });
         
         return NextResponse.redirect(
@@ -103,34 +111,50 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      // 8. Initialize secure Google connection
+      // 8. Handle user authentication/creation based on flow type
+      let finalUserId: string = userId || '';
+
+      if (isSigninFlow) {
+        // For signin flow, we need user to be authenticated first
+        log.warn('Signin flow detected but no user authentication - redirecting to login:', {
+          googleEmail: profile.email
+        });
+        return NextResponse.redirect(
+          new URL('/dashboard?google_auth=error&message=Please_login_first', request.url)
+        );
+      }
+
+      // 9. Initialize secure Google connection
       log.debug('Initializing encrypted Google connection:', {
-        userId: userId.substring(0, 8) + '...',
+        userId: finalUserId.substring(0, 8) + '...',
         googleEmail: profile.email
       });
       
-      await initializeGoogleConnection(userId, tokens);
+      await initializeGoogleConnection(finalUserId, tokens);
 
-      // 9. Clear temporary cookies securely
+      // 10. Clear temporary cookies securely
       const response = NextResponse.redirect(
         new URL('/dashboard?google_auth=success', request.url)
       );
       
       response.cookies.delete('google_auth_user_id');
       response.cookies.delete('google_auth_state');
+      response.cookies.delete('google_signin_state');
 
       log.info('Google authentication completed successfully:', {
-        userId: userId.substring(0, 8) + '...',
+        userId: finalUserId.substring(0, 8) + '...',
         googleEmail: profile.email,
-        ip: clientIp
+        ip: clientIp,
+        isSigninFlow
       });
 
       return response;
     } catch (tokenError) {
       log.error('Error processing Google OAuth tokens:', {
         error: tokenError instanceof Error ? tokenError.message : 'Unknown error',
-        userId: userId.substring(0, 8) + '...',
-        ip: clientIp
+        userId: userId?.substring(0, 8) + '...',
+        ip: clientIp,
+        isSigninFlow
       });
       
       // Clear temporary cookies securely
@@ -139,6 +163,7 @@ export async function GET(request: NextRequest) {
       );
       response.cookies.delete('google_auth_user_id');
       response.cookies.delete('google_auth_state');
+      response.cookies.delete('google_signin_state');
       
       return response;
     }
@@ -155,6 +180,7 @@ export async function GET(request: NextRequest) {
     );
     response.cookies.delete('google_auth_user_id');
     response.cookies.delete('google_auth_state');
+    response.cookies.delete('google_signin_state');
     
     return response;
   }

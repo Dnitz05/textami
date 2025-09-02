@@ -4,10 +4,24 @@ import { refreshAccessToken, shouldRefreshToken } from './auth';
 import { encryptGoogleTokens, decryptGoogleTokens, EncryptedData } from '../security/encryption';
 import { log } from '../logger';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Lazy initialization of Supabase client
+let supabaseClient: any = null;
+
+function getSupabaseClient() {
+  if (supabaseClient) {
+    return supabaseClient;
+  }
+  
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error('Supabase configuration missing for token manager');
+  }
+  
+  supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
+  return supabaseClient;
+}
 
 // Token storage interface
 interface StoredGoogleTokens extends GoogleAuthTokens {
@@ -25,7 +39,7 @@ export async function saveGoogleTokens(
     // Encrypt tokens before storing
     const encryptedTokens = encryptGoogleTokens(tokens);
     
-    const { error } = await supabase
+    const { error } = await getSupabaseClient()
       .from('profiles')
       .update({
         google_tokens: encryptedTokens,
@@ -60,7 +74,7 @@ export async function saveGoogleTokens(
 // Load Google tokens from Supabase (decrypted)
 export async function loadGoogleTokens(userId: string): Promise<GoogleAuthTokens | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('profiles')
       .select('google_tokens, google_refresh_token, google_connected')
       .eq('id', userId)
@@ -153,7 +167,7 @@ export async function getValidGoogleTokens(userId: string): Promise<GoogleAuthTo
 // Remove Google tokens from Supabase
 export async function removeGoogleTokens(userId: string): Promise<void> {
   try {
-    const { error } = await supabase
+    const { error } = await getSupabaseClient()
       .from('profiles')
       .update({
         google_tokens: null,
@@ -199,7 +213,7 @@ export async function getGoogleConnectionStatus(userId: string): Promise<{
     const needsReauth = !tokens.refresh_token || tokens.expiry_date <= now;
 
     // Get user profile to get email
-    const { data } = await supabase
+    const { data } = await getSupabaseClient()
       .from('profiles')
       .select('email')
       .eq('id', userId)
@@ -227,7 +241,7 @@ export async function initializeGoogleConnection(
     await saveGoogleTokens(userId, tokens);
     
     // Update user profile to mark Google as connected
-    await supabase
+    await getSupabaseClient()
       .from('profiles')
       .update({
         google_connected: true,
@@ -250,7 +264,7 @@ export async function disconnectGoogleAccount(userId: string): Promise<void> {
     await removeGoogleTokens(userId);
     
     // Update profile
-    await supabase
+    await getSupabaseClient()
       .from('profiles')
       .update({
         google_connected: false,
@@ -274,7 +288,7 @@ export async function refreshAllExpiredTokens(): Promise<{
 }> {
   try {
     // Get all users with Google tokens
-    const { data: profiles, error } = await supabase
+    const { data: profiles, error } = await getSupabaseClient()
       .from('profiles')
       .select('id, google_tokens, google_refresh_token')
       .not('google_tokens', 'is', null);
@@ -315,7 +329,7 @@ export async function refreshAllExpiredTokens(): Promise<{
 // Clear Google tokens (for security cleanup)
 export async function clearGoogleTokens(userId: string): Promise<void> {
   try {
-    const { error } = await supabase
+    const { error } = await getSupabaseClient()
       .from('profiles')
       .update({
         google_tokens: null,
