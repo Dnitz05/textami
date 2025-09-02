@@ -104,6 +104,13 @@ export function handleOAuthCallback() {
   const code = urlParams.get('code');
   const error = urlParams.get('error');
 
+  // Don't process if we already have fallback params
+  const hasCallbackParams = urlParams.has('ls_state');
+  if (hasCallbackParams) {
+    console.log('🔄 OAuth callback already has fallback params, skipping processing');
+    return;
+  }
+
   if (error || !code || !state) {
     clearOAuthState();
     return;
@@ -117,6 +124,12 @@ export function handleOAuthCallback() {
       
       // If state matches and we have stored data, add to URL for server
       if (oauthState.state === state) {
+        console.log('🚨 CRITICAL: Adding URL fallback params for OAuth callback:', {
+          state: oauthState.state,
+          flow: oauthState.flow,
+          hasUserId: !!oauthState.userId
+        });
+
         const currentUrl = new URL(window.location.href);
         currentUrl.searchParams.set('ls_state', oauthState.state);
         currentUrl.searchParams.set('ls_flow', oauthState.flow);
@@ -128,7 +141,14 @@ export function handleOAuthCallback() {
         // Clear localStorage and redirect with enhanced params
         clearOAuthState();
         window.location.href = currentUrl.toString();
+      } else {
+        console.warn('🔄 State mismatch between localStorage and callback:', {
+          stored: oauthState.state,
+          callback: state
+        });
       }
+    } else {
+      console.warn('🔄 No OAuth state found in localStorage for callback');
     }
   } catch (error) {
     console.warn('Failed to process OAuth localStorage fallback:', error);

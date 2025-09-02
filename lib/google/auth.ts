@@ -4,9 +4,8 @@ import { GoogleAuthTokens, GoogleUserProfile, GOOGLE_SCOPES } from './types';
 // Google OAuth2 Configuration
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
-const REDIRECT_URI = process.env.NODE_ENV === 'production' 
-  ? 'https://textami.vercel.app/api/auth/google/callback'
-  : 'http://localhost:3000/api/auth/google/callback';
+// 🚨 CRITICAL: ALWAYS use production domain for OAuth callback
+const REDIRECT_URI = 'https://textami.vercel.app/api/auth/google/callback';
 
 // Initialize OAuth2 Client
 export function createGoogleOAuth2Client(): OAuth2Client {

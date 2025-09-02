@@ -72,28 +72,37 @@ export async function GET(request: NextRequest) {
     const signinState = cookieStore.get('google_signin_state')?.value;
     const storedState = cookieStore.get('google_auth_state')?.value || signinState;
 
-    // Try localStorage fallback if cookies are missing (cross-domain issues)
+    // 🚨 CRITICAL FALLBACK: Use URL state when cookies are missing
     let localStorageState: string | undefined;
     let localStorageUserId: string | undefined;
     let localStorageFlow: 'signin' | 'connect' | undefined;
     
-    if (!storedState) {
-      // Check for localStorage state in URL parameters (passed by client-side)
-      const lsState = url.searchParams.get('ls_state');
-      const lsUserId = url.searchParams.get('ls_user_id');
-      const lsFlow = url.searchParams.get('ls_flow') as 'signin' | 'connect' | undefined;
+    // ALWAYS check URL fallback parameters for cross-domain compatibility
+    const lsState = url.searchParams.get('ls_state');
+    const lsUserId = url.searchParams.get('ls_user_id'); 
+    const lsFlow = url.searchParams.get('ls_flow') as 'signin' | 'connect' | undefined;
+    
+    if (lsState && state && lsState === state) {
+      localStorageState = lsState;
+      localStorageUserId = lsUserId || undefined;
+      localStorageFlow = lsFlow;
       
-      if (lsState && state && lsState === state) {
-        localStorageState = lsState;
-        localStorageUserId = lsUserId || undefined;
-        localStorageFlow = lsFlow;
-        
-        log.info('Using localStorage fallback for OAuth state:', {
-          ip: clientIp,
-          hasUserId: !!localStorageUserId,
-          flow: localStorageFlow
-        });
-      }
+      log.info('✅ Using URL fallback for OAuth state (CRITICAL FIX):', {
+        ip: clientIp,
+        hasUserId: !!localStorageUserId,
+        flow: localStorageFlow,
+        stateMatches: true
+      });
+    }
+
+    // If no cookies but we have valid URL state, use it
+    if (!storedState && localStorageState) {
+      log.warn('🔄 No cookies found, using URL state fallback:', {
+        ip: clientIp,
+        cookieState: !!storedState,
+        urlState: !!localStorageState,
+        hasUserId: !!localStorageUserId
+      });
     }
     
     const finalStoredState = storedState || localStorageState;
