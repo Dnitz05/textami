@@ -18,7 +18,7 @@ export function createGoogleOAuth2Client(): OAuth2Client {
 }
 
 // Generate Google OAuth URL
-export function getGoogleAuthUrl(): string {
+export function getGoogleAuthUrl(customState?: string): string {
   const oauth2Client = createGoogleOAuth2Client();
   
   const url = oauth2Client.generateAuthUrl({
@@ -26,7 +26,7 @@ export function getGoogleAuthUrl(): string {
     scope: GOOGLE_SCOPES.join(' '),
     include_granted_scopes: true,
     prompt: 'consent', // Force consent to get refresh token
-    state: generateState(), // CSRF protection
+    state: customState || generateState(), // Use custom state or generate one
   });
 
   return url;

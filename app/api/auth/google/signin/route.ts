@@ -11,8 +11,8 @@ export async function GET(request: NextRequest) {
     // Generate secure state token for CSRF protection
     const stateToken = generateSecureToken();
     
-    // Get Google OAuth URL (function generates its own state)
-    const googleAuthUrl = getGoogleAuthUrl();
+    // Get Google OAuth URL with custom state token
+    const googleAuthUrl = getGoogleAuthUrl(stateToken);
     
     if (!googleAuthUrl) {
       log.error('❌ Failed to generate Google Auth URL');
@@ -59,8 +59,8 @@ export async function POST(request: NextRequest) {
     // Generate secure state token for CSRF protection
     const stateToken = generateSecureToken();
     
-    // Get Google OAuth URL (function generates its own state)
-    const googleAuthUrl = getGoogleAuthUrl();
+    // Get Google OAuth URL with custom state token
+    const googleAuthUrl = getGoogleAuthUrl(stateToken);
     
     if (!googleAuthUrl) {
       log.error('❌ Failed to generate Google Auth URL');

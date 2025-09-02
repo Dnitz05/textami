@@ -70,18 +70,9 @@ export default function GoogleAuthButton({ onConnectionChange }: GoogleAuthButto
     try {
       setLoading(true);
       
-      // Check if user is authenticated first
-      const authResponse = await fetch('/api/auth/google', {
-        method: 'POST',
-      });
-
-      if (authResponse.ok) {
-        // User is authenticated, use secure endpoint
-        window.location.href = '/api/auth/google';
-      } else {
-        // User not authenticated, use public signin endpoint
-        window.location.href = '/api/auth/google/signin';
-      }
+      // For now, always use the public signin endpoint
+      // This avoids the chicken-and-egg problem with authentication checking
+      window.location.href = '/api/auth/google/signin';
     } catch (error) {
       console.error('Error connecting to Google:', error);
       toast.error('Failed to connect to Google');
