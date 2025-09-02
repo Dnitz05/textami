@@ -32,6 +32,18 @@ export async function GET(request: NextRequest) {
           value: process.env.OPENAI_API_KEY ? 
             process.env.OPENAI_API_KEY.substring(0, 20) + '...' : 
             'NOT_FOUND'
+        },
+        GOOGLE_CLIENT_ID: {
+          exists: !!process.env.GOOGLE_CLIENT_ID,
+          value: process.env.GOOGLE_CLIENT_ID ? 
+            process.env.GOOGLE_CLIENT_ID.substring(0, 20) + '...' : 
+            'NOT_FOUND'
+        },
+        GOOGLE_CLIENT_SECRET: {
+          exists: !!process.env.GOOGLE_CLIENT_SECRET,
+          value: process.env.GOOGLE_CLIENT_SECRET ? 
+            process.env.GOOGLE_CLIENT_SECRET.substring(0, 20) + '...' : 
+            'NOT_FOUND'
         }
       }
     };
