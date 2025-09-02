@@ -49,7 +49,7 @@ export async function saveGoogleTokens(
       userId: userId.substring(0, 8) + '...',
       hasAccessToken: !!tokens.access_token,
       hasRefreshToken: !!tokens.refresh_token,
-      tokenExpiresIn: tokens.expires_in
+      tokenExpiryDate: tokens.expiry_date
     });
 
     // 🚨 ENSURE USER PROFILE EXISTS FIRST
