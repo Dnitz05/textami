@@ -205,6 +205,9 @@ export async function getGoogleConnectionStatus(userId: string): Promise<{
     const tokens = await loadGoogleTokens(userId);
     
     if (!tokens) {
+      log.debug('No tokens found when checking Google connection status:', {
+        userId: userId.substring(0, 8) + '...'
+      });
       return { connected: false };
     }
 
@@ -215,18 +218,21 @@ export async function getGoogleConnectionStatus(userId: string): Promise<{
     // Get user profile to get email
     const { data } = await getSupabaseClient()
       .from('profiles')
-      .select('email')
+      .select('email, google_connected')
       .eq('id', userId)
       .single();
 
     return {
-      connected: true,
+      connected: data?.google_connected || false,
       email: data?.email,
       expiresAt,
       needsReauth,
     };
   } catch (error) {
-    console.error('Error getting Google connection status:', error);
+    log.error('Error getting Google connection status:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      userId: userId.substring(0, 8) + '...'
+    });
     return { connected: false };
   }
 }
