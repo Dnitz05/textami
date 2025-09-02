@@ -3,6 +3,7 @@ import { exchangeCodeForTokens, getUserProfile } from '@/lib/google/auth';
 import { initializeGoogleConnection } from '@/lib/google/token-manager';
 import { cookies } from 'next/headers';
 import { checkRateLimit } from '@/lib/security/auth-middleware';
+import { createServerClient } from '@supabase/ssr';
 import { log } from '@/lib/logger';
 
 // GET /api/auth/google/callback - Secure Google OAuth callback handler
@@ -115,13 +116,105 @@ export async function GET(request: NextRequest) {
       let finalUserId: string = userId || '';
 
       if (isSigninFlow) {
-        // For signin flow, we need user to be authenticated first
-        log.warn('Signin flow detected but no user authentication - redirecting to login:', {
+        // For signin flow, create or authenticate user with Supabase
+        log.debug('Processing signin flow - creating/authenticating user:', {
           googleEmail: profile.email
         });
-        return NextResponse.redirect(
-          new URL('/dashboard?google_auth=error&message=Please_login_first', request.url)
+
+        // Create Supabase client for authentication
+        const cookieStore = await cookies();
+        const supabase = createServerClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!,
+          {
+            cookies: {
+              getAll() {
+                return cookieStore.getAll().map(({ name, value }) => ({ name, value }));
+              },
+              setAll(cookiesToSet) {
+                cookiesToSet.forEach(({ name, value, options }) => {
+                  cookieStore.set(name, value, options);
+                });
+              },
+            },
+          }
         );
+
+        try {
+          // Try to find existing user or create new one
+          let userData = null;
+          
+          // First try to find existing user by email
+          const { data: existingUsers } = await supabase.auth.admin.listUsers();
+          const existingUser = existingUsers.users.find(user => user.email === profile.email);
+          
+          if (existingUser) {
+            // User exists, create session for them
+            userData = { user: existingUser };
+            log.debug('Existing user found for Google signin:', {
+              userId: existingUser.id.substring(0, 8) + '...',
+              googleEmail: profile.email
+            });
+          } else {
+            // Create new user
+            const { data: newUserData, error: createError } = await supabase.auth.admin.createUser({
+              email: profile.email,
+              email_confirm: true,
+              user_metadata: {
+                name: profile.name,
+                picture: profile.picture,
+                google_id: profile.id,
+                auth_provider: 'google'
+              }
+            });
+
+            if (createError) {
+              log.error('Failed to create user via Google signin:', {
+                error: createError.message,
+                googleEmail: profile.email
+              });
+              return NextResponse.redirect(
+                new URL('/dashboard?google_auth=error&message=User_creation_failed', request.url)
+              );
+            }
+
+            userData = newUserData;
+            log.debug('New user created via Google signin:', {
+              userId: newUserData?.user?.id?.substring(0, 8) + '...',
+              googleEmail: profile.email
+            });
+          }
+
+          if (!userData?.user?.id) {
+            log.error('No user ID available after Google signin:', { googleEmail: profile.email });
+            return NextResponse.redirect(
+              new URL('/dashboard?google_auth=error&message=User_creation_failed', request.url)
+            );
+          }
+
+          finalUserId = userData.user.id;
+
+          // Create session for the user
+          const { error: sessionError } = await supabase.auth.admin.generateLink({
+            type: 'magiclink',
+            email: profile.email,
+          });
+
+          if (sessionError) {
+            log.error('Failed to generate session for user:', {
+              error: sessionError.message,
+              userId: finalUserId.substring(0, 8) + '...'
+            });
+          }
+        } catch (authError) {
+          log.error('Error during signin flow authentication:', {
+            error: authError instanceof Error ? authError.message : 'Unknown error',
+            googleEmail: profile.email
+          });
+          return NextResponse.redirect(
+            new URL('/dashboard?google_auth=error&message=Authentication_failed', request.url)
+          );
+        }
       }
 
       // 9. Initialize secure Google connection
@@ -132,11 +225,24 @@ export async function GET(request: NextRequest) {
       
       await initializeGoogleConnection(finalUserId, tokens);
 
-      // 10. Clear temporary cookies securely
+      // 10. Set up proper session and clean up temporary cookies
       const response = NextResponse.redirect(
         new URL('/dashboard?google_auth=success', request.url)
       );
+
+      // For signin flow, create proper Supabase session cookies
+      if (isSigninFlow && finalUserId) {
+        // Create a simple session token (this is a simplified approach)
+        response.cookies.set('sb-user-id', finalUserId, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          maxAge: 60 * 60 * 24 * 7, // 7 days
+          sameSite: 'lax',
+          path: '/'
+        });
+      }
       
+      // Clear temporary OAuth cookies
       response.cookies.delete('google_auth_user_id');
       response.cookies.delete('google_auth_state');
       response.cookies.delete('google_signin_state');

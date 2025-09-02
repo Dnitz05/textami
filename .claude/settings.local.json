@@ -36,7 +36,8 @@
       "Bash(npx jest:*)",
       "Bash(npm test:*)",
       "Bash(npm run test:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(vercel link:*)"
     ],
     "additionalDirectories": [
       "C:\\mnt\\c\\projects",

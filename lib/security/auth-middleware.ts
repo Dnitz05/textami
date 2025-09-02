@@ -49,11 +49,12 @@ export async function validateUserSession(
   response?: NextResponse;
 }> {
   try {
-    // Extract authorization header
+    // Extract authorization header and session cookies
     const authHeader = request.headers.get('authorization');
     const sessionCookie = request.cookies.get('sb-access-token');
+    const userIdCookie = request.cookies.get('sb-user-id');
     
-    if (!authHeader && !sessionCookie && !options.allowAnonymous) {
+    if (!authHeader && !sessionCookie && !userIdCookie && !options.allowAnonymous) {
       log.security('Missing authentication credentials - unauthorized access attempt:', {
         path: request.nextUrl.pathname,
         method: request.method,
@@ -71,21 +72,43 @@ export async function validateUserSession(
       };
     }
 
-    if (options.allowAnonymous && !authHeader && !sessionCookie) {
+    if (options.allowAnonymous && !authHeader && !sessionCookie && !userIdCookie) {
       return { user: null };
     }
 
     const supabase = getSupabaseClient();
     
-    // Extract token from header or cookie
+    // Handle different authentication methods
     let token: string | undefined;
+    let userId: string | undefined;
+
     if (authHeader && authHeader.startsWith('Bearer ')) {
       token = authHeader.substring(7);
     } else if (sessionCookie) {
       token = sessionCookie.value;
+    } else if (userIdCookie) {
+      userId = userIdCookie.value;
     }
 
-    if (!token) {
+    let user = null;
+    let authError = null;
+
+    if (token) {
+      // Validate token with Supabase
+      const result = await supabase.auth.getUser(token);
+      user = result.data.user;
+      authError = result.error;
+    } else if (userId) {
+      // Validate user ID (simplified Google OAuth session)
+      try {
+        const { data: userData } = await supabase.auth.admin.getUserById(userId);
+        user = userData.user;
+      } catch (error) {
+        authError = error;
+      }
+    }
+
+    if (!token && !userId) {
       return {
         user: null,
         error: 'Invalid authentication format',
@@ -95,9 +118,6 @@ export async function validateUserSession(
         )
       };
     }
-
-    // Validate token with Supabase
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
       log.security('Token validation failed - invalid session:', {
@@ -128,7 +148,7 @@ export async function validateUserSession(
       id: user.id,
       email: user.email || '',
       role: profile?.role || 'user',
-      sessionId: hashForLogging(token)
+      sessionId: token ? hashForLogging(token) : userId ? hashForLogging(userId) : 'google-oauth'
     };
 
     // Check role requirements
