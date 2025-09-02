@@ -18,6 +18,21 @@ export function useGoogleOAuth(): UseGoogleOAuthResult {
     setLoading(true);
     setError(null);
 
+    // 🚨 CRITICAL: Force OAuth to production domain
+    const currentHost = window.location.host;
+    const isPreview = currentHost.includes('vercel.app') && !currentHost.includes('textami.vercel.app');
+    
+    if (isPreview) {
+      console.log('🔄 HOOK: Redirecting OAuth initiation from preview to production:', {
+        from: currentHost,
+        to: 'textami.vercel.app'
+      });
+      
+      const productionUrl = `https://textami.vercel.app${window.location.pathname}${window.location.search}`;
+      window.location.href = productionUrl;
+      return;
+    }
+
     try {
       const endpoint = flow === 'signin' ? '/api/auth/google/signin' : '/api/auth/google';
       const method = flow === 'signin' ? 'POST' : 'GET';
