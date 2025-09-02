@@ -26,8 +26,14 @@ export function storeOAuthState(state: string, flow: 'signin' | 'connect', userI
   
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(oauthState));
+    console.log('✅ OAuth state stored in localStorage:', {
+      state: state.substring(0, 10) + '...',
+      flow,
+      hasUserId: !!userId,
+      timestamp: new Date(oauthState.timestamp).toISOString()
+    });
   } catch (error) {
-    console.warn('Failed to store OAuth state in localStorage:', error);
+    console.warn('❌ Failed to store OAuth state in localStorage:', error);
   }
 }
 
@@ -39,24 +45,42 @@ export function getOAuthState(expectedState: string): OAuthState | null {
   
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
+    console.log('🔍 Retrieving OAuth state from localStorage:', {
+      hasStored: !!stored,
+      expectedState: expectedState?.substring(0, 10) + '...'
+    });
+    
     if (!stored) return null;
     
     const oauthState: OAuthState = JSON.parse(stored);
     
     // Check expiry
-    if (Date.now() - oauthState.timestamp > STATE_EXPIRY_MS) {
+    const isExpired = Date.now() - oauthState.timestamp > STATE_EXPIRY_MS;
+    if (isExpired) {
+      console.warn('⚠️ OAuth state expired, clearing:', {
+        age: Math.round((Date.now() - oauthState.timestamp) / 1000) + 's',
+        maxAge: Math.round(STATE_EXPIRY_MS / 1000) + 's'
+      });
       clearOAuthState();
       return null;
     }
     
     // Validate state token
-    if (oauthState.state !== expectedState) {
+    const stateMatches = oauthState.state === expectedState;
+    console.log('🔍 OAuth state validation:', {
+      stored: oauthState.state?.substring(0, 10) + '...',
+      expected: expectedState?.substring(0, 10) + '...',
+      matches: stateMatches,
+      flow: oauthState.flow
+    });
+    
+    if (!stateMatches) {
       return null;
     }
     
     return oauthState;
   } catch (error) {
-    console.warn('Failed to retrieve OAuth state from localStorage:', error);
+    console.warn('❌ Failed to retrieve OAuth state from localStorage:', error);
     clearOAuthState();
     return null;
   }

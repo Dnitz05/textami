@@ -14,13 +14,23 @@ export async function GET(request: NextRequest) {
 }
 
 export async function HEAD(request: NextRequest) {
-  // HEAD requests should not process OAuth, just return OK
+  // HEAD requests are Next.js prefetch/health checks - return 200 without processing
   const clientIp = request.headers.get('x-forwarded-for') || 'unknown';
-  log.warn('HEAD request to OAuth callback - returning 200 without processing:', {
+  log.debug('✅ HEAD request to OAuth callback (Next.js prefetch) - returning 200:', {
     ip: clientIp,
-    url: request.url
+    url: request.url,
+    userAgent: request.headers.get('user-agent')?.substring(0, 50),
+    referer: request.headers.get('referer')
   });
-  return new Response(null, { status: 200 });
+  
+  return new Response(null, { 
+    status: 200,
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    }
+  });
 }
 
 async function handleOAuthCallback(request: NextRequest) {

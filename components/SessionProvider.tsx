@@ -45,7 +45,10 @@ export default function SessionProvider({
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Handle OAuth callback if present
+    // Handle OAuth callback if present with debug logging
+    if (typeof window !== 'undefined') {
+      console.log('🔍 SessionProvider: Checking for OAuth callback...');
+    }
     handleOAuthCallback()
 
     // Get initial session
