@@ -9,19 +9,16 @@ import { log } from '@/lib/logger';
 // GET /api/auth/google - Secure Google OAuth initiation
 export async function GET(request: NextRequest) {
   try {
-    // 1. Validate user session
-    const { user, error: authError, response: authResponse } = await validateUserSession(
+    // 1. Allow unauthenticated access for OAuth initiation
+    const { user } = await validateUserSession(
       request,
-      { logAccess: true }
+      { allowAnonymous: true, logAccess: true }
     );
-    
-    if (authError || !user) {
-      return authResponse!;
-    }
 
-    // 2. Rate limiting - prevent OAuth spam
+    // 2. Use IP for rate limiting if no user
+    const rateLimitId = user?.id || request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'anonymous';
     const { allowed, response: rateLimitResponse } = checkRateLimit(
-      user.id,
+      rateLimitId,
       3, // 3 OAuth attempts per hour
       3600000
     );
@@ -37,19 +34,21 @@ export async function GET(request: NextRequest) {
     const authUrl = getGoogleAuthUrl();
     
     log.info('Google OAuth initiated:', {
-      userId: user.id.substring(0, 8) + '...',
+      userId: user ? user.id.substring(0, 8) + '...' : 'anonymous',
       ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
     });
 
     // 5. Store secure session data for callback
     const response = NextResponse.redirect(authUrl);
-    response.cookies.set('google_auth_user_id', user.id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 10, // 10 minutes
-      sameSite: 'lax',
-      path: '/api/auth/google'
-    });
+    if (user) {
+      response.cookies.set('google_auth_user_id', user.id, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 10, // 10 minutes
+        sameSite: 'lax',
+        path: '/api/auth/google'
+      });
+    }
     response.cookies.set('google_auth_state', stateToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
