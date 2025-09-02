@@ -61,13 +61,24 @@ export async function GET(request: NextRequest) {
 
     // Check if this is a signin flow (no existing user session)
     const isSigninFlow = !userId && signinState;
+    let treatAsSigninFlow: boolean = !!isSigninFlow;
 
     if (!userId && !isSigninFlow) {
-      log.error('No user ID found in OAuth session:', { ip: clientIp });
-      // Allow sign-in flow to proceed even without user ID if state matches
+      // Since we now allow anonymous OAuth initiation, treat this as signin flow if state is valid
       if (storedState && storedState === state) {
-        log.info('Allowing sign-in flow without user ID due to valid state match:', { ip: clientIp });
+        log.info('Treating anonymous OAuth as signin flow due to valid state match:', { ip: clientIp });
+        treatAsSigninFlow = true; // Treat as sign-in flow if state matches
       } else {
+        log.error('No user ID found in OAuth session and invalid state:', { ip: clientIp });
+        log.warn('Session expired or invalid, redirecting to error page with detailed diagnostics:', { 
+          ip: clientIp, 
+          cookiesPresent: {
+            google_auth_user_id: !!userId,
+            google_auth_state: !!storedState,
+            google_signin_state: !!signinState
+          },
+          cookiesReceived: cookieStore.getAll().map(c => ({ name: c.name, value: c.value ? 'present' : 'empty' }))
+        });
         return NextResponse.redirect(
           new URL('/dashboard?google_auth=error&message=Session_expired', request.url)
         );
@@ -120,7 +131,7 @@ export async function GET(request: NextRequest) {
       // 8. Handle user authentication/creation based on flow type
       let finalUserId: string = userId || '';
 
-      if (isSigninFlow) {
+      if (treatAsSigninFlow) {
         // For signin flow, create or authenticate user with Supabase
         log.debug('Processing signin flow - creating/authenticating user:', {
           googleEmail: profile.email
@@ -236,7 +247,7 @@ export async function GET(request: NextRequest) {
       );
 
       // For signin flow, create proper Supabase session cookies
-      if (isSigninFlow && finalUserId) {
+      if (treatAsSigninFlow && finalUserId) {
         // Create a simple session token (this is a simplified approach)
         response.cookies.set('sb-user-id', finalUserId, {
           httpOnly: true,

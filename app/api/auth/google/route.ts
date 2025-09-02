@@ -44,17 +44,17 @@ export async function GET(request: NextRequest) {
       response.cookies.set('google_auth_user_id', user.id, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 10, // 10 minutes
-        sameSite: 'lax',
-        path: '/api/auth/google'
+        maxAge: 60 * 60, // 1 hour
+        sameSite: 'none',
+        path: '/'
       });
     }
     response.cookies.set('google_auth_state', stateToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 10, // 10 minutes
-      sameSite: 'lax',
-      path: '/api/auth/google'
+      maxAge: 60 * 60, // 1 hour
+      sameSite: 'none',
+      path: '/'
     });
 
     return response;
