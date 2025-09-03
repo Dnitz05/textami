@@ -353,7 +353,7 @@ async function handleOAuthCallback(request: NextRequest) {
         ip: clientIp
       });
       
-      await initializeGoogleConnection(actualFinalUserId, tokens);
+      await initializeGoogleConnection(actualFinalUserId, tokens, profile.email);
 
       // 10. Set up proper session and clean up temporary cookies
       const response = NextResponse.redirect(

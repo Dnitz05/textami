@@ -33,7 +33,8 @@ interface StoredGoogleTokens extends GoogleAuthTokens {
 // Save Google tokens to Supabase (encrypted)
 export async function saveGoogleTokens(
   userId: string, 
-  tokens: GoogleAuthTokens
+  tokens: GoogleAuthTokens,
+  email?: string
 ): Promise<void> {
   try {
     // 🚨 CRITICAL VALIDATION
@@ -66,13 +67,16 @@ export async function saveGoogleTokens(
       });
 
       // Create profile if it doesn't exist
+      const profileData = {
+        id: userId,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        ...(email && { email })
+      };
+
       const { error: insertError } = await getSupabaseClient()
         .from('profiles')
-        .insert({
-          id: userId,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        });
+        .insert(profileData);
 
       if (insertError) {
         log.error('❌ Failed to create user profile:', {
@@ -293,10 +297,11 @@ export async function getGoogleConnectionStatus(userId: string): Promise<{
   }
 }
 
-// Initialize Google connection for user (after OAuth flow)
+ // Initialize Google connection for user (after OAuth flow)
 export async function initializeGoogleConnection(
   userId: string,
-  tokens: GoogleAuthTokens
+  tokens: GoogleAuthTokens,
+  email?: string
 ): Promise<void> {
   try {
     // 🚨 CRITICAL VALIDATION
@@ -316,7 +321,7 @@ export async function initializeGoogleConnection(
     });
 
     // Save initial tokens (this handles profile creation if needed)
-    await saveGoogleTokens(userId, tokens);
+    await saveGoogleTokens(userId, tokens, email);
     
     log.info('✅ Google connection initialized successfully:', {
       userId: userId.substring(0, 8) + '...'
