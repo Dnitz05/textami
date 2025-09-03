@@ -12,8 +12,8 @@ export function getVercelDomain(request: NextRequest): string {
   const vercelUrl = request.headers.get('x-vercel-deployment-url');
   const forwardedHost = request.headers.get('x-forwarded-host');
   
-  // For production, prefer textami.vercel.app
-  if (host?.includes('textami.vercel.app') && !host.includes('git-')) {
+  // For production, prefer docmile.com
+  if (host?.includes('docmile.com') && !host.includes('git-')) {
     return `https://${host}`;
   }
   
@@ -33,7 +33,7 @@ export function getVercelDomain(request: NextRequest): string {
   }
   
   // Default fallback
-  return 'https://textami.vercel.app';
+  return 'https://docmile.com';
 }
 
 /**
@@ -74,7 +74,7 @@ export function isVercelPreview(request: NextRequest): boolean {
   return (
     host.includes('git-') || 
     vercelUrl.includes('git-') ||
-    (host.includes('vercel.app') && !host.includes('textami.vercel.app'))
+    (host.includes('vercel.app') && !host.includes('docmile.com'))
   );
 }
 

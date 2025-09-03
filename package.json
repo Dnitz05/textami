@@ -1,5 +1,5 @@
 {
-  "name": "textami",
+  "name": "docmile",
   "version": "0.1.0-ai-first",
   "description": "AI-first document generator powered by GPT-5 Vision",
   "author": {
@@ -10,7 +10,7 @@
   "license": "UNLICENSED",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Dnitz05/textami.git"
+    "url": "https://github.com/Dnitz05/docmile.git"
   },
   "scripts": {
     "dev": "next dev --turbo",

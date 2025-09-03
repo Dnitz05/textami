@@ -51,12 +51,12 @@ async function handleOAuthCallback(request: NextRequest) {
     
     if (!allowed) {
       log.warn('OAuth callback rate limit exceeded:', { ip: clientIp });
-      return NextResponse.redirect(
-        createOAuthRedirectUrl(request, '/dashboard', {
-          google_auth: 'error',
-          message: 'Too_many_attempts'
-        })
-      );
+        return NextResponse.redirect(
+          createOAuthRedirectUrl(request, '/dashboard', {
+            google_auth: 'error',
+            message: 'Too many attempts'
+          })
+        );
     }
 
     // 2. Extract and validate callback parameters
@@ -115,8 +115,8 @@ async function handleOAuthCallback(request: NextRequest) {
       });
       
       const errorMessage = error === 'access_denied' 
-        ? 'User_cancelled_authentication'
-        : 'Invalid_callback_parameters';
+        ? 'User cancelled authentication'
+        : 'Invalid callback parameters';
         
       return NextResponse.redirect(
         createOAuthRedirectUrl(request, '/dashboard', {
@@ -214,7 +214,7 @@ async function handleOAuthCallback(request: NextRequest) {
       return NextResponse.redirect(
         createOAuthRedirectUrl(request, '/dashboard', {
           google_auth: 'error',
-          message: 'Session_expired'
+          message: 'Session expired'
         })
       );
     }
@@ -236,12 +236,12 @@ async function handleOAuthCallback(request: NextRequest) {
         hasCallbackState: !!state,
         isSigninFlow
       });
-      return NextResponse.redirect(
-        createOAuthRedirectUrl(request, '/dashboard', {
-          google_auth: 'error',
-          message: 'Security_validation_failed'
-        })
-      );
+        return NextResponse.redirect(
+          createOAuthRedirectUrl(request, '/dashboard', {
+            google_auth: 'error',
+            message: 'Security validation failed'
+          })
+        );
     }
 
     try {
@@ -270,7 +270,10 @@ async function handleOAuthCallback(request: NextRequest) {
         });
         
         return NextResponse.redirect(
-          new URL('/dashboard?google_auth=error&message=Email_not_verified', request.url)
+          createOAuthRedirectUrl(request, '/dashboard', {
+            google_auth: 'error',
+            message: 'Email not verified'
+          })
         );
       }
 
@@ -336,7 +339,10 @@ async function handleOAuthCallback(request: NextRequest) {
                 googleEmail: profile.email
               });
               return NextResponse.redirect(
-                new URL('/dashboard?google_auth=error&message=User_creation_failed', request.url)
+                createOAuthRedirectUrl(request, '/dashboard', {
+                  google_auth: 'error',
+                  message: 'User creation failed'
+                })
               );
             }
 
@@ -350,7 +356,10 @@ async function handleOAuthCallback(request: NextRequest) {
           if (!userData?.user?.id) {
             log.error('No user ID available after Google signin:', { googleEmail: profile.email });
             return NextResponse.redirect(
-              new URL('/dashboard?google_auth=error&message=User_creation_failed', request.url)
+              createOAuthRedirectUrl(request, '/dashboard', {
+                google_auth: 'error',
+                message: 'User creation failed'
+              })
             );
           }
 
@@ -374,7 +383,10 @@ async function handleOAuthCallback(request: NextRequest) {
             googleEmail: profile.email
           });
           return NextResponse.redirect(
-            new URL('/dashboard?google_auth=error&message=Authentication_failed', request.url)
+            createOAuthRedirectUrl(request, '/dashboard', {
+              google_auth: 'error',
+              message: 'Authentication failed'
+            })
           );
         }
       }
@@ -391,7 +403,7 @@ async function handleOAuthCallback(request: NextRequest) {
         return NextResponse.redirect(
           createOAuthRedirectUrl(request, '/dashboard', {
             google_auth: 'error',
-            message: 'User_creation_failed'
+            message: 'User creation failed'
           })
         );
       }
@@ -406,7 +418,7 @@ async function handleOAuthCallback(request: NextRequest) {
         return NextResponse.redirect(
           createOAuthRedirectUrl(request, '/dashboard', {
             google_auth: 'error',
-            message: 'Invalid_tokens'
+            message: 'Invalid tokens'
           })
         );
       }
@@ -464,7 +476,10 @@ async function handleOAuthCallback(request: NextRequest) {
       
       // Clear temporary cookies securely
       const response = NextResponse.redirect(
-        new URL(`/dashboard?google_auth=error&message=${encodeURIComponent('Authentication_failed')}`, request.url)
+        createOAuthRedirectUrl(request, '/dashboard', {
+          google_auth: 'error',
+          message: 'Authentication failed'
+        })
       );
       response.cookies.delete('google_auth_user_id');
       response.cookies.delete('google_auth_state');
@@ -481,7 +496,10 @@ async function handleOAuthCallback(request: NextRequest) {
     
     // Clear temporary cookies in case of error
     const response = NextResponse.redirect(
-      new URL('/dashboard?google_auth=error&message=Unexpected_error', request.url)
+      createOAuthRedirectUrl(request, '/dashboard', {
+        google_auth: 'error',
+        message: 'Unexpected error'
+      })
     );
     response.cookies.delete('google_auth_user_id');
     response.cookies.delete('google_auth_state');

@@ -5,7 +5,7 @@ import { GoogleAuthTokens, GoogleUserProfile, GOOGLE_SCOPES } from './types';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
 // 🚨 CRITICAL: ALWAYS use production domain for OAuth callback
-const REDIRECT_URI = 'https://textami.vercel.app/api/auth/google/callback';
+const REDIRECT_URI = 'https://docmile.com/api/auth/google/callback';
 
 // Initialize OAuth2 Client
 export function createGoogleOAuth2Client(): OAuth2Client {
