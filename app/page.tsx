@@ -29,9 +29,9 @@ export default function LandingPage() {
             {/* Logo */}
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">T</span>
+                <span className="text-white font-bold text-lg">D</span>
               </div>
-              <span className="text-2xl font-bold text-blue-600">textami</span>
+              <span className="text-2xl font-bold text-blue-600">DocMile</span>
             </div>
 
             {/* Auth Buttons */}
@@ -129,7 +129,7 @@ export default function LandingPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4">
             <div className="flex justify-between items-center p-6 border-b">
-              <h2 className="text-xl font-semibold text-gray-900">Comença amb Textami</h2>
+              <h2 className="text-xl font-semibold text-gray-900">Comença amb DocMile</h2>
               <button
                 onClick={() => setShowAuthForm(false)}
                 className="text-gray-400 hover:text-gray-600"

@@ -194,7 +194,7 @@ export default function Dashboard() {
             <span className="text-blue-600 font-medium">🧠 Powered by GPT-5</span>
             <span className="text-purple-600 font-medium">⚡ Zero Configuration</span>
           </div>
-          <p className="mt-4">© 2025 Textami - Document Intelligence Platform</p>
+          <p className="mt-4">© 2025 DocMile - Document Intelligence Platform</p>
         </footer>
       </div>
 

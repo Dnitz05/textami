@@ -178,9 +178,9 @@ function AdvancedGeneratorContent() {
         <div className="p-4 border-b">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white text-sm font-bold">T</span>
+              <span className="text-white text-sm font-bold">D</span>
             </div>
-            <span className="font-semibold text-gray-900">Textami AI</span>
+            <span className="font-semibold text-gray-900">DocMile AI</span>
           </div>
           
           {/* Tab Navigation */}

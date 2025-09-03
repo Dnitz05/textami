@@ -110,9 +110,9 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
             <Link href={isAuthenticated ? "/dashboard" : "/"} className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">T</span>
+                  <span className="text-white font-bold text-lg">D</span>
                 </div>
-                <span className="text-2xl font-bold text-blue-600">textami</span>
+                <span className="text-2xl font-bold text-blue-600">DocMile</span>
               </div>
             </Link>
           </div>

@@ -554,7 +554,7 @@ export default function GeneratorPage() {
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-16">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            🧠 Textami AI Generator
+            🧠 DocMile AI Generator
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             GPT-5 Vision analitza documents, Excel intelligence, i genera amb format preservation perfecte

@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Textami - Generador Professional de Documents",
+  title: "DocMile - Generador Professional de Documents",
   description: "Transforma plantilles Word i dades Excel en documents personalitzats amb qualitat professional",
   keywords: ["documents", "word", "excel", "plantilles", "generador"],
   authors: [{ name: "Aitor Gilabert Juan" }],
