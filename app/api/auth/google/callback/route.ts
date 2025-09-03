@@ -126,90 +126,21 @@ async function handleOAuthCallback(request: NextRequest) {
       );
     }
 
-    // 5. Validate session cookies and CSRF state with localStorage fallback
+    // 5. Validate session cookies and CSRF state
     const cookieStore = await cookies();
     const userId = cookieStore.get('google_auth_user_id')?.value;
     const signinState = cookieStore.get('google_signin_state')?.value;
     const storedState = cookieStore.get('google_auth_state')?.value || signinState;
 
-    // 🚨 CRITICAL FALLBACK: Use URL state when cookies are missing
-    let localStorageState: string | undefined;
-    let localStorageUserId: string | undefined;
-    let localStorageFlow: 'signin' | 'connect' | undefined;
-    
-    // ALWAYS check URL fallback parameters for cross-domain compatibility
-    const lsState = url.searchParams.get('ls_state');
-    const lsUserId = url.searchParams.get('ls_user_id'); 
-    const lsFlow = url.searchParams.get('ls_flow') as 'signin' | 'connect' | undefined;
-    
-    if (lsState && state && lsState === state) {
-      localStorageState = lsState;
-      localStorageUserId = lsUserId || undefined;
-      localStorageFlow = lsFlow;
-      
-      log.info('✅ Using URL fallback for OAuth state (CRITICAL FIX):', {
-        ip: clientIp,
-        hasUserId: !!localStorageUserId,
-        flow: localStorageFlow,
-        stateMatches: true
-      });
-    }
-
-    // If no cookies but we have valid URL state, use it
-    if (!storedState && localStorageState) {
-      log.warn('🔄 No cookies found, using URL state fallback:', {
-        ip: clientIp,
-        cookieState: !!storedState,
-        urlState: !!localStorageState,
-        hasUserId: !!localStorageUserId
-      });
-    }
-    
-    const finalStoredState = storedState || localStorageState;
-    const finalUserId = userId || localStorageUserId;
-
-    // 🚨 CRITICAL DEBUG LOGGING FOR STATE VALIDATION
-    log.info('🔍 OAUTH STATE VALIDATION DEBUG:', {
-      ip: clientIp,
-      callbackState: state,
-      storedState: storedState,
-      localStorageState: localStorageState,
-      finalStoredState: finalStoredState,
-      statesMatch: finalStoredState === state,
-      stateComparison: {
-        stored: finalStoredState ? finalStoredState.substring(0, 10) + '...' : 'NULL',
-        callback: state ? state.substring(0, 10) + '...' : 'NULL',
-        lengthMatch: finalStoredState?.length === state?.length,
-        exactMatch: finalStoredState === state
-      },
-      cookieData: {
-        hasUserId: !!userId,
-        hasSigninState: !!signinState,
-        hasAuthState: !!storedState,
-        allCookiesCount: cookieStore.getAll().length
-      },
-      localStorageData: {
-        hasLSState: !!localStorageState,
-        hasLSUserId: !!localStorageUserId,
-        lsFlow: localStorageFlow
-      },
-      domainInfo: {
-        host: request.headers.get('host'),
-        origin: request.headers.get('origin'),
-        referrer: request.headers.get('referer')
-      }
-    });
-
     // Check if this is a signin flow - prioritize signin state or no user ID as signin
-    const isSigninFlow = !finalUserId || !!signinState || localStorageFlow === 'signin';
-    let treatAsSigninFlow: boolean = isSigninFlow;
+    const isSigninFlow = !userId || !!signinState;
 
-    // For signin flows without cookies (cross-domain issues), validate with state token
-    if (!finalUserId && !signinState && !finalStoredState) {
-      log.error('No cookies or state found - possible cross-domain issue:', { 
+    // Validate state token for CSRF protection
+    if (!storedState) {
+      log.error('No OAuth state found in cookies:', { 
         ip: clientIp,
-        allCookies: cookieStore.getAll().map(c => ({ name: c.name, hasValue: !!c.value })),
-        hasLocalStorageFallback: !!localStorageState
+        hasSigninState: !!signinState,
+        allCookiesCount: cookieStore.getAll().length
       });
       return NextResponse.redirect(
         createOAuthRedirectUrl(request, '/dashboard', {
@@ -219,16 +150,7 @@ async function handleOAuthCallback(request: NextRequest) {
       );
     }
 
-    // If we have a valid state but no user ID, treat as signin flow
-    if (!finalUserId && finalStoredState && finalStoredState === state) {
-      log.info('Treating OAuth as signin flow due to missing user ID but valid state:', { 
-        ip: clientIp,
-        usingLocalStorage: !!localStorageState
-      });
-      treatAsSigninFlow = true;
-    }
-
-    if (!finalStoredState || finalStoredState !== state) {
+    if (storedState !== state) {
       log.error('CSRF state validation failed:', { 
         userId: userId ? userId.substring(0, 8) + '...' : 'signin-flow',
         ip: clientIp,
@@ -278,9 +200,9 @@ async function handleOAuthCallback(request: NextRequest) {
       }
 
       // 8. Handle user authentication/creation based on flow type
-      let actualFinalUserId: string = finalUserId || '';
+      let actualFinalUserId: string = userId || '';
 
-      if (treatAsSigninFlow) {
+      if (isSigninFlow) {
         // For signin flow, create or authenticate user with Supabase
         log.debug('Processing signin flow - creating/authenticating user:', {
           googleEmail: profile.email
@@ -396,7 +318,7 @@ async function handleOAuthCallback(request: NextRequest) {
       if (!actualFinalUserId || actualFinalUserId.trim() === '') {
         log.error('❌ CRITICAL: No valid userId for token storage:', {
           actualFinalUserId,
-          treatAsSigninFlow,
+          isSigninFlow,
           ip: clientIp,
           googleEmail: profile.email
         });
@@ -427,7 +349,7 @@ async function handleOAuthCallback(request: NextRequest) {
         userId: actualFinalUserId.substring(0, 8) + '...',
         googleEmail: profile.email,
         hasValidTokens: !!tokens.access_token,
-        treatAsSigninFlow,
+        isSigninFlow,
         ip: clientIp
       });
       
@@ -441,7 +363,7 @@ async function handleOAuthCallback(request: NextRequest) {
       );
 
       // For signin flow, create proper Supabase session cookies
-      if (treatAsSigninFlow && actualFinalUserId) {
+      if (isSigninFlow && actualFinalUserId) {
         // Create a simple session token (this is a simplified approach)
         response.cookies.set('sb-user-id', actualFinalUserId, {
           httpOnly: true,
@@ -461,8 +383,7 @@ async function handleOAuthCallback(request: NextRequest) {
         userId: actualFinalUserId.substring(0, 8) + '...',
         googleEmail: profile.email,
         ip: clientIp,
-        isSigninFlow,
-        usedLocalStorageFallback: !!localStorageState
+        isSigninFlow
       });
 
       return response;

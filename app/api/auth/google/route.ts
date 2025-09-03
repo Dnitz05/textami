@@ -41,16 +41,14 @@ export async function GET(request: NextRequest) {
     // 5. Store secure session data for callback with improved security
     const response = NextResponse.redirect(authUrl);
     
-    // 🚨 CRITICAL: Cross-site cookie settings for Google OAuth redirects
+    // Standard cookie settings for docmile.com domain
     const isProduction = process.env.NODE_ENV === 'production';
     const cookieConfig = {
       httpOnly: true,
       secure: isProduction,
       maxAge: 60 * 10, // 10 minutes
-      // CRITICAL: Use 'none' in production for cross-site inclusion from Google
-      sameSite: isProduction ? 'none' as const : 'lax' as const,
-      path: '/',
-      ...(isProduction && { domain: '.docmile.com' }) // Share across docmile.com subdomains
+      sameSite: 'lax' as const, // Standard setting for same-domain OAuth
+      path: '/'
     };
     
     if (user) {

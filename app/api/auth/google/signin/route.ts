@@ -27,16 +27,14 @@ export async function GET(request: NextRequest) {
     // Create response with redirect
     const response = NextResponse.redirect(googleAuthUrl);
     
-    // 🚨 CRITICAL: Cross-site cookie settings for Google OAuth redirects
+    // Standard cookie settings for docmile.com domain
     const isProduction = process.env.NODE_ENV === 'production';
     response.cookies.set('google_signin_state', stateToken, {
       httpOnly: true,
       secure: isProduction,
       maxAge: 60 * 10, // 10 minutes
-      // CRITICAL: Use 'none' in production for cross-site inclusion from Google
-      sameSite: isProduction ? 'none' as const : 'lax' as const,
-      path: '/',
-      ...(isProduction && { domain: '.vercel.app' }) // Share across Vercel subdomains
+      sameSite: 'lax' as const, // Standard setting for same-domain OAuth
+      path: '/'
     });
 
     return response;

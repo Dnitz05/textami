@@ -5,7 +5,9 @@ import { GoogleAuthTokens, GoogleUserProfile, GOOGLE_SCOPES } from './types';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
 // 🚨 CRITICAL: ALWAYS use production domain for OAuth callback
-const REDIRECT_URI = 'https://docmile.com/api/auth/google/callback';
+// Use environment variable if available, otherwise default to docmile.com
+const BASE_DOMAIN = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'docmile.com';
+const REDIRECT_URI = `https://${BASE_DOMAIN}/api/auth/google/callback`;
 
 // Initialize OAuth2 Client
 export function createGoogleOAuth2Client(): OAuth2Client {
