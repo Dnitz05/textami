@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
       // CRITICAL: Use 'none' in production for cross-site inclusion from Google
       sameSite: isProduction ? 'none' as const : 'lax' as const,
       path: '/',
-      ...(isProduction && { domain: '.vercel.app' }) // Share across Vercel subdomains
+      ...(isProduction && { domain: '.docmile.com' }) // Share across docmile.com subdomains
     };
     
     if (user) {
