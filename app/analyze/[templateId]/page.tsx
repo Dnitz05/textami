@@ -72,53 +72,6 @@ export default async function DynamicAnalyzePage({ params }: PageProps) {
     }
   }, [isAuthenticated, authLoading, router]);
 
-  // 🧠 ULTRA-SMART: Load template data based on type and templateId
-  useEffect(() => {
-    let isMounted = true;
-    
-    const loadTemplateData = async () => {
-      if (!isMounted) return;
-      
-      const { templateId } = resolvedParams;
-      
-      // Try to load from saved templates first
-      const loadedTemplate = sessionStorage.getItem('loadedTemplate');
-      if (loadedTemplate && isMounted) {
-        try {
-          const template = JSON.parse(loadedTemplate);
-          setAnalysisData(template.analysisData);
-          setExcelHeaders(template.excelHeaders);
-          setPipelineStatus('frozen');
-          sessionStorage.removeItem('loadedTemplate');
-          log.debug('✅ Template loaded from session:', template.name);
-          return;
-        } catch (error) {
-          log.error('❌ Error loading template from session:', error);
-        }
-      }
-
-      // 🔄 Handle different template types
-      if (isMounted && templateType === 'google-docs') {
-        await loadGoogleDocsTemplate(templateId);
-      } else if (isMounted && templateType === 'docx') {
-        await loadDocxTemplate(templateId);
-      }
-    };
-
-    if (templateType !== 'unknown') {
-      loadTemplateData().catch(error => {
-        if (isMounted) {
-          log.error('❌ Template loading failed:', error);
-          setError(error instanceof Error ? error.message : 'Template loading failed');
-        }
-      });
-    }
-
-    return () => {
-      isMounted = false;
-    };
-  }, [templateType, resolvedParams.templateId, loadGoogleDocsTemplate, loadDocxTemplate]);
-
   // 📄 Load Google Docs template
   const loadGoogleDocsTemplate = useCallback(async (templateId: string) => {
     const selectedGoogleFile = sessionStorage.getItem('selectedGoogleFile');
@@ -290,6 +243,53 @@ export default async function DynamicAnalyzePage({ params }: PageProps) {
       setIsAnalyzing(false);
     }
   }, [setAnalysisData, setPipelineStatus, setError, setIsAnalyzing, setOriginalFileName]);
+
+  // 🧠 ULTRA-SMART: Load template data based on type and templateId
+  useEffect(() => {
+    let isMounted = true;
+    
+    const loadTemplateData = async () => {
+      if (!isMounted) return;
+      
+      const { templateId } = resolvedParams;
+      
+      // Try to load from saved templates first
+      const loadedTemplate = sessionStorage.getItem('loadedTemplate');
+      if (loadedTemplate && isMounted) {
+        try {
+          const template = JSON.parse(loadedTemplate);
+          setAnalysisData(template.analysisData);
+          setExcelHeaders(template.excelHeaders);
+          setPipelineStatus('frozen');
+          sessionStorage.removeItem('loadedTemplate');
+          log.debug('✅ Template loaded from session:', template.name);
+          return;
+        } catch (error) {
+          log.error('❌ Error loading template from session:', error);
+        }
+      }
+
+      // 🔄 Handle different template types
+      if (isMounted && templateType === 'google-docs') {
+        await loadGoogleDocsTemplate(templateId);
+      } else if (isMounted && templateType === 'docx') {
+        await loadDocxTemplate(templateId);
+      }
+    };
+
+    if (templateType !== 'unknown') {
+      loadTemplateData().catch(error => {
+        if (isMounted) {
+          log.error('❌ Template loading failed:', error);
+          setError(error instanceof Error ? error.message : 'Template loading failed');
+        }
+      });
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [templateType, resolvedParams.templateId, loadGoogleDocsTemplate, loadDocxTemplate]);
 
   const handleSaveAsTemplate = () => {
     setShowSaveTemplateDialog(true);
