@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 // Force dynamic rendering to avoid SSR issues with Supabase
 export const dynamic = 'force-dynamic';
@@ -74,12 +74,16 @@ export default async function DynamicAnalyzePage({ params }: PageProps) {
 
   // 🧠 ULTRA-SMART: Load template data based on type and templateId
   useEffect(() => {
+    let isMounted = true;
+    
     const loadTemplateData = async () => {
+      if (!isMounted) return;
+      
       const { templateId } = resolvedParams;
       
       // Try to load from saved templates first
       const loadedTemplate = sessionStorage.getItem('loadedTemplate');
-      if (loadedTemplate) {
+      if (loadedTemplate && isMounted) {
         try {
           const template = JSON.parse(loadedTemplate);
           setAnalysisData(template.analysisData);
@@ -94,20 +98,29 @@ export default async function DynamicAnalyzePage({ params }: PageProps) {
       }
 
       // 🔄 Handle different template types
-      if (templateType === 'google-docs') {
+      if (isMounted && templateType === 'google-docs') {
         await loadGoogleDocsTemplate(templateId);
-      } else if (templateType === 'docx') {
+      } else if (isMounted && templateType === 'docx') {
         await loadDocxTemplate(templateId);
       }
     };
 
     if (templateType !== 'unknown') {
-      loadTemplateData();
+      loadTemplateData().catch(error => {
+        if (isMounted) {
+          log.error('❌ Template loading failed:', error);
+          setError(error instanceof Error ? error.message : 'Template loading failed');
+        }
+      });
     }
-  }, [templateType, resolvedParams.templateId]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [templateType, resolvedParams.templateId, loadGoogleDocsTemplate, loadDocxTemplate]);
 
   // 📄 Load Google Docs template
-  const loadGoogleDocsTemplate = async (templateId: string) => {
+  const loadGoogleDocsTemplate = useCallback(async (templateId: string) => {
     const selectedGoogleFile = sessionStorage.getItem('selectedGoogleFile');
     
     if (selectedGoogleFile) {
@@ -181,10 +194,10 @@ export default async function DynamicAnalyzePage({ params }: PageProps) {
       log.warn('⚠️ No Google file data found for template:', templateId);
       router.push('/google/select');
     }
-  };
+  }, [router]);
 
   // 📄 Load DOCX template
-  const loadDocxTemplate = async (templateId: string) => {
+  const loadDocxTemplate = useCallback(async (templateId: string) => {
     const selectedFile = sessionStorage.getItem('selectedFile');
     const selectedFileContent = sessionStorage.getItem('selectedFileContent');
     
@@ -223,10 +236,10 @@ export default async function DynamicAnalyzePage({ params }: PageProps) {
       log.warn('⚠️ No DOCX file data found for template:', templateId);
       router.push('/dashboard');
     }
-  };
+  }, [router]);
 
   // 🔧 Perform DOCX analysis
-  const performDocxAnalysis = async (file: File, templateId: string) => {
+  const performDocxAnalysis = useCallback(async (file: File, templateId: string) => {
     setIsAnalyzing(true);
     setError(null);
     setOriginalFileName(file.name);
@@ -276,7 +289,7 @@ export default async function DynamicAnalyzePage({ params }: PageProps) {
     } finally {
       setIsAnalyzing(false);
     }
-  };
+  }, [setAnalysisData, setPipelineStatus, setError, setIsAnalyzing, setOriginalFileName]);
 
   const handleSaveAsTemplate = () => {
     setShowSaveTemplateDialog(true);
