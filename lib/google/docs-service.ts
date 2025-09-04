@@ -139,13 +139,26 @@ class GoogleDocsService {
     cleaningOptions?: CleaningOptions
   ): Promise<GoogleDocsExportResult> {
     try {
+      console.log('🔍 Making Google Docs API request:', { documentId });
+      
       const response = await this.docsClient.documents.get({
         documentId,
         includeTabsContent: true,
       });
 
+      console.log('📊 Google Docs API Response:', {
+        hasResponse: !!response,
+        hasData: !!response.data,
+        status: response.status,
+        statusText: response.statusText,
+        dataKeys: response.data ? Object.keys(response.data) : [],
+        title: response.data?.title,
+        documentId: response.data?.documentId,
+        revisionId: response.data?.revisionId
+      });
+
       if (!response.data) {
-        throw new Error('No document data received');
+        throw new Error('No document data received from Google Docs API');
       }
 
       // Convert to HTML
@@ -186,18 +199,33 @@ class GoogleDocsService {
     let html = '<div class="google-doc">\n';
 
     // Enhanced debugging for empty document issue
-    console.log('🔍 Google Docs API Response Debug:', {
+    console.log('🔍 Google Docs Document Structure Debug:', {
       hasDocument: !!document,
+      documentKeys: document ? Object.keys(document) : [],
       hasBody: !!document.body,
+      bodyKeys: document.body ? Object.keys(document.body) : [],
       hasBodyContent: !!document.body?.content,
       bodyContentLength: document.body?.content?.length || 0,
       documentTitle: document.title || 'No title',
-      bodyContentTypes: document.body?.content?.map(el => Object.keys(el).filter(key => key !== 'endIndex' && key !== 'startIndex')) || []
+      documentId: document.documentId,
+      revisionId: document.revisionId,
+      bodyContentTypes: document.body?.content?.map(el => Object.keys(el).filter(key => key !== 'endIndex' && key !== 'startIndex')) || [],
+      fullBodyStructure: document.body ? JSON.stringify(document.body, null, 2).substring(0, 500) + '...' : 'No body'
     });
 
-    if (!document.body || !document.body.content) {
-      console.warn('⚠️ Google Docs document has no body or content - returning empty document placeholder');
-      return '<div class="google-doc"><p>Empty document - no content found in Google Docs API response</p></div>';
+    if (!document.body) {
+      console.error('❌ Google Docs document has no body object');
+      return '<div class="google-doc"><p>Error: Document has no body - this might be a permissions issue or the document is corrupted</p></div>';
+    }
+
+    if (!document.body.content) {
+      console.error('❌ Google Docs document body has no content array');
+      return '<div class="google-doc"><p>Error: Document body has no content - this might indicate the document is truly empty or there are access restrictions</p></div>';
+    }
+
+    if (document.body.content.length === 0) {
+      console.warn('⚠️ Google Docs document has empty content array');
+      return '<div class="google-doc"><p>Empty document - the Google Docs document contains no content elements</p></div>';
     }
 
     for (const element of document.body.content) {

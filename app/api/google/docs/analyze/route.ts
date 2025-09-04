@@ -103,7 +103,24 @@ export async function POST(request: NextRequest) {
       throw new Error(`Google Docs service initialization failed: ${serviceError instanceof Error ? serviceError.message : 'Unknown error'}`);
     }
 
-    // 6. Get document content from Google Docs API
+    // 6. Test document access first, then get full content
+    log.debug('🔍 Testing document access...');
+    
+    try {
+      // First test if we can access the document structure
+      const testStructure = await docsService.getDocumentStructure(documentId);
+      log.debug('✅ Document structure accessible:', {
+        headings: testStructure.headings.length,
+        paragraphs: testStructure.paragraphs.length,
+        tables: testStructure.tables.length,
+        images: testStructure.images.length
+      });
+    } catch (structureError) {
+      log.error('❌ Cannot access document structure:', structureError);
+      throw new Error(`Document access failed: ${structureError instanceof Error ? structureError.message : 'Document not accessible'}`);
+    }
+
+    // 7. Get document content from Google Docs API
     log.debug('📄 Fetching document content from Google Docs...');
     
     let docResult;
