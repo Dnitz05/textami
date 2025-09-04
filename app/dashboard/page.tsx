@@ -43,6 +43,11 @@ export default function Dashboard() {
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // 🎯 Generate unique templateId for DOCX
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substr(2, 9);
+      const templateId = `template_docx_${timestamp}_${random}`;
+      
       // Store the selected file in sessionStorage to pass to analyze page
       const fileData = {
         file: {
@@ -50,7 +55,8 @@ export default function Dashboard() {
           size: file.size,
           type: file.type,
           lastModified: file.lastModified
-        }
+        },
+        templateId: templateId  // 🔥 Include templateId
       };
       sessionStorage.setItem('selectedFile', JSON.stringify(fileData));
       sessionStorage.setItem('templateName', file.name.replace('.docx', ''));
@@ -64,8 +70,8 @@ export default function Dashboard() {
         
         sessionStorage.setItem('selectedFileContent', base64String);
         
-        // Navigate to analyze page
-        router.push('/analyze');
+        // 🚀 Navigate to dynamic analyze page with templateId
+        router.push(`/analyze/${templateId}`);
       };
       reader.readAsArrayBuffer(file);
     }

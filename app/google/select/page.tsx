@@ -20,16 +20,22 @@ export default function GoogleSelectPage() {
 
   const handleFileSelected = async (file: GoogleDriveFile) => {
     try {
-      // Store selected Google Drive file info
+      // 🎯 Generate unique templateId for Google Docs
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substr(2, 9);
+      const templateId = `template_gdocs_${timestamp}_${random}`;
+      
+      // Store selected Google Drive file info with templateId
       sessionStorage.setItem('selectedGoogleFile', JSON.stringify({
         id: file.id,
         name: file.name,
         mimeType: file.mimeType,
-        type: 'google-drive'
+        type: 'google-drive',
+        templateId: templateId  // 🔥 Include templateId
       }));
 
-      // Redirect to analysis page
-      router.push('/analyze');
+      // 🚀 Redirect to dynamic analysis page with templateId
+      router.push(`/analyze/${templateId}`);
     } catch (error) {
       console.error('Error processing selected file:', error);
     }
