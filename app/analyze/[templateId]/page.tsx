@@ -39,7 +39,7 @@ export default function DynamicAnalyzePage({ params }: PageProps) {
   const [generationResult, setGenerationResult] = useState<GenerationResult | null>(null);
   const [showSaveTemplateDialog, setShowSaveTemplateDialog] = useState(false);
   const [templateName, setTemplateName] = useState('');
-  const [templateDescription, setTemplateName] = useState('');
+  const [templateDescription, setTemplateDescription] = useState('');
   const [originalFileName, setOriginalFileName] = useState('');
   const [templateType, setTemplateType] = useState<'docx' | 'google-docs' | 'unknown'>('unknown');
 
