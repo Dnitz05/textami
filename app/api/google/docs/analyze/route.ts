@@ -144,10 +144,14 @@ export async function POST(request: NextRequest) {
         level: h.level,
         content: h.text
       })),
-      tables: docResult.structure.tables.map(t => ({
-        headers: t.headers || [],
-        rows: t.rows || []
-      })),
+      tables: docResult.structure.tables.map(t => {
+        const headers = t.cells?.[0]?.map(cell => cell.text) || [];
+        const rows = t.cells?.slice(1)?.map(row => row.map(cell => cell.text)) || [];
+        return {
+          headers,
+          rows
+        };
+      }),
       confidence: 1.0,
       metadata: {
         processingTimeMs: 0,
@@ -176,7 +180,14 @@ export async function POST(request: NextRequest) {
         markdown: docResult.cleanedHtml,
         placeholders: analysisResult.placeholders,
         sections: analysisResult.sections,
-        tables: analysisResult.tables,
+        tables: docResult.structure.tables.map(t => {
+          const headers = t.cells?.[0]?.map(cell => cell.text) || [];
+          const rows = t.cells?.slice(1)?.map(row => row.map(cell => cell.text)) || [];
+          return {
+            headers,
+            rows
+          };
+        }),
         // Original document metadata
         metadata: {
           originalName: docResult.metadata.name,
@@ -191,7 +202,7 @@ export async function POST(request: NextRequest) {
       templateId,
       placeholdersFound: analysisResult?.placeholders?.length || 0,
       sectionsFound: analysisResult?.sections?.length || 0,
-      tablesFound: analysisResult?.tables?.length || 0,
+      tablesFound: docResult.structure.tables.length,
       hasTranscription: !!docResult.cleanedHtml,
       contentLength: docResult.cleanedHtml?.length || 0,
     });
