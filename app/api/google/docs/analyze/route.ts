@@ -198,19 +198,20 @@ export async function POST(request: NextRequest) {
     const response = {
       success: true,
       data: {
+        // Spread analysis result first to avoid conflicts
+        ...analysisResult,
+        // Override with explicit fields needed by UI
         templateId,
         fileName: safeFileName || docResult.metadata.name,
         sourceType: 'google-docs',
         googleDocId: documentId,
-        // Essential content fields expected by UI
+        // Essential content fields expected by UI (with fallbacks)
         transcription: analysisResult.transcription || docResult.cleanedHtml || '',
         markdown: analysisResult.markdown || analysisResult.transcription || docResult.cleanedHtml || '',
         placeholders: analysisResult.placeholders || [],
         sections: analysisResult.sections || [],
         tables: analysisResult.tables || [],
         signatura: analysisResult.signatura,
-        // Spread remaining fields
-        ...analysisResult,
         // Additional metadata for UI
         processing: {
           aiAnalyzer: useGemini ? 'gemini' : 'openai',
