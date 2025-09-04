@@ -27,8 +27,8 @@ export default function LandingPage() {
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <div className="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="120" height="36" viewBox="0 0 320 120">
+            <div className="flex items-center justify-center py-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="140" height="42" viewBox="0 0 320 120" className="flex-shrink-0">
                 <g>
                   <rect x="10"  y="18"  width="18" height="18" rx="2" fill="black"/>
                   <rect x="36"  y="18"  width="18" height="18" rx="2" fill="black"/>

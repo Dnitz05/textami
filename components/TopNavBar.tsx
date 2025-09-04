@@ -107,8 +107,8 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
         <div className="flex items-center justify-between h-16">
           {/* Logo - Left side */}
           <div className="flex items-center flex-shrink-0">
-            <Link href={isAuthenticated ? "/dashboard" : "/"} className="flex items-center hover:opacity-80 transition-opacity">
-              <svg xmlns="http://www.w3.org/2000/svg" width="120" height="36" viewBox="0 0 320 120">
+            <Link href={isAuthenticated ? "/dashboard" : "/"} className="flex items-center justify-center hover:opacity-80 transition-opacity py-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="140" height="42" viewBox="0 0 320 120" className="flex-shrink-0">
                 <g>
                   <rect x="10"  y="18"  width="18" height="18" rx="2" fill="black"/>
                   <rect x="36"  y="18"  width="18" height="18" rx="2" fill="black"/>
