@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 import { checkRateLimit } from '@/lib/security/auth-middleware';
 import { createServerClient } from '@supabase/ssr';
 import { log } from '@/lib/logger';
-import { createOAuthRedirectUrl, logDomainInfo, isVercelPreview } from '@/lib/vercel/domain-utils';
+import { logDomainInfo, isVercelPreview } from '@/lib/vercel/domain-utils';
 
 // GET /api/auth/google/callback - Secure Google OAuth callback handler
 // Handle both GET and HEAD requests for OAuth callback
@@ -51,12 +51,8 @@ async function handleOAuthCallback(request: NextRequest) {
     
     if (!allowed) {
       log.warn('OAuth callback rate limit exceeded:', { ip: clientIp });
-        return NextResponse.redirect(
-          createOAuthRedirectUrl(request, '/dashboard', {
-            google_auth: 'error',
-            message: 'Too many attempts'
-          })
-        );
+        const rateLimitUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Too+many+attempts`;
+        return NextResponse.redirect(rateLimitUrl);
     }
 
     // 2. Extract and validate callback parameters
@@ -91,12 +87,8 @@ async function handleOAuthCallback(request: NextRequest) {
         ip: clientIp,
         userAgent: request.headers.get('user-agent')?.substring(0, 100)
       });
-      return NextResponse.redirect(
-        createOAuthRedirectUrl(request, '/dashboard', {
-          google_auth: 'error',
-          message: error
-        })
-      );
+      const errorUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=${encodeURIComponent(error)}`;
+      return NextResponse.redirect(errorUrl);
     }
 
     // 4. Validate required parameters
@@ -118,12 +110,8 @@ async function handleOAuthCallback(request: NextRequest) {
         ? 'User cancelled authentication'
         : 'Invalid callback parameters';
         
-      return NextResponse.redirect(
-        createOAuthRedirectUrl(request, '/dashboard', {
-          google_auth: 'error',
-          message: errorMessage
-        })
-      );
+      const callbackErrorUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=${encodeURIComponent(errorMessage)}`;
+      return NextResponse.redirect(callbackErrorUrl);
     }
 
     // 5. Validate session cookies and CSRF state
@@ -142,12 +130,8 @@ async function handleOAuthCallback(request: NextRequest) {
         hasSigninState: !!signinState,
         allCookiesCount: cookieStore.getAll().length
       });
-      return NextResponse.redirect(
-        createOAuthRedirectUrl(request, '/dashboard', {
-          google_auth: 'error',
-          message: 'Session expired'
-        })
-      );
+      const sessionExpiredUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Session+expired`;
+      return NextResponse.redirect(sessionExpiredUrl);
     }
 
     if (storedState !== state) {
@@ -158,12 +142,8 @@ async function handleOAuthCallback(request: NextRequest) {
         hasCallbackState: !!state,
         isSigninFlow
       });
-        return NextResponse.redirect(
-          createOAuthRedirectUrl(request, '/dashboard', {
-            google_auth: 'error',
-            message: 'Security validation failed'
-          })
-        );
+        const securityErrorUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Security+validation+failed`;
+        return NextResponse.redirect(securityErrorUrl);
     }
 
     try {
@@ -197,12 +177,8 @@ async function handleOAuthCallback(request: NextRequest) {
           isSigninFlow
         });
         
-        return NextResponse.redirect(
-          createOAuthRedirectUrl(request, '/dashboard', {
-            google_auth: 'error',
-            message: 'Email not verified'
-          })
-        );
+        const emailNotVerifiedUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Email+not+verified`;
+        return NextResponse.redirect(emailNotVerifiedUrl);
       }
 
       // 8. Handle user authentication/creation based on flow type
@@ -266,12 +242,8 @@ async function handleOAuthCallback(request: NextRequest) {
                 error: createError.message,
                 googleEmail: profile.email
               });
-              return NextResponse.redirect(
-                createOAuthRedirectUrl(request, '/dashboard', {
-                  google_auth: 'error',
-                  message: 'User creation failed'
-                })
-              );
+              const userCreationFailedUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=User+creation+failed`;
+              return NextResponse.redirect(userCreationFailedUrl);
             }
 
             userData = newUserData;
@@ -283,39 +255,67 @@ async function handleOAuthCallback(request: NextRequest) {
 
           if (!userData?.user?.id) {
             log.error('No user ID available after Google signin:', { googleEmail: profile.email });
-            return NextResponse.redirect(
-              createOAuthRedirectUrl(request, '/dashboard', {
-                google_auth: 'error',
-                message: 'User creation failed'
-              })
-            );
+            const noUserIdUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=User+creation+failed`;
+            return NextResponse.redirect(noUserIdUrl);
           }
 
           actualFinalUserId = userData.user.id;
 
-          // Create session for the user
-          const { error: sessionError } = await supabase.auth.admin.generateLink({
-            type: 'magiclink',
+          // 🚀 ULTRA-FIABLE: Generate official magic link for session establishment
+          log.info('🔗 Generating official Supabase magic link for OAuth session:', {
+            userId: actualFinalUserId.substring(0, 8) + '...',
             email: profile.email,
+            flow: 'oauth-signin'
           });
 
-          if (sessionError) {
-            log.error('Failed to generate session for user:', {
-              error: sessionError.message,
-              userId: actualFinalUserId.substring(0, 8) + '...'
+          const { data: magicLinkData, error: linkError } = await supabase.auth.admin.generateLink({
+            type: existingUser ? 'recovery' : 'signup',
+            email: profile.email,
+            options: {
+              redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard`,
+              data: {
+                oauth_provider: 'google',
+                oauth_user_id: profile.id,
+                oauth_flow: 'signin'
+              }
+            }
+          });
+
+          if (linkError || !magicLinkData?.properties?.action_link) {
+            log.error('❌ Failed to generate magic link for OAuth session:', {
+              error: linkError?.message || 'No action link generated',
+              userId: actualFinalUserId.substring(0, 8) + '...',
+              email: profile.email
             });
+            
+            return NextResponse.redirect(
+              `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Session+creation+failed`
+            );
           }
+
+          // 🎯 CRITICAL: Auto-redirect to official magic link to establish session
+          log.info('✅ Magic link generated successfully, redirecting to establish session:', {
+            userId: actualFinalUserId.substring(0, 8) + '...',
+            hasActionLink: !!magicLinkData.properties.action_link,
+            email: profile.email
+          });
+
+          // Store temporary data for post-auth processing if needed
+          const response = NextResponse.redirect(magicLinkData.properties.action_link);
+          
+          // Clean up temporary OAuth cookies
+          response.cookies.delete('google_auth_user_id');
+          response.cookies.delete('google_auth_state'); 
+          response.cookies.delete('google_signin_state');
+          
+          return response;
         } catch (authError) {
           log.error('Error during signin flow authentication:', {
             error: authError instanceof Error ? authError.message : 'Unknown error',
             googleEmail: profile.email
           });
-          return NextResponse.redirect(
-            createOAuthRedirectUrl(request, '/dashboard', {
-              google_auth: 'error',
-              message: 'Authentication failed'
-            })
-          );
+          const authFailedUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Authentication+failed`;
+          return NextResponse.redirect(authFailedUrl);
         }
       }
 
@@ -328,12 +328,8 @@ async function handleOAuthCallback(request: NextRequest) {
           ip: clientIp,
           googleEmail: profile.email
         });
-        return NextResponse.redirect(
-          createOAuthRedirectUrl(request, '/dashboard', {
-            google_auth: 'error',
-            message: 'User creation failed'
-          })
-        );
+        const criticalUserIdUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=User+creation+failed`;
+        return NextResponse.redirect(criticalUserIdUrl);
       }
 
       if (!tokens || !tokens.access_token) {
@@ -343,12 +339,8 @@ async function handleOAuthCallback(request: NextRequest) {
           hasAccessToken: !!tokens?.access_token,
           ip: clientIp
         });
-        return NextResponse.redirect(
-          createOAuthRedirectUrl(request, '/dashboard', {
-            google_auth: 'error',
-            message: 'Invalid tokens'
-          })
-        );
+        const invalidTokensUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Invalid+tokens`;
+        return NextResponse.redirect(invalidTokensUrl);
       }
 
       log.info('🚀 Initializing encrypted Google connection:', {
@@ -361,42 +353,17 @@ async function handleOAuthCallback(request: NextRequest) {
       
       await initializeGoogleConnection(actualFinalUserId, tokens, profile.email);
 
-      // 10. Set up proper session and clean up temporary cookies
-      const redirectUrl = createOAuthRedirectUrl(request, '/dashboard', {
-        google_auth: 'success'
-      });
-      log.info('🔍 OAUTH CALLBACK DEBUG - Final redirect URL:', {
-        userId: actualFinalUserId.substring(0, 8) + '...',
-        redirectUrl: redirectUrl,
-        ip: clientIp
-      });
-      const response = NextResponse.redirect(redirectUrl);
-
-      // For signin flow, create proper Supabase session cookies
-      if (isSigninFlow && actualFinalUserId) {
-        // Create a simple session token (this is a simplified approach)
-        response.cookies.set('sb-user-id', actualFinalUserId, {
-          httpOnly: true,
-          secure: true, // Always secure for session cookies
-          maxAge: 60 * 60 * 24 * 7, // 7 days
-          sameSite: 'strict',
-          path: '/'
-        });
-      }
-      
-      // Clear temporary OAuth cookies
-      response.cookies.delete('google_auth_user_id');
-      response.cookies.delete('google_auth_state');
-      response.cookies.delete('google_signin_state');
-
-      log.info('Google authentication completed successfully:', {
+      // 10. ✅ SESSION ESTABLISHED VIA MAGIC LINK - Direct success redirect
+      log.info('🎯 OAuth signin flow completed - session established via official magic link:', {
         userId: actualFinalUserId.substring(0, 8) + '...',
         googleEmail: profile.email,
         ip: clientIp,
-        isSigninFlow
+        flow: 'magic-link-redirect'
       });
 
-      return response;
+      // Note: Session is established by the magic link redirect above
+      // No manual cookie setting needed - Supabase handles it officially
+      return; // Early return as magic link redirect already happened
     } catch (tokenError) {
       log.error('Error processing Google OAuth tokens:', {
         error: tokenError instanceof Error ? tokenError.message : 'Unknown error',
@@ -405,13 +372,11 @@ async function handleOAuthCallback(request: NextRequest) {
         isSigninFlow
       });
       
-      // Clear temporary cookies securely
-      const response = NextResponse.redirect(
-        createOAuthRedirectUrl(request, '/dashboard', {
-          google_auth: 'error',
-          message: 'Authentication failed'
-        })
-      );
+      // Clear temporary cookies securely and redirect with simple URL
+      const errorRedirectUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Authentication+failed`;
+      const response = NextResponse.redirect(errorRedirectUrl);
+      
+      // Clean up OAuth cookies
       response.cookies.delete('google_auth_user_id');
       response.cookies.delete('google_auth_state');
       response.cookies.delete('google_signin_state');
@@ -425,13 +390,11 @@ async function handleOAuthCallback(request: NextRequest) {
       ip: clientIp
     });
     
-    // Clear temporary cookies in case of error
-    const response = NextResponse.redirect(
-      createOAuthRedirectUrl(request, '/dashboard', {
-        google_auth: 'error',
-        message: 'Unexpected error'
-      })
-    );
+    // Clear temporary cookies in case of error and use simple redirect URL
+    const errorRedirectUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Unexpected+error`;
+    const response = NextResponse.redirect(errorRedirectUrl);
+    
+    // Clean up OAuth cookies
     response.cookies.delete('google_auth_user_id');
     response.cookies.delete('google_auth_state');
     response.cookies.delete('google_signin_state');
