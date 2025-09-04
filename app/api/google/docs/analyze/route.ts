@@ -205,7 +205,6 @@ export async function POST(request: NextRequest) {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       name: error instanceof Error ? error.name : undefined,
-      cause: error instanceof Error ? error.cause : undefined,
     });
     
     // Provide specific error messages
