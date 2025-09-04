@@ -268,37 +268,20 @@ async function handleOAuthCallback(request: NextRequest) {
             flow: 'oauth-signin'
           });
 
-          // Generate appropriate magic link based on user existence
-          let magicLinkData, linkError;
-          
-          if (existingUser) {
-            // For existing users, use recovery link
-            const result = await supabase.auth.admin.generateLink({
-              type: 'recovery',
-              email: profile.email,
-              options: {
-                redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard`
+          // 🎯 Generate magic link for session establishment (works for both new and existing users)
+          const { data: magicLinkData, error: linkError } = await supabase.auth.admin.generateLink({
+            type: 'magiclink',
+            email: profile.email,
+            options: {
+              redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard`,
+              data: {
+                oauth_provider: 'google',
+                oauth_user_id: profile.id,
+                oauth_flow: 'signin',
+                user_exists: !!existingUser
               }
-            });
-            magicLinkData = result.data;
-            linkError = result.error;
-          } else {
-            // For new users, use signup link  
-            const result = await supabase.auth.admin.generateLink({
-              type: 'signup',
-              email: profile.email,
-              options: {
-                redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard`,
-                data: {
-                  oauth_provider: 'google',
-                  oauth_user_id: profile.id,
-                  oauth_flow: 'signin'
-                }
-              }
-            });
-            magicLinkData = result.data;
-            linkError = result.error;
-          }
+            }
+          });
 
           if (linkError || !magicLinkData?.properties?.action_link) {
             log.error('❌ Failed to generate magic link for OAuth session:', {
