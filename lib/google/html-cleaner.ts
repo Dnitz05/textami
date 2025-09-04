@@ -48,6 +48,13 @@ export function cleanGoogleDocsHTML(
 
   let cleanedHtml = html;
 
+  // Debug logging for empty document troubleshooting
+  console.log('🧽 HTML Cleaning Debug - Input:', {
+    inputLength: html.length,
+    inputPreview: html.substring(0, 200) + '...',
+    cleaningOptions: opts
+  });
+
   // Step 1: Remove Google-specific elements and attributes
   cleanedHtml = removeGoogleSpecificElements(cleanedHtml, removedElements);
 
@@ -79,6 +86,22 @@ export function cleanGoogleDocsHTML(
 
   // Step 7: Final cleanup and validation
   cleanedHtml = finalCleanup(cleanedHtml);
+
+  // Debug logging for empty document troubleshooting
+  console.log('🧽 HTML Cleaning Debug - Output:', {
+    originalLength: originalHtml.length,
+    cleanedLength: cleanedHtml.length,
+    cleanedPreview: cleanedHtml.substring(0, 200) + '...',
+    removedElements: removedElements,
+    isEmptyAfterCleaning: cleanedHtml.trim().length === 0
+  });
+
+  // If cleaning resulted in completely empty content, provide fallback
+  if (cleanedHtml.trim().length === 0 && originalHtml.trim().length > 0) {
+    console.warn('⚠️ HTML cleaning removed all content - using original HTML as fallback');
+    cleanedHtml = originalHtml;
+    warnings.push('HTML cleaning was too aggressive - reverted to original HTML');
+  }
 
   return {
     cleanedHtml,

@@ -185,15 +185,38 @@ class GoogleDocsService {
   private async convertDocumentToHTML(document: docs_v1.Schema$Document): Promise<string> {
     let html = '<div class="google-doc">\n';
 
+    // Enhanced debugging for empty document issue
+    console.log('🔍 Google Docs API Response Debug:', {
+      hasDocument: !!document,
+      hasBody: !!document.body,
+      hasBodyContent: !!document.body?.content,
+      bodyContentLength: document.body?.content?.length || 0,
+      documentTitle: document.title || 'No title',
+      bodyContentTypes: document.body?.content?.map(el => Object.keys(el).filter(key => key !== 'endIndex' && key !== 'startIndex')) || []
+    });
+
     if (!document.body || !document.body.content) {
-      return '<div class="google-doc"><p>Empty document</p></div>';
+      console.warn('⚠️ Google Docs document has no body or content - returning empty document placeholder');
+      return '<div class="google-doc"><p>Empty document - no content found in Google Docs API response</p></div>';
     }
 
     for (const element of document.body.content) {
-      html += await this.convertElementToHTML(element, document);
+      const elementHtml = await this.convertElementToHTML(element, document);
+      console.log('📄 Element converted to HTML:', {
+        elementType: Object.keys(element).filter(key => key !== 'endIndex' && key !== 'startIndex'),
+        htmlLength: elementHtml.length,
+        htmlPreview: elementHtml.substring(0, 100) + '...'
+      });
+      html += elementHtml;
     }
 
     html += '</div>';
+    
+    console.log('✅ Final HTML conversion result:', {
+      totalLength: html.length,
+      htmlPreview: html.substring(0, 200) + '...'
+    });
+    
     return html;
   }
 
