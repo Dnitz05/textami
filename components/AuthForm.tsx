@@ -79,6 +79,26 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
     );
   }
 
+  // Check for Google account connection (simulating detection)
+  // This is a placeholder; actual logic might depend on cookies or token presence
+  const googleConnected = localStorage.getItem('oauth_redirected') === 'true' || document.cookie.includes('google_auth_user_id');
+  if (googleConnected) {
+    log.info('🔍 AUTHFORM DEBUG - Google account detected as connected, redirecting to dashboard');
+    if (typeof window !== 'undefined') {
+      window.location.href = '/dashboard';
+    }
+    return (
+      <div className="text-center">
+        <div className="text-blue-600 mb-4">
+          🔄 Redirigint al dashboard...
+        </div>
+        <p className="text-gray-600">
+          Compte de Google detectat com a connectat.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-md mx-auto">
       {/* Mode Toggle */}

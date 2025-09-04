@@ -595,6 +595,7 @@ export function useUser(): UseUserReturn {
           if (!isMounted) return
 
           if (event === 'SIGNED_IN' && session?.user) {
+            log.info('🔍 USEUSER DEBUG - User signed in via Supabase auth state change', { userId: session.user.id });
             updateState({
               user: session.user,
               profile: null,
@@ -604,6 +605,7 @@ export function useUser(): UseUserReturn {
               isProfileComplete: false
             })
           } else if (event === 'SIGNED_OUT') {
+            log.info('🔍 USEUSER DEBUG - User signed out via Supabase auth state change');
             updateState({
               user: null,
               profile: null,
@@ -618,6 +620,7 @@ export function useUser(): UseUserReturn {
         authSubscription = subscription
 
         // Then initialize the current session
+        log.info('🔍 USEUSER DEBUG - Initializing user session');
         await initializeUser()
         
       } catch (error) {
