@@ -107,13 +107,31 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
         <div className="flex items-center justify-between h-16">
           {/* Logo - Left side */}
           <div className="flex items-center flex-shrink-0">
-            <Link href={isAuthenticated ? "/dashboard" : "/"} className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">D</span>
-                </div>
-                <span className="text-2xl font-bold text-blue-600">DocMile</span>
-              </div>
+            <Link href={isAuthenticated ? "/dashboard" : "/"} className="flex items-center hover:opacity-80 transition-opacity">
+              <svg xmlns="http://www.w3.org/2000/svg" width="120" height="36" viewBox="0 0 320 120">
+                <g>
+                  <rect x="10"  y="18"  width="18" height="18" rx="2" fill="black"/>
+                  <rect x="36"  y="18"  width="18" height="18" rx="2" fill="black"/>
+                  <rect x="62"  y="18"  width="18" height="18" rx="2" fill="#60A5FA"/>
+
+                  <rect x="10"  y="44"  width="18" height="18" rx="2" fill="black"/>
+                  <rect x="36"  y="44"  width="18" height="18" rx="2" fill="#60A5FA"/>
+                  <rect x="62"  y="44"  width="18" height="18" rx="2" fill="black"/>
+
+                  <rect x="10"  y="70"  width="18" height="18" rx="2" fill="#60A5FA"/>
+                  <rect x="36"  y="70"  width="18" height="18" rx="2" fill="black"/>
+                  <rect x="62"  y="70"  width="18" height="18" rx="2" fill="black"/>
+                </g>
+
+                <g stroke="#60A5FA" stroke-width="3" fill="none">
+                  <line x1="71" y1="27" x2="45" y2="53"/>
+                  <line x1="19" y1="79" x2="45" y2="53"/>
+                </g>
+
+                <text x="100" y="68" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="52" font-weight="700" fill="#2D3748">
+                  docmile
+                </text>
+              </svg>
             </Link>
           </div>
 

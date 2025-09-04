@@ -553,33 +553,9 @@ export default function GeneratorPage() {
       <TopNavBar />
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-16">
-          <div className="flex items-center justify-center mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" width="240" height="90" viewBox="0 0 320 120">
-              <g>
-                <rect x="10"  y="18"  width="18" height="18" rx="2" fill="black"/>
-                <rect x="36"  y="18"  width="18" height="18" rx="2" fill="black"/>
-                <rect x="62"  y="18"  width="18" height="18" rx="2" fill="#60A5FA"/>
-
-                <rect x="10"  y="44"  width="18" height="18" rx="2" fill="black"/>
-                <rect x="36"  y="44"  width="18" height="18" rx="2" fill="#60A5FA"/>
-                <rect x="62"  y="44"  width="18" height="18" rx="2" fill="black"/>
-
-                <rect x="10"  y="70"  width="18" height="18" rx="2" fill="#60A5FA"/>
-                <rect x="36"  y="70"  width="18" height="18" rx="2" fill="black"/>
-                <rect x="62"  y="70"  width="18" height="18" rx="2" fill="black"/>
-              </g>
-
-              <g stroke="#60A5FA" stroke-width="3" fill="none">
-                <line x1="71" y1="27" x2="45" y2="53"/>
-                <line x1="19" y1="79" x2="45" y2="53"/>
-              </g>
-
-              <text x="100" y="68" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="52" font-weight="700" fill="#2D3748">
-                docmile
-              </text>
-            </svg>
-          </div>
-          <h2 className="text-2xl font-semibold text-gray-700 mb-2">AI Generator</h2>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            AI Generator
+          </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             GPT-5 Vision analitza documents, Excel intelligence, i genera amb format preservation perfecte
           </p>

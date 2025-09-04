@@ -22,6 +22,11 @@ export const metadata: Metadata = {
   description: "Transforma plantilles Word i dades Excel en documents personalitzats amb qualitat professional",
   keywords: ["documents", "word", "excel", "plantilles", "generador"],
   authors: [{ name: "Aitor Gilabert Juan" }],
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
