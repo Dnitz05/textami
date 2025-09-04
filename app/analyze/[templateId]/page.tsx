@@ -21,12 +21,14 @@ import {
 import { log } from '@/lib/logger';
 
 interface PageProps {
-  params: {
+  params: Promise<{
     templateId: string;
-  };
+  }>;
 }
 
-export default function DynamicAnalyzePage({ params }: PageProps) {
+export default async function DynamicAnalyzePage({ params }: PageProps) {
+  // 🚀 Next.js 15: params is now a Promise
+  const resolvedParams = await params;
   const router = useRouter();
   const { user, isAuthenticated, loading: authLoading } = useUser();
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
@@ -46,7 +48,7 @@ export default function DynamicAnalyzePage({ params }: PageProps) {
   // 🎯 ULTRA-SMART: Detect template type from templateId
   useEffect(() => {
     const detectTemplateType = () => {
-      const { templateId } = params;
+      const { templateId } = resolvedParams;
       
       if (templateId.startsWith('template_gdocs_') || templateId.startsWith('template_googledocs_')) {
         setTemplateType('google-docs');
@@ -61,7 +63,7 @@ export default function DynamicAnalyzePage({ params }: PageProps) {
     };
 
     detectTemplateType();
-  }, [params.templateId]);
+  }, [resolvedParams.templateId]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -73,7 +75,7 @@ export default function DynamicAnalyzePage({ params }: PageProps) {
   // 🧠 ULTRA-SMART: Load template data based on type and templateId
   useEffect(() => {
     const loadTemplateData = async () => {
-      const { templateId } = params;
+      const { templateId } = resolvedParams;
       
       // Try to load from saved templates first
       const loadedTemplate = sessionStorage.getItem('loadedTemplate');
@@ -102,7 +104,7 @@ export default function DynamicAnalyzePage({ params }: PageProps) {
     if (templateType !== 'unknown') {
       loadTemplateData();
     }
-  }, [templateType, params.templateId]);
+  }, [templateType, resolvedParams.templateId]);
 
   // 📄 Load Google Docs template
   const loadGoogleDocsTemplate = async (templateId: string) => {
@@ -593,7 +595,7 @@ export default function DynamicAnalyzePage({ params }: PageProps) {
                 </span>
               </div>
               <span className="text-sm text-gray-500">•</span>
-              <span className="text-sm font-mono text-gray-600">{params.templateId}</span>
+              <span className="text-sm font-mono text-gray-600">{resolvedParams.templateId}</span>
               {originalFileName && (
                 <>
                   <span className="text-sm text-gray-500">•</span>
