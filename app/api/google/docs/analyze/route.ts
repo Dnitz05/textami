@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createGoogleDocsService } from '@/lib/google/docs-service';
-import { analyzeGoogleDocsHTML, createGoogleDocsAnalyzer } from '@/lib/ai/google-docs-analyzer';
-import { isGeminiAvailable, analyzeWithGemini } from '@/lib/ai/gemini-analyzer';
 import { validateUserSession, checkRateLimit } from '@/lib/security/auth-middleware';
-import { validateRequestSchema, validateGoogleDocId, validateFilename, validateBoolean } from '@/lib/security/input-validation';
+import { validateRequestSchema, validateGoogleDocId, validateFilename } from '@/lib/security/input-validation';
 import { getValidGoogleTokens } from '@/lib/google/token-manager';
 import { log } from '@/lib/logger';
 import { v4 as uuidv4 } from 'uuid';
@@ -57,9 +55,9 @@ export async function POST(request: NextRequest) {
         required: false,
         validator: validateFilename
       },
-      useGemini: {
+      templateId: {
         required: false,
-        validator: (value) => validateBoolean(value, false)
+        validator: (value) => typeof value === 'string' || value === undefined
       }
     });
     
@@ -71,7 +69,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const { documentId, fileName, useGemini } = sanitizedData!;
+    const { documentId, fileName } = sanitizedData!;
     
     // Ensure documentId is a string (should be guaranteed by validation)
     if (typeof documentId !== 'string') {
@@ -84,7 +82,7 @@ export async function POST(request: NextRequest) {
     // Ensure fileName is string or undefined
     const safeFileName = (typeof fileName === 'string' && fileName.trim()) ? fileName : undefined;
     
-    log.debug('📋 Request parameters:', { documentId, userId: user.id, fileName, useGemini });
+    log.debug('📋 Request parameters:', { documentId, userId: user.id, fileName });
 
     // 4. Get valid Google tokens (with automatic refresh)
     const googleTokens = await getValidGoogleTokens(user.id);
@@ -143,35 +141,32 @@ export async function POST(request: NextRequest) {
     // 7. Generate template ID as a UUID
     const templateId = uuidv4();
 
-    // 8. Choose AI analyzer based on preference and availability
-    let analysisResult;
+    // 8. Use content directly from Google Docs - NO AI NEEDED for transcription
+    log.debug('📄 Using Google Docs content directly (no AI transcription needed)');
     
-    try {
-      if (useGemini && isGeminiAvailable()) {
-        log.debug('🤖 Using Gemini analyzer...');
-        analysisResult = await analyzeWithGemini(docResult.cleanedHtml, {
-          templateId,
-          fileName: safeFileName || docResult.metadata.name,
-          performAIAnalysis: true,
-          cleanHtml: false, // Already cleaned
-          mapStyles: false, // Already mapped
-        });
-      } else {
-        log.debug('🤖 Using OpenAI analyzer...');
-        analysisResult = await analyzeGoogleDocsHTML(docResult.cleanedHtml, {
-          templateId,
-          fileName: safeFileName || docResult.metadata.name,
-          performAIAnalysis: true,
-          cleanHtml: false, // Already cleaned
-          mapStyles: false, // Already mapped
-        });
+    const analysisResult = {
+      transcription: docResult.cleanedHtml,
+      markdown: docResult.cleanedHtml, // Can be converted later if needed
+      placeholders: [], // These will be detected by the UI or later processing
+      sections: docResult.structure.headings.map(h => ({
+        title: h.text,
+        level: h.level,
+        content: h.text
+      })),
+      tables: docResult.structure.tables.map(t => ({
+        headers: t.headers || [],
+        rows: t.rows || []
+      })),
+      confidence: 1.0,
+      metadata: {
+        processingTimeMs: 0,
+        elementsFound: {
+          sections: docResult.structure.headings.length,
+          tables: docResult.structure.tables.length,
+          paragraphs: docResult.structure.paragraphs.length
+        }
       }
-    } catch (analysisError) {
-      log.error('❌ AI analysis failed:', analysisError);
-      throw new Error(`AI analysis failed: ${analysisError instanceof Error ? analysisError.message : 'Unknown analysis error'}`);
-    }
-
-    // Analysis result validation is handled by the analyzers themselves
+    };
 
     // 9. Save template to database (compatibility with current schema)
     const supabase = getSupabase();
@@ -213,7 +208,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 10. Return response compatible with existing UI - SIMPLIFIED
+    // 10. Return response with direct Google Docs content - NO AI TRANSCRIPTION
     const response = {
       success: true,
       data: {
@@ -221,13 +216,19 @@ export async function POST(request: NextRequest) {
         fileName: safeFileName || docResult.metadata.name,
         sourceType: 'google-docs',
         googleDocId: documentId,
-        // Essential content fields - ensure they exist
-        transcription: analysisResult?.transcription || docResult.cleanedHtml || docResult.html || 'Google Doc processed successfully',
-        markdown: analysisResult?.markdown || analysisResult?.transcription || docResult.cleanedHtml || `# ${safeFileName || docResult.metadata.name}\n\nGoogle Doc content analyzed`,
-        placeholders: analysisResult?.placeholders || [],
-        sections: analysisResult?.sections || [],
-        tables: analysisResult?.tables || [],
-        signatura: analysisResult?.signatura || undefined
+        // Direct content from Google Docs
+        transcription: docResult.cleanedHtml,
+        markdown: docResult.cleanedHtml,
+        placeholders: analysisResult.placeholders,
+        sections: analysisResult.sections,
+        tables: analysisResult.tables,
+        // Original document metadata
+        metadata: {
+          originalName: docResult.metadata.name,
+          createdTime: docResult.metadata.createdTime,
+          modifiedTime: docResult.metadata.modifiedTime,
+          ...analysisResult.metadata
+        }
       }
     };
 
@@ -236,44 +237,12 @@ export async function POST(request: NextRequest) {
       placeholdersFound: analysisResult?.placeholders?.length || 0,
       sectionsFound: analysisResult?.sections?.length || 0,
       tablesFound: analysisResult?.tables?.length || 0,
-      hasTranscription: !!(analysisResult?.transcription || docResult.cleanedHtml),
-      aiUsed: useGemini ? 'gemini' : 'openai',
+      hasTranscription: !!docResult.cleanedHtml,
+      contentLength: docResult.cleanedHtml?.length || 0,
     });
 
-    // EMERGENCY: Apply unified compatibility layer for Google Docs
-    try {
-      const { convertGoogleDocsToUnified, validateUnifiedTemplate } = await import('@/lib/compatibility/unified-system');
-      
-      const unifiedResult = convertGoogleDocsToUnified(response.data);
-      const validatedResult = validateUnifiedTemplate(unifiedResult);
-      
-      if (!validatedResult) {
-        log.error('❌ Failed to create valid unified template for Google Docs');
-        const { createFallbackTemplate } = await import('@/lib/compatibility/unified-system');
-        const fallbackResult = createFallbackTemplate('google-docs', safeFileName || docResult.metadata.name);
-        
-        return NextResponse.json({
-          success: true,
-          data: fallbackResult
-        });
-      }
-      
-      log.debug('✅ Google Docs response unified successfully:', {
-        templateId: validatedResult.templateId,
-        hasMarkdown: !!validatedResult.markdown,
-        placeholdersCount: validatedResult.placeholders.length
-      });
-      
-      return NextResponse.json({
-        success: true,
-        data: validatedResult
-      });
-      
-    } catch (unificationError) {
-      log.error('❌ Compatibility layer failed for Google Docs:', unificationError);
-      // Fallback to original response if unification fails
-      return NextResponse.json(response);
-    }
+    // Return direct response - no compatibility layer needed
+    return NextResponse.json(response);
 
   } catch (error) {
     // Enhanced error logging for debugging
