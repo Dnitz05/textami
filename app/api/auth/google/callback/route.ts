@@ -167,22 +167,28 @@ async function handleOAuthCallback(request: NextRequest) {
     }
 
     try {
-      // 6. Exchange authorization code for tokens
+      // 6. Exchange authorization code for tokens with timeout
       log.debug('Exchanging authorization code for tokens:', {
         userId: userId ? userId.substring(0, 8) + '...' : 'signin-flow',
         ip: clientIp,
         isSigninFlow
       });
       
-      const tokens = await exchangeCodeForTokens(code);
+      const tokens = await Promise.race([
+        exchangeCodeForTokens(code),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Token exchange timeout')), 10000))
+      ]) as Awaited<ReturnType<typeof exchangeCodeForTokens>>;
 
-      // 7. Validate tokens by getting user profile
+      // 7. Validate tokens by getting user profile with timeout
       log.debug('Validating tokens with user profile request:', {
         userId: userId ? userId.substring(0, 8) + '...' : 'signin-flow',
         isSigninFlow
       });
       
-      const profile = await getUserProfile(tokens.access_token);
+      const profile = await Promise.race([
+        getUserProfile(tokens.access_token),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('User profile request timeout')), 10000))
+      ]) as Awaited<ReturnType<typeof getUserProfile>>;
 
       if (!profile.verified_email) {
         log.warn('Google account email not verified:', {
@@ -356,11 +362,15 @@ async function handleOAuthCallback(request: NextRequest) {
       await initializeGoogleConnection(actualFinalUserId, tokens, profile.email);
 
       // 10. Set up proper session and clean up temporary cookies
-      const response = NextResponse.redirect(
-        createOAuthRedirectUrl(request, '/dashboard', {
-          google_auth: 'success'
-        })
-      );
+      const redirectUrl = createOAuthRedirectUrl(request, '/dashboard', {
+        google_auth: 'success'
+      });
+      log.info('🔍 OAUTH CALLBACK DEBUG - Final redirect URL:', {
+        userId: actualFinalUserId.substring(0, 8) + '...',
+        redirectUrl: redirectUrl,
+        ip: clientIp
+      });
+      const response = NextResponse.redirect(redirectUrl);
 
       // For signin flow, create proper Supabase session cookies
       if (isSigninFlow && actualFinalUserId) {

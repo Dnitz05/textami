@@ -39,6 +39,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
         log.debug('🔥 AUTHFORM DEBUG: Waiting for auth state to propagate...');
         setTimeout(() => {
           log.debug('🔥 AUTHFORM DEBUG: Closing modal after successful login');
+          log.info('🔍 AUTHFORM DEBUG - onSuccess function invoked, checking for unexpected navigation');
           onSuccess?.();
         }, 1000); // Increased timeout to allow auth state to update
         

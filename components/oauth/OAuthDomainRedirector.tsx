@@ -20,20 +20,35 @@ export default function OAuthDomainRedirector() {
                        window.location.search.includes('state=')
 
     if (isPreview && isOAuthFlow) {
+      // Check if redirection has already been attempted to prevent loops
+      const hasRedirected = localStorage.getItem('oauth_redirected');
+      if (hasRedirected) {
+        console.log('🔄 CLIENT: Redirection already attempted, skipping to prevent loop:', {
+          from: currentHost,
+          to: 'textami.vercel.app',
+          path: window.location.pathname,
+          search: window.location.search
+        });
+        return;
+      }
+
       console.log('🔄 CLIENT: Redirecting OAuth from preview to production:', {
         from: currentHost,
         to: 'textami.vercel.app',
         path: window.location.pathname,
         search: window.location.search
-      })
+      });
+
+      // Set redirection flag
+      localStorage.setItem('oauth_redirected', 'true');
 
       // Preserve all URL params and redirect to production
       const productionUrl = window.location.href.replace(
         currentHost, 
         'textami.vercel.app'
-      )
+      );
       
-      window.location.href = productionUrl
+      window.location.href = productionUrl;
     }
   }, [])
 
