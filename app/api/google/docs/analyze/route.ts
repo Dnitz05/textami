@@ -1,5 +1,3 @@
-// app/api/google/docs/analyze/route.ts
-// Secure Google Docs Analysis Endpoint with authentication
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createGoogleDocsService } from '@/lib/google/docs-service';
@@ -9,6 +7,7 @@ import { validateUserSession, checkRateLimit } from '@/lib/security/auth-middlew
 import { validateRequestSchema, validateGoogleDocId, validateFilename, validateBoolean } from '@/lib/security/input-validation';
 import { getValidGoogleTokens } from '@/lib/google/token-manager';
 import { log } from '@/lib/logger';
+import { v4 as uuidv4 } from 'uuid';
 
 // Initialize Supabase client
 function getSupabase() {
@@ -130,7 +129,6 @@ export async function POST(request: NextRequest) {
     });
 
     // 7. Generate template ID as a UUID
-    import { v4 as uuidv4 } from 'uuid';
     const templateId = uuidv4();
 
     // 8. Choose AI analyzer based on preference and availability
