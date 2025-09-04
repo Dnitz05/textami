@@ -173,9 +173,49 @@ function generateState(): string {
 
 // Helper to handle Google API errors
 export function handleGoogleApiError(error: any): Error {
+  // Enhanced error handling with detailed debugging
+  console.log('🚨 Google API Error Debug:', {
+    hasError: !!error,
+    hasResponse: !!error?.response,
+    status: error?.response?.status,
+    statusText: error?.response?.statusText,
+    hasData: !!error?.response?.data,
+    errorData: error?.response?.data,
+    errorMessage: error?.message,
+    errorCode: error?.code,
+    fullError: JSON.stringify(error, null, 2).substring(0, 1000)
+  });
+
   if (error?.response?.data?.error) {
     const googleError = error.response.data.error;
+    
+    // Specific handling for common Google API errors
+    if (googleError.code === 403) {
+      return new Error(`Google API Permission Error: ${googleError.message}. This usually means insufficient permissions, expired token, or document access restrictions. Please re-authorize your Google account.`);
+    }
+    
+    if (googleError.code === 404) {
+      return new Error(`Google API Not Found Error: ${googleError.message}. The document may have been deleted, moved, or you don't have access to it.`);
+    }
+    
+    if (googleError.code === 401) {
+      return new Error(`Google API Authentication Error: ${googleError.message}. Your Google authentication has expired. Please re-authorize your account.`);
+    }
+    
     return new Error(`Google API Error: ${googleError.message} (Code: ${googleError.code})`);
+  }
+  
+  // Handle HTTP status errors without detailed error object
+  if (error?.response?.status === 403) {
+    return new Error(`Google API 403 Forbidden: Access denied. This could be due to insufficient OAuth scopes, expired token, or document sharing restrictions. Please check your Google account authorization.`);
+  }
+  
+  if (error?.response?.status === 404) {
+    return new Error(`Google API 404 Not Found: Document not found or not accessible. Please verify the document ID and sharing permissions.`);
+  }
+  
+  if (error?.response?.status === 401) {
+    return new Error(`Google API 401 Unauthorized: Authentication failed. Please re-authorize your Google account.`);
   }
   
   if (error?.message) {

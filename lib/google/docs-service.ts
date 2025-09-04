@@ -139,7 +139,26 @@ class GoogleDocsService {
     cleaningOptions?: CleaningOptions
   ): Promise<GoogleDocsExportResult> {
     try {
-      console.log('🔍 Making Google Docs API request:', { documentId });
+      console.log('🔍 Making Google Docs API request:', { 
+        documentId,
+        hasDocsClient: !!this.docsClient,
+        authType: this.docsClient.context?.authType || 'unknown'
+      });
+      
+      // Log OAuth2 client info (without sensitive data)
+      const oauth2Client = this.docsClient.context?._options?.auth;
+      if (oauth2Client && typeof oauth2Client.getAccessToken === 'function') {
+        try {
+          const tokenInfo = await oauth2Client.getAccessToken();
+          console.log('🔑 OAuth2 Token Status:', {
+            hasToken: !!tokenInfo.token,
+            tokenLength: tokenInfo.token?.length || 0,
+            tokenPrefix: tokenInfo.token ? tokenInfo.token.substring(0, 20) + '...' : 'No token'
+          });
+        } catch (tokenError) {
+          console.error('❌ Failed to get access token:', tokenError);
+        }
+      }
       
       const response = await this.docsClient.documents.get({
         documentId,
