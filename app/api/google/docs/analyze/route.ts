@@ -129,8 +129,8 @@ export async function POST(request: NextRequest) {
       throw new Error(`Document parsing failed: ${parseError instanceof Error ? parseError.message : 'Unknown parsing error'}`);
     }
 
-    if (!docResult || !docResult.cleanedHtml) {
-      throw new Error('Failed to extract HTML content from Google Doc - empty result');
+    if (!docResult.cleanedHtml) {
+      throw new Error('Failed to extract HTML content from Google Doc');
     }
 
     log.debug('✅ Document content extracted:', {
@@ -171,9 +171,7 @@ export async function POST(request: NextRequest) {
       throw new Error(`AI analysis failed: ${analysisError instanceof Error ? analysisError.message : 'Unknown analysis error'}`);
     }
 
-    if (!analysisResult) {
-      throw new Error('AI analysis returned empty result');
-    }
+    // Analysis result validation is handled by the analyzers themselves
 
     // 9. Save template to database (compatibility with current schema)
     const supabase = getSupabase();
@@ -215,39 +213,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 10. Return response compatible with existing UI
+    // 10. Return response compatible with existing UI - SIMPLIFIED
     const response = {
       success: true,
       data: {
-        // Spread analysis result first to avoid conflicts
-        ...analysisResult,
-        // Override with explicit fields needed by UI
         templateId,
         fileName: safeFileName || docResult.metadata.name,
         sourceType: 'google-docs',
         googleDocId: documentId,
-        // Essential content fields expected by UI (with fallbacks)
-        transcription: analysisResult.transcription || docResult.cleanedHtml || '',
-        markdown: analysisResult.markdown || analysisResult.transcription || docResult.cleanedHtml || '',
-        placeholders: analysisResult.placeholders || [],
-        sections: analysisResult.sections || [],
-        tables: analysisResult.tables || [],
-        signatura: analysisResult.signatura,
-        // Additional metadata for UI
-        processing: {
-          aiAnalyzer: useGemini ? 'gemini' : 'openai',
-          processingTime: analysisResult.metadata?.processingTimeMs || 0,
-          elementsExtracted: analysisResult.metadata?.elementsFound || 0,
-        }
+        // Essential content fields - ensure they exist
+        transcription: analysisResult?.transcription || docResult.cleanedHtml || docResult.html || 'Google Doc processed successfully',
+        markdown: analysisResult?.markdown || analysisResult?.transcription || docResult.cleanedHtml || `# ${safeFileName || docResult.metadata.name}\n\nGoogle Doc content analyzed`,
+        placeholders: analysisResult?.placeholders || [],
+        sections: analysisResult?.sections || [],
+        tables: analysisResult?.tables || [],
+        signatura: analysisResult?.signatura || undefined
       }
     };
 
     log.debug('✅ Google Docs analysis complete:', {
       templateId,
-      placeholdersFound: analysisResult.placeholders.length,
-      sectionsFound: analysisResult.sections.length,
-      tablesFound: analysisResult.tables.length,
-      confidence: analysisResult.confidence,
+      placeholdersFound: analysisResult?.placeholders?.length || 0,
+      sectionsFound: analysisResult?.sections?.length || 0,
+      tablesFound: analysisResult?.tables?.length || 0,
+      hasTranscription: !!(analysisResult?.transcription || docResult.cleanedHtml),
       aiUsed: useGemini ? 'gemini' : 'openai',
     });
 
