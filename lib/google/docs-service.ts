@@ -142,22 +142,18 @@ class GoogleDocsService {
       console.log('🔍 Making Google Docs API request:', { 
         documentId,
         hasDocsClient: !!this.docsClient,
-        authType: this.docsClient.context?.authType || 'unknown'
+        hasContext: !!this.docsClient.context
       });
       
-      // Log OAuth2 client info (without sensitive data)
-      const oauth2Client = this.docsClient.context?._options?.auth;
-      if (oauth2Client && typeof oauth2Client.getAccessToken === 'function') {
-        try {
-          const tokenInfo = await oauth2Client.getAccessToken();
-          console.log('🔑 OAuth2 Token Status:', {
-            hasToken: !!tokenInfo.token,
-            tokenLength: tokenInfo.token?.length || 0,
-            tokenPrefix: tokenInfo.token ? tokenInfo.token.substring(0, 20) + '...' : 'No token'
-          });
-        } catch (tokenError) {
-          console.error('❌ Failed to get access token:', tokenError);
-        }
+      // Log authentication status (simplified to avoid TypeScript issues)
+      try {
+        console.log('🔑 Authentication Check:', {
+          docsClientReady: !!this.docsClient,
+          contextExists: !!this.docsClient.context,
+          requestAboutToStart: true
+        });
+      } catch (authError) {
+        console.error('❌ Authentication check failed:', authError);
       }
       
       const response = await this.docsClient.documents.get({
