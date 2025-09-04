@@ -118,8 +118,32 @@ export async function POST(request: NextRequest) {
       throw new Error(`Document parsing failed: ${parseError instanceof Error ? parseError.message : 'Unknown parsing error'}`);
     }
 
+    // Enhanced debugging for empty document issue
+    log.debug('📋 Document parsing result:', {
+      hasHtml: !!docResult.html,
+      htmlLength: docResult.html?.length || 0,
+      hasCleanedHtml: !!docResult.cleanedHtml,
+      cleanedHtmlLength: docResult.cleanedHtml?.length || 0,
+      htmlPreview: docResult.html?.substring(0, 200) + '...' || 'No HTML',
+      cleanedHtmlPreview: docResult.cleanedHtml?.substring(0, 200) + '...' || 'No cleaned HTML'
+    });
+
     if (!docResult.cleanedHtml) {
-      throw new Error('Failed to extract HTML content from Google Doc');
+      // More detailed error for empty document
+      log.error('❌ Empty document issue details:', {
+        originalHtml: docResult.html ? `${docResult.html.length} chars` : 'No HTML',
+        cleanedHtml: docResult.cleanedHtml ? `${docResult.cleanedHtml.length} chars` : 'No cleaned HTML',
+        documentId,
+        userId: user.id
+      });
+      
+      // FALLBACK: If cleaned HTML is empty but original HTML exists, use original HTML
+      if (docResult.html && docResult.html.trim().length > 0) {
+        log.warn('⚠️ Using original HTML as fallback since cleaning process removed all content');
+        docResult.cleanedHtml = docResult.html;
+      } else {
+        throw new Error('Failed to extract HTML content from Google Doc - document appears to be empty or cleaning process removed all content');
+      }
     }
 
     log.debug('✅ Document content extracted:', {
