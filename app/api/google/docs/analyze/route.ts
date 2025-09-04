@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 9. Save template to database
+    // 9. Save template to database (compatibility with current schema)
     const supabase = getSupabase();
     const { data: template, error: templateError } = await supabase
       .from('templates')
@@ -163,23 +163,26 @@ export async function POST(request: NextRequest) {
         id: templateId,
         user_id: user.id,
         name: safeFileName || docResult.metadata.name,
-        source_type: 'google-docs',
-        source_id: documentId,
-        source_metadata: {
+        description: `Google Docs template: ${safeFileName || docResult.metadata.name}`,
+        file_url: `https://docs.google.com/document/d/${documentId}`,
+        storage_path: `google-docs/${documentId}`,
+        file_size_bytes: docResult.html.length, // Approximate size
+        original_filename: `${safeFileName || docResult.metadata.name}.gdoc`,
+        mime_type: 'application/vnd.google-apps.document',
+        variables: analysisResult.placeholders || [],
+        ai_features: {
+          source_type: 'google-docs',
           google_doc_id: documentId,
-          original_name: docResult.metadata.name,
-          created_time: docResult.metadata.createdTime,
-          modified_time: docResult.metadata.modifiedTime,
-        },
-        html_content: analysisResult.transcription,
-        placeholders: analysisResult.placeholders,
-        sections: analysisResult.sections,
-        tables: analysisResult.tables,
-        metadata: {
-          ...analysisResult.metadata,
-          ai_analyzer: useGemini ? 'gemini' : 'openai',
+          html_content: analysisResult.transcription,
+          placeholders: analysisResult.placeholders,
+          sections: analysisResult.sections,
+          tables: analysisResult.tables,
           google_doc_metadata: docResult.metadata,
-        }
+          ai_analyzer: useGemini ? 'gemini' : 'openai',
+          ...analysisResult.metadata
+        },
+        sample_data: {},
+        category: 'general'
       })
       .select()
       .single();
