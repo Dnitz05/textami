@@ -100,25 +100,37 @@ export async function POST(request: NextRequest) {
     log.debug('✅ Valid Google tokens retrieved for user:', { userId: user.id });
 
     // 5. Create Google Docs service with user tokens
-    const docsService = await createGoogleDocsService(
-      googleTokens,
-      async (newTokens) => {
-        // Token refresh is handled by token-manager automatically
-        log.debug('🔄 Google tokens refreshed automatically');
-      }
-    );
+    let docsService;
+    try {
+      docsService = await createGoogleDocsService(
+        googleTokens,
+        async (newTokens) => {
+          // Token refresh is handled by token-manager automatically
+          log.debug('🔄 Google tokens refreshed automatically');
+        }
+      );
+    } catch (serviceError) {
+      log.error('❌ Failed to create Google Docs service:', serviceError);
+      throw new Error(`Google Docs service initialization failed: ${serviceError instanceof Error ? serviceError.message : 'Unknown error'}`);
+    }
 
     // 6. Get document content from Google Docs API
     log.debug('📄 Fetching document content from Google Docs...');
     
-    const docResult = await docsService.parseDocumentContent(documentId, {
-      preserveFormatting: true,
-      convertToSemantic: true,
-      removeEmptyElements: true,
-    });
+    let docResult;
+    try {
+      docResult = await docsService.parseDocumentContent(documentId, {
+        preserveFormatting: true,
+        convertToSemantic: true,
+        removeEmptyElements: true,
+      });
+    } catch (parseError) {
+      log.error('❌ Failed to parse document content:', parseError);
+      throw new Error(`Document parsing failed: ${parseError instanceof Error ? parseError.message : 'Unknown parsing error'}`);
+    }
 
-    if (!docResult.cleanedHtml) {
-      throw new Error('Failed to extract HTML content from Google Doc');
+    if (!docResult || !docResult.cleanedHtml) {
+      throw new Error('Failed to extract HTML content from Google Doc - empty result');
     }
 
     log.debug('✅ Document content extracted:', {
@@ -134,24 +146,33 @@ export async function POST(request: NextRequest) {
     // 8. Choose AI analyzer based on preference and availability
     let analysisResult;
     
-    if (useGemini && isGeminiAvailable()) {
-      log.debug('🤖 Using Gemini analyzer...');
-      analysisResult = await analyzeWithGemini(docResult.cleanedHtml, {
-        templateId,
-        fileName: safeFileName || docResult.metadata.name,
-        performAIAnalysis: true,
-        cleanHtml: false, // Already cleaned
-        mapStyles: false, // Already mapped
-      });
-    } else {
-      log.debug('🤖 Using OpenAI analyzer...');
-      analysisResult = await analyzeGoogleDocsHTML(docResult.cleanedHtml, {
-        templateId,
-        fileName: safeFileName || docResult.metadata.name,
-        performAIAnalysis: true,
-        cleanHtml: false, // Already cleaned
-        mapStyles: false, // Already mapped
-      });
+    try {
+      if (useGemini && isGeminiAvailable()) {
+        log.debug('🤖 Using Gemini analyzer...');
+        analysisResult = await analyzeWithGemini(docResult.cleanedHtml, {
+          templateId,
+          fileName: safeFileName || docResult.metadata.name,
+          performAIAnalysis: true,
+          cleanHtml: false, // Already cleaned
+          mapStyles: false, // Already mapped
+        });
+      } else {
+        log.debug('🤖 Using OpenAI analyzer...');
+        analysisResult = await analyzeGoogleDocsHTML(docResult.cleanedHtml, {
+          templateId,
+          fileName: safeFileName || docResult.metadata.name,
+          performAIAnalysis: true,
+          cleanHtml: false, // Already cleaned
+          mapStyles: false, // Already mapped
+        });
+      }
+    } catch (analysisError) {
+      log.error('❌ AI analysis failed:', analysisError);
+      throw new Error(`AI analysis failed: ${analysisError instanceof Error ? analysisError.message : 'Unknown analysis error'}`);
+    }
+
+    if (!analysisResult) {
+      throw new Error('AI analysis returned empty result');
     }
 
     // 9. Save template to database (compatibility with current schema)
@@ -266,32 +287,53 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
-    log.error('❌ Google Docs analysis failed:', error);
+    // Enhanced error logging for debugging
+    log.error('❌ Google Docs analysis failed:', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined,
+      cause: error instanceof Error ? error.cause : undefined,
+    });
     
     // Provide specific error messages
     let errorMessage = 'Internal server error';
     let statusCode = 500;
+    let debugInfo = {};
 
     if (error instanceof Error) {
-      if (error.message.includes('Google API Error')) {
+      debugInfo = {
+        name: error.name,
+        message: error.message,
+        stack: error.stack?.split('\n').slice(0, 5), // First 5 lines of stack
+      };
+
+      if (error.message.includes('Google API Error') || error.message.includes('googleapis')) {
         errorMessage = 'Failed to access Google Document - check permissions';
         statusCode = 403;
-      } else if (error.message.includes('authentication')) {
+      } else if (error.message.includes('authentication') || error.message.includes('token')) {
         errorMessage = 'Google authentication expired - please re-authorize';
         statusCode = 401;
-      } else if (error.message.includes('Document not found')) {
+      } else if (error.message.includes('Document not found') || error.message.includes('not found')) {
         errorMessage = 'Google Document not found or not accessible';
         statusCode = 404;
+      } else if (error.message.includes('Cannot find module') || error.message.includes('import')) {
+        errorMessage = 'Service temporarily unavailable - missing dependencies';
+        statusCode = 503;
       } else {
-        errorMessage = error.message;
+        errorMessage = error.message || 'Google Docs analysis failed';
       }
+    } else {
+      // Handle non-Error objects
+      errorMessage = 'Unexpected error during Google Docs analysis';
+      debugInfo = { errorType: typeof error, errorValue: String(error) };
     }
 
     return NextResponse.json(
       { 
         error: errorMessage,
-        details: error instanceof Error ? error.message : 'Unknown error',
-        type: 'google_docs_analysis_error'
+        details: error instanceof Error ? error.message : String(error),
+        type: 'google_docs_analysis_error',
+        debug: process.env.NODE_ENV === 'development' ? debugInfo : undefined
       },
       { status: statusCode }
     );
