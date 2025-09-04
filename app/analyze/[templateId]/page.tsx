@@ -26,10 +26,9 @@ interface PageProps {
   }>;
 }
 
-export default async function DynamicAnalyzePage({ params }: PageProps) {
-  // 🚀 Next.js 15: params is now a Promise
-  const resolvedParams = await params;
+export default function DynamicAnalyzePage({ params }: PageProps) {
   const router = useRouter();
+  const [resolvedParams, setResolvedParams] = useState<{ templateId: string } | null>(null);
   const { user, isAuthenticated, loading: authLoading } = useUser();
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [excelHeaders, setExcelHeaders] = useState<string[]>([]);
@@ -45,8 +44,25 @@ export default async function DynamicAnalyzePage({ params }: PageProps) {
   const [originalFileName, setOriginalFileName] = useState('');
   const [templateType, setTemplateType] = useState<'docx' | 'google-docs' | 'unknown'>('unknown');
 
+  // 🚀 Resolve params Promise for Next.js 15
+  useEffect(() => {
+    const resolveParams = async () => {
+      try {
+        const resolved = await params;
+        setResolvedParams(resolved);
+      } catch (error) {
+        log.error('❌ Failed to resolve params:', error);
+        router.push('/dashboard');
+      }
+    };
+
+    resolveParams();
+  }, [params, router]);
+
   // 🎯 ULTRA-SMART: Detect template type from templateId
   useEffect(() => {
+    if (!resolvedParams) return;
+
     const detectTemplateType = () => {
       const { templateId } = resolvedParams;
       
@@ -63,7 +79,7 @@ export default async function DynamicAnalyzePage({ params }: PageProps) {
     };
 
     detectTemplateType();
-  }, [resolvedParams.templateId]);
+  }, [resolvedParams]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -246,6 +262,8 @@ export default async function DynamicAnalyzePage({ params }: PageProps) {
 
   // 🧠 ULTRA-SMART: Load template data based on type and templateId
   useEffect(() => {
+    if (!resolvedParams) return;
+    
     let isMounted = true;
     
     const loadTemplateData = async () => {
@@ -289,7 +307,7 @@ export default async function DynamicAnalyzePage({ params }: PageProps) {
     return () => {
       isMounted = false;
     };
-  }, [templateType, resolvedParams.templateId, loadGoogleDocsTemplate, loadDocxTemplate]);
+  }, [templateType, resolvedParams, loadGoogleDocsTemplate, loadDocxTemplate]);
 
   const handleSaveAsTemplate = () => {
     setShowSaveTemplateDialog(true);
@@ -583,6 +601,18 @@ export default async function DynamicAnalyzePage({ params }: PageProps) {
       setIsGenerating(false);
     }
   };
+
+  // Show loading while params are being resolved
+  if (!resolvedParams) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading template...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
