@@ -28,15 +28,24 @@
 - **Styling**: Tailwind CSS
 - **Testing**: Jest with Testing Library
 
-## AI-First Workflow (SIMPLIFIED MVP)
-✅ **NEW AI-FIRST WORKFLOW:**
-1. **Upload DOCX**: User uploads normal Word document (no templates needed)
-2. **AI Transcription**: GPT-5 Vision reads document, preserves all formatting and tables
-3. **AI Placeholder Detection**: AI automatically identifies potential data fields
-4. **Upload Excel**: User uploads Excel file with data
-5. **AI Mapping Proposal**: AI suggests optimal column-to-placeholder associations
-6. **User Confirmation**: Simple interface to confirm/adjust AI proposals
-7. **AI Generation**: GPT-5 generates final DOCX with perfect formatting preservation
+## AI-First Workflow (SIMPLIFIED MVP - CORRECTED)
+✅ **CORRECTED WORKFLOW - ANALYSIS FIRST, SAVE LATER:**
+
+### **Google Docs Flow (NO AI TRANSCRIPTION NEEDED):**
+1. **Select Google Doc**: User chooses document from Google Drive  
+2. **ANALYSIS ONLY**: `/api/google/docs/analyze` extracts HTML content directly (NO database save)
+3. **User Reviews**: Edit placeholders, configure variables in template editor UI
+4. **Save Template**: User clicks "Save Template" → `/api/templates` saves to database/storage
+5. **Upload Excel & Generate**: Normal Excel mapping and document generation
+
+### **DOCX Flow:**
+1. **Upload DOCX**: User uploads Word document
+2. **ANALYSIS ONLY**: AI reads document, identifies placeholders (NO database save)  
+3. **User Reviews**: Edit placeholders, configure variables in template editor UI
+4. **Save Template**: User clicks "Save Template" → saves to database/storage
+5. **Upload Excel & Generate**: Excel mapping and document generation
+
+**🚨 KEY CORRECTION**: Analysis APIs (`/api/google/docs/analyze`, `/api/ai-docx/analyze`) should NOT save templates automatically. Templates are only saved when user explicitly clicks "Save Template" button.
 
 ✅ **KEY AI CAPABILITIES:**
 - **Table Intelligence**: AI reads complex tables, understands structure, preserves layout

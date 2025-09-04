@@ -1,23 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { createGoogleDocsService } from '@/lib/google/docs-service';
 import { validateUserSession, checkRateLimit } from '@/lib/security/auth-middleware';
 import { validateRequestSchema, validateGoogleDocId, validateFilename } from '@/lib/security/input-validation';
 import { getValidGoogleTokens } from '@/lib/google/token-manager';
 import { log } from '@/lib/logger';
 import { v4 as uuidv4 } from 'uuid';
-
-// Initialize Supabase client
-function getSupabase() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  
-  if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Supabase configuration missing');
-  }
-  
-  return createClient(supabaseUrl, supabaseServiceKey);
-}
 
 export async function POST(request: NextRequest) {
   log.debug('🚀 Google Docs Analysis Request Started');
@@ -57,7 +44,11 @@ export async function POST(request: NextRequest) {
       },
       templateId: {
         required: false,
-        validator: (value) => typeof value === 'string' || value === undefined
+        validator: (value) => ({
+          isValid: typeof value === 'string' || value === undefined,
+          sanitizedValue: value,
+          errors: typeof value === 'string' || value === undefined ? [] : ['templateId must be a string']
+        })
       }
     });
     
@@ -168,45 +159,9 @@ export async function POST(request: NextRequest) {
       }
     };
 
-    // 9. Save template to database (compatibility with current schema)
-    const supabase = getSupabase();
-    const { data: template, error: templateError } = await supabase
-      .from('templates')
-      .insert({
-        id: templateId,
-        user_id: user.id,
-        name: safeFileName || docResult.metadata.name,
-        description: `Google Docs template: ${safeFileName || docResult.metadata.name}`,
-        file_url: `https://docs.google.com/document/d/${documentId}`,
-        storage_path: `google-docs/${documentId}`,
-        file_size_bytes: docResult.html.length, // Approximate size
-        original_filename: `${safeFileName || docResult.metadata.name}.gdoc`,
-        mime_type: 'application/vnd.google-apps.document',
-        variables: analysisResult.placeholders || [],
-        ai_features: {
-          source_type: 'google-docs',
-          google_doc_id: documentId,
-          html_content: analysisResult.transcription,
-          placeholders: analysisResult.placeholders,
-          sections: analysisResult.sections,
-          tables: analysisResult.tables,
-          google_doc_metadata: docResult.metadata,
-          ai_analyzer: useGemini ? 'gemini' : 'openai',
-          ...analysisResult.metadata
-        },
-        sample_data: {},
-        category: 'general'
-      })
-      .select()
-      .single();
-
-    if (templateError) {
-      log.error('❌ Failed to save template to database:', templateError);
-      return NextResponse.json(
-        { error: 'Failed to save template' },
-        { status: 500 }
-      );
-    }
+    // 9. NO SAVE TO DATABASE - This is ANALYSIS only, not template creation
+    // Template will be saved later when user clicks "Save Template" button
+    log.debug('📋 Analysis complete - NOT saving to database (analysis only)');
 
     // 10. Return response with direct Google Docs content - NO AI TRANSCRIPTION
     const response = {
