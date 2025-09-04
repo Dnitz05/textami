@@ -129,8 +129,9 @@ export async function POST(request: NextRequest) {
       tables: docResult.structure.tables.length,
     });
 
-    // 7. Generate template ID
-    const templateId = `google_doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // 7. Generate template ID as a UUID
+    import { v4 as uuidv4 } from 'uuid';
+    const templateId = uuidv4();
 
     // 8. Choose AI analyzer based on preference and availability
     let analysisResult;
