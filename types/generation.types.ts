@@ -16,7 +16,7 @@ export interface Document {
   id: string;
   generation_id: string;
   file_url: string;
-  file_type: 'docx' | 'pdf';
+  file_type: 'google-docs' | 'pdf';
   row_index?: number;
   created_at: string;
 }
@@ -31,6 +31,6 @@ export interface GenerationProgress {
 export interface BatchGenerationRequest {
   template_id: string;
   data_source_id?: string;
-  output_format: 'docx' | 'pdf' | 'both';
+  output_format: 'google-docs' | 'pdf' | 'both';
   data?: Record<string, any>[];
 }

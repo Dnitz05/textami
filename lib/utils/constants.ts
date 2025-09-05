@@ -10,21 +10,19 @@ export const APP_INFO = {
 };
 
 export const FILE_LIMITS = {
-  maxTemplateSize: 10 * 1024 * 1024,  // 10MB
   maxDataSize: 50 * 1024 * 1024,      // 50MB
   maxDocuments: 500,                   // Per batch
-  allowedTemplates: ['.docx'],
   allowedData: ['.xlsx', '.xls', '.csv']
 };
 
 export const MESSAGES = {
   // Errors
-  templateRequired: 'Cal pujar una plantilla',
+  templateRequired: 'Cal seleccionar un Google Doc',
   dataRequired: 'Cal pujar les dades',
   mappingRequired: 'Cal mapejar les columnes',
   
   // Èxits
-  templateUploaded: 'Plantilla pujada correctament',
+  templateSelected: 'Google Doc seleccionat correctament',
   dataUploaded: 'Dades carregades correctament',
   documentsGenerated: 'Documents generats!',
   

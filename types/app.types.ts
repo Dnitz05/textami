@@ -51,7 +51,7 @@ export type TemplateCategory = 'general' | 'business' | 'legal' | 'marketing' | 
 
 // File Types
 export type SupportedFileType = 'excel' | 'csv'
-export type DocumentMimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+export type GoogleDocsMimeType = 'application/vnd.google-apps.document'
 
 // Generation Status
 export type GenerationStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled'
@@ -224,7 +224,7 @@ export interface GenerationConfig {
   templateId: string
   dataSourceId?: string
   variableMappingId?: string
-  outputFormat?: 'docx' | 'pdf'
+  outputFormat?: 'google-docs' | 'pdf'
   batchSize?: number
   priority?: number
   metadata?: Record<string, unknown>

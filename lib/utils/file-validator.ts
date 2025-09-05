@@ -9,28 +9,18 @@ export interface ValidationResult {
 }
 
 /**
- * Valida un fitxer de plantilla .docx
+ * Valida un Google Doc ID
  */
-export function validateTemplateFile(file: File): ValidationResult {
-  // Verificar nom
-  if (!file.name) {
-    return { isValid: false, error: 'Nom de fitxer buit' };
+export function validateGoogleDocId(docId: string): ValidationResult {
+  // Verificar que existeixi
+  if (!docId || docId.trim().length === 0) {
+    return { isValid: false, error: 'ID del Google Doc buit' };
   }
 
-  // Verificar extensió
-  const extension = '.' + file.name.split('.').pop()?.toLowerCase();
-  if (!FILE_LIMITS.allowedTemplates.includes(extension)) {
-    return { isValid: false, error: 'Format no permès. Cal un .docx' };
-  }
-
-  // Verificar mida
-  if (file.size > FILE_LIMITS.maxTemplateSize) {
-    return { isValid: false, error: `Fitxer massa gran. Màxim ${FILE_LIMITS.maxTemplateSize / 1024 / 1024}MB` };
-  }
-
-  // Verificar mida mínima
-  if (file.size < 1000) {
-    return { isValid: false, error: 'Fitxer massa petit' };
+  // Verificar format bàsic de Google Doc ID
+  const googleDocIdPattern = /^[a-zA-Z0-9_-]{25,50}$/;
+  if (!googleDocIdPattern.test(docId)) {
+    return { isValid: false, error: 'ID del Google Doc invàlid' };
   }
 
   return { isValid: true };
