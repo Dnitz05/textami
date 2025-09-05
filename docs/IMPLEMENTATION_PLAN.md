@@ -119,16 +119,16 @@ Sistema que permeti:
 
 ## 2.3 Template Source Selector (1-2 dies)
 ### Subtasques:
-- [ ] **2.3.1** Crear `components/TemplateSourceSelector.tsx`:
-  - Modal amb opcions DOCX vs Google Docs
-  - Icons i descriptions
-  - Handler per cada opció
+- [x] **2.3.1** Actualitzar `components/TemplateSourceSelector.tsx`:
+  - ✅ Modal Google Docs only (DOCX eliminat)
+  - ✅ UI optimitzada per Google Drive integration
+  - ✅ Handler per Google Docs selection
 - [ ] **2.3.2** Modificar dashboard per mostrar selector:
   ```typescript
   // app/dashboard/page.tsx
   const [showSourceModal, setShowSourceModal] = useState(false)
   ```
-- [ ] **2.3.3** Integrar amb flow existent upload DOCX
+- [x] **2.3.3** ✅ Integració amb Google Docs flow (DOCX flow eliminat)
 - [ ] **2.3.4** Crear `components/google/GoogleDocUploader.tsx`:
   - Drive file picker integration
   - Document preview
@@ -301,13 +301,13 @@ Sistema que permeti:
 ## 5.3 Universal Generation Pipeline (1-2 dies)
 ### Subtasques:
 - [ ] **5.3.1** Crear `lib/generators/universal-generator.ts`:
-  - Support DOCX + Google Docs output
+  - Google Docs native output (DOCX removed)
   - Format selection logic
   - Unified error handling
 - [ ] **5.3.2** Implementar output format selector:
   ```typescript
   interface GenerationOptions {
-    outputFormat: 'docx' | 'google-docs'
+    outputFormat: 'google-docs' | 'pdf'
     outputFolder?: string
     namingPattern?: string
   }
@@ -387,7 +387,7 @@ Sistema que permeti:
   - Maintain existing functionality
 - [ ] **7.2.2** Update preview panels:
   - HTML preview per Google Docs
-  - Maintain DOCX preview existent
+  - Enhanced Google Docs preview
 - [ ] **7.2.3** Instructions tab integration
 
 ## 7.3 Generation Interface (1-2 dies)
@@ -398,7 +398,7 @@ Sistema que permeti:
   - Progress indicators
 - [ ] **7.3.2** Results display:
   - Links per Google Docs
-  - Download links per DOCX
+  - Google Drive access links
   - Success/error statistics
 - [ ] **7.3.3** Error handling UI:
   - Retry mechanisms
@@ -548,7 +548,7 @@ Sistema que permeti:
 ✅ **Google Sheets mapping** intelligent amb IA  
 ✅ **Instructions system** complet (global→cells)  
 ✅ **Mass generation** → Google Docs en Drive folders  
-✅ **Hybrid system** DOCX + Google Docs operatiu  
+✅ **Google-first system** 100% operatiu sense DOCX dependencies  
 
 ### Dependencies crítiques:
 - Google Cloud APIs approval (1-2 dies)

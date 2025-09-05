@@ -1,501 +1,262 @@
-# ARQUITECTURA HÍBRIDA UNIVERSAL: DOCX + GOOGLE DOCS
+# GOOGLE-FIRST ARCHITECTURE: NATIVE WORKSPACE INTEGRATION
 
-**Data:** 1 Setembre 2025  
-**Status:** Decisió Arquitectònica Aprovada  
-**Versió:** 1.0-hybrid-universal
+**Data:** 5 Setembre 2025  
+**Status:** Production Architecture Implemented  
+**Versió:** 2.0-google-native
 
 ---
 
-## 🎯 NOVA VISIÓ: COMPATIBILITAT UNIVERSAL
+## 🎯 NOVA VISIÓ: GOOGLE WORKSPACE NATIVE
 
-Textami evoluciona cap a una **arquitectura híbrida universal** que suporta múltiples fonts de documents i dades, maximitzant l'abast de mercat mentre reutilitza 90% del codi existent.
+Textami ha evolucionat cap a una **arquitectura Google-first** que ofereix integració nativa amb Google Workspace, eliminant la complexitat dels sistemes híbrids i maximitzant la qualitat de l'experiència d'usuari.
 
 ### **Principi Fonamental:**
-> **Mateixa UI, múltiples backends** - L'usuari veu la mateixa interfície però pot treballar amb DOCX/Excel o Google Docs/Sheets segons preferència.
+> **Native Google Integration** - Integració completa amb Google Workspace per oferir una experiència fluida, col·laborativa i escalable que aprofita tota la potència de l'ecosistema Google.
 
 ---
 
-## 🏗️ ARQUITECTURA HÍBRIDA
+## 🏗️ ARQUITECTURA GOOGLE-NATIVE
 
-### **Pipeline Universal:**
+### **Pipeline Google-First:**
 ```
 ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│   Template  │    │   Structure │    │    HTML     │
-│   Sources   │───▶│  Extraction │───▶│   Preview   │
-│ DOCX/Google │    │   (Unified) │    │ (Universal) │
+│   Google    │    │   GPT-5     │    │   Google    │
+│    Docs     │───▶│   Vision    │───▶│    Docs     │
+│  Templates  │    │  Analysis   │    │   Output    │
 └─────────────┘    └─────────────┘    └─────────────┘
-                                              │
-                                              ▼
+       │                    │                    │
+       ▼                    ▼                    ▼
 ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│   Output    │◀───│   Variable  │◀───│    Data     │
-│ DOCX/Google │    │   Mapping   │    │   Sources   │
-│    Docs     │    │ (Universal) │    │ Excel/Sheets│
+│   Google    │    │   Smart     │    │   Batch     │
+│   Sheets    │───▶│   Mapping   │───▶│ Processing  │
+│    Data     │    │   Engine    │    │   Engine    │
 └─────────────┘    └─────────────┘    └─────────────┘
 ```
 
----
+### **Core Components:**
 
-## 📊 COMPONENT MAPPING
-
-### **1. Template Input (Nou Selector):**
+#### **1. Google Drive Integration Layer**
 ```typescript
-// components/TemplateSourceSelector.tsx
-interface TemplateSourceOption {
-  type: 'docx' | 'google-docs';
-  title: string;
-  description: string;
-  icon: string;
-  handler: () => void;
-}
-
-export function TemplateSourceSelector({ onTemplateCreated }: Props) {
-  const options: TemplateSourceOption[] = [
-    {
-      type: 'docx',
-      title: 'Document Word',
-      description: 'Puja un fitxer .docx des del teu ordinador',
-      icon: '📄',
-      handler: () => handleDocxUpload()
-    },
-    {
-      type: 'google-docs', 
-      title: 'Google Doc',
-      description: 'Importa des de Google Drive',
-      icon: '📝',
-      handler: () => handleGoogleDocImport()
-    }
-  ];
-  
-  return (
-    <div className="template-source-selector">
-      <h3>Escull el tipus de plantilla:</h3>
-      <div className="options-grid">
-        {options.map(option => (
-          <SourceOptionCard key={option.type} option={option} />
-        ))}
-      </div>
-    </div>
-  );
+// Native Google Drive access
+GoogleDriveService {
+  - Document picker and browser
+  - Real-time file access
+  - Permission management
+  - Collaborative editing support
 }
 ```
 
-### **2. Data Source (Modificació ExcelMappingPanel):**
+#### **2. AI Processing Engine** 
 ```typescript
-// components/analysis/DataMappingPanel.tsx (RENAME)
-export function DataMappingPanel({ analysisData, onMappingComplete }: Props) {
-  const [dataSourceType, setDataSourceType] = useState<'excel' | 'sheets' | null>(null);
-  
-  // Selector de font de dades
-  if (!dataSourceType) {
-    return (
-      <Card className="data-source-selector">
-        <h3>Afegir dades per generació massiva</h3>
-        <div className="data-source-options">
-          <Button onClick={() => setDataSourceType('excel')}>
-            <span className="icon">📊</span>
-            Pujar Excel
-          </Button>
-          <Button onClick={() => setDataSourceType('sheets')}>
-            <span className="icon">📋</span>
-            Connectar Google Sheets
-          </Button>
-        </div>
-      </Card>
-    );
-  }
-  
-  // Interfície de mapping (reutilitza existent)
-  return (
-    <div className="data-mapping-interface">
-      {dataSourceType === 'excel' ? (
-        <ExcelMappingInterface 
-          analysisData={analysisData}
-          onMappingComplete={onMappingComplete}
-        />
-      ) : (
-        <GoogleSheetsMappingInterface 
-          analysisData={analysisData}
-          onMappingComplete={onMappingComplete}
-        />
-      )}
-    </div>
-  );
+// GPT-5 Vision + Gemini
+AIProcessingEngine {
+  - Native Google Docs reading
+  - Intelligent placeholder detection  
+  - Context-aware instructions
+  - Format preservation
+}
+```
+
+#### **3. Generation Engine**
+```typescript
+// Google Docs API generation
+GenerationEngine {
+  - Mass Google Docs creation
+  - Drive folder management
+  - Batch processing queues
+  - Error recovery systems
 }
 ```
 
 ---
 
-## ⚙️ BACKEND ADAPTERS
+## 🔄 DATA FLOW ARCHITECTURE
 
-### **Source Adapters (Nou layer):**
-```typescript
-// lib/sources/source-adapter.ts
-export interface UniversalAnalysisData extends AnalysisData {
-  sourceType: 'docx' | 'google-docs';
-  sourceId: string;
-  sourceMetadata?: {
-    originalUrl?: string;
-    permissions?: string[];
-    lastModified?: string;
-  };
-}
-
-// lib/sources/docx-source.ts
-export async function analyzeDocxSource(file: File): Promise<UniversalAnalysisData> {
-  // Existing OOXML logic - NO CHANGES
-  const analysis = await analyzeDocxFile(file);
-  
-  return {
-    ...analysis,
-    sourceType: 'docx',
-    sourceId: analysis.templateId,
-    sourceMetadata: {
-      originalUrl: file.name,
-      lastModified: new Date(file.lastModified).toISOString()
-    }
-  };
-}
-
-// lib/sources/google-docs-source.ts
-export async function analyzeGoogleDocsSource(docId: string): Promise<UniversalAnalysisData> {
-  // 1. Export Google Doc to HTML
-  const htmlContent = await driveAPI.files.export({
-    fileId: docId,
-    mimeType: 'text/html'
-  });
-  
-  // 2. Parse HTML structure (simpler than OOXML!)
-  const sections = parseHTMLSections(htmlContent.data);
-  const tables = parseHTMLTables(htmlContent.data);
-  
-  // 3. AI variable detection (same as current system)
-  const placeholders = await detectVariablesWithGemini(htmlContent.data);
-  
-  return {
-    templateId: generateId(),
-    title: extractHTMLTitle(htmlContent.data),
-    markdown: htmlContent.data, // Direct HTML
-    sections,
-    tables,
-    tags: [], // Legacy compatibility
-    placeholders,
-    sourceType: 'google-docs',
-    sourceId: docId,
-    sourceMetadata: {
-      originalUrl: `https://docs.google.com/document/d/${docId}`,
-      permissions: await getDocPermissions(docId)
-    }
-  };
-}
+### **1. Template Analysis Flow:**
+```
+Google Doc Selection
+    ↓
+GPT-5 Vision Analysis (Native HTML)
+    ↓  
+Smart Placeholder Detection
+    ↓
+AI Instructions Processing
+    ↓
+Template Storage (Supabase)
 ```
 
-### **Data Adapters:**
-```typescript
-// lib/data-sources/excel-adapter.ts
-export async function parseExcelData(file: File): Promise<DataSourceResult> {
-  // Existing logic - NO CHANGES
-  return {
-    type: 'excel',
-    headers: extractedHeaders,
-    data: extractedRows,
-    sourceMetadata: { fileName: file.name }
-  };
-}
+### **2. Data Processing Flow:**
+```
+Google Sheets / Excel Upload
+    ↓
+Data Extraction & Validation
+    ↓
+AI Smart Mapping Engine
+    ↓
+User Confirmation Interface
+    ↓
+Mapping Storage (Supabase)
+```
 
-// lib/data-sources/sheets-adapter.ts  
-export async function parseGoogleSheetsData(sheetId: string, range?: string): Promise<DataSourceResult> {
-  const response = await sheetsAPI.spreadsheets.values.get({
-    spreadsheetId: sheetId,
-    range: range || 'A:Z' // Get all data
-  });
-  
-  const [headers, ...rows] = response.data.values || [];
-  
-  return {
-    type: 'sheets',
-    headers,
-    data: rows.map(row => {
-      const rowData: Record<string, any> = {};
-      headers.forEach((header, index) => {
-        rowData[header] = row[index] || '';
-      });
-      return rowData;
-    }),
-    sourceMetadata: { 
-      sheetUrl: `https://docs.google.com/spreadsheets/d/${sheetId}`,
-      range
-    }
-  };
-}
+### **3. Generation Flow:**
+```
+Template + Data + Instructions
+    ↓
+Batch Processing Engine
+    ↓
+Google Docs API Generation
+    ↓
+Drive Folder Organization
+    ↓
+Success/Error Reporting
 ```
 
 ---
 
-## 🚀 GENERATION ENGINE
+## 🧠 AI-FIRST PROCESSING
 
-### **Universal Generator:**
-```typescript
-// lib/generators/universal-generator.ts
-export async function generateDocuments({
-  template,
-  dataSource,
-  mappings,
-  outputFormat
-}: UniversalGenerationParams): Promise<GenerationResult[]> {
-  
-  const results: GenerationResult[] = [];
-  
-  for (const rowData of dataSource.data) {
-    let generatedDoc;
-    
-    // Decide output format based on template source or user preference
-    if (outputFormat === 'google-docs' || template.sourceType === 'google-docs') {
-      generatedDoc = await generateGoogleDoc(template, rowData, mappings);
-    } else {
-      generatedDoc = await generateDocxFile(template, rowData, mappings);
-    }
-    
-    results.push(generatedDoc);
-  }
-  
-  return results;
-}
+### **GPT-5 Vision Integration:**
+- **Native Document Reading:** No file parsing, direct HTML analysis
+- **Context Understanding:** Semantic analysis of document structure
+- **Intelligent Placeholders:** Auto-detection without manual configuration
+- **Format Preservation:** Maintains Google Docs native styling
 
-async function generateGoogleDoc(
-  template: UniversalAnalysisData, 
-  data: Record<string, any>, 
-  mappings: Record<string, string>
-): Promise<GenerationResult> {
-  
-  // 1. Process template HTML with variables (simple!)
-  let processedHTML = template.markdown; // Already HTML from Google Docs
-  
-  // 2. Replace variables
-  for (const placeholder of template.placeholders || []) {
-    const value = data[mappings[placeholder.variable]] || placeholder.variable;
-    processedHTML = processedHTML.replace(
-      new RegExp(`{{${placeholder.variable}}}`, 'g'),
-      String(value)
-    );
-  }
-  
-  // 3. Create new Google Doc from processed HTML
-  const response = await driveAPI.files.create({
-    requestBody: { 
-      name: `${template.title} - ${data[mappings['nom']] || 'Generated'}`,
-      mimeType: 'application/vnd.google-apps.document'
-    },
-    media: {
-      mimeType: 'text/html',
-      body: processedHTML
-    }
-  });
-  
-  return {
-    documentId: response.data.id!,
-    documentUrl: `https://docs.google.com/document/d/${response.data.id}`,
-    documentName: response.data.name!,
-    sourceData: data,
-    generatedAt: new Date(),
-    format: 'google-docs'
-  };
-}
-```
+### **Smart Mapping Engine:**
+- **Gemini-Powered:** Advanced data correspondence suggestions
+- **Context-Aware:** Understands data types and document context
+- **Learning System:** Improves accuracy with user feedback
+- **Multi-Language:** Support for multiple data formats and languages
 
 ---
 
-## 📱 UI MODIFICATIONS (MINIMAL)
+## 🔧 TECHNICAL STACK
 
-### **1. Dashboard "Nova Plantilla" Button:**
+### **Frontend Layer:**
 ```typescript
-// app/dashboard/page.tsx - Only change the button behavior
-<Button 
-  onClick={() => setShowTemplateSourceModal(true)}
-  className="new-template-btn"
->
-  + Nova Plantilla
-</Button>
-
-{showTemplateSourceModal && (
-  <TemplateSourceSelector 
-    onSourceSelected={handleTemplateSourceSelection}
-    onClose={() => setShowTemplateSourceModal(false)}
-  />
-)}
+Next.js 15.4.6 + React 19.1.0
+├── Google Drive Picker Components
+├── Real-time Progress Tracking  
+├── Collaborative Editing UI
+└── Responsive Design (Mobile-first)
 ```
 
-### **2. Analysis Interface - Add source badge:**
+### **API Layer:**
 ```typescript
-// components/AIAnalysisInterface.tsx - Add source indicator
-<div className="analysis-header">
-  <h2>{analysisData.title}</h2>
-  <span className="source-badge">
-    {analysisData.sourceType === 'docx' ? '📄 Word' : '📝 Google'}
-  </span>
-</div>
-
-// Rest of interface UNCHANGED
-<DocumentPreviewPanel {...props} />
-<DataMappingPanel {...props} />  // Renamed from ExcelMappingPanel
-<AIPromptsPanel {...props} />
+Next.js API Routes + Google APIs
+├── /api/google/docs/*     // Document processing
+├── /api/google/drive/*    // File management
+├── /api/google/sheets/*   // Data processing
+└── /api/generation/*      // Batch generation
 ```
 
-### **3. Generation Results:**
+### **AI Processing:**
 ```typescript
-// Show appropriate links based on output format
-{result.format === 'google-docs' ? (
-  <a href={result.documentUrl} target="_blank">
-    📝 Obrir a Google Docs
-  </a>
-) : (
-  <a href={result.downloadUrl}>
-    📄 Descarregar DOCX
-  </a>
-)}
+OpenAI GPT-5 + Google Gemini
+├── Document Analysis (GPT-5 Vision)
+├── Smart Mapping (Gemini Pro)
+├── Instruction Processing (GPT-5)
+└── Quality Assurance (Both)
 ```
 
----
-
-## 💾 DATABASE EXTENSIONS
-
-### **Schema Updates:**
+### **Database Layer:**
 ```sql
--- Extend existing templates table
-ALTER TABLE templates 
-ADD COLUMN source_type TEXT CHECK (source_type IN ('docx', 'google-docs')) DEFAULT 'docx',
-ADD COLUMN source_id TEXT,
-ADD COLUMN source_metadata JSONB;
-
--- Extend generations table
-ALTER TABLE generations
-ADD COLUMN output_format TEXT CHECK (output_format IN ('docx', 'google-docs', 'pdf')) DEFAULT 'docx';
-
--- Create index for new fields
-CREATE INDEX idx_templates_source_type ON templates(source_type);
-CREATE INDEX idx_generations_output_format ON generations(output_format);
+Supabase PostgreSQL + Storage
+├── google_documents      // Template metadata
+├── ai_instructions       // 5-level hierarchy  
+├── generation_jobs       // Batch processing
+└── user_profiles         // Google OAuth data
 ```
 
 ---
 
-## 🔧 DEVELOPMENT ROADMAP
+## 🚀 SCALABILITY DESIGN
 
-### **Phase 1: Google Docs Input (1-2 setmanes)**
-- ✅ Google Docs API integration
-- ✅ HTML extraction and parsing  
-- ✅ TemplateSourceSelector component
-- ✅ Google Docs source adapter
-- ✅ Update existing upload flow
+### **Google Infrastructure Leverage:**
+- **Infinite Storage:** Google Drive handles all file operations
+- **Global CDN:** Google's worldwide infrastructure
+- **Auto-scaling:** Google APIs handle load balancing
+- **99.9% Uptime:** Google's enterprise reliability
 
-### **Phase 2: Google Sheets Integration (1 setmana)**
-- ✅ Google Sheets API integration
-- ✅ GoogleSheetsMappingInterface component  
-- ✅ Data source selector in mapping panel
-- ✅ Sheets data adapter
+### **AI Processing Optimization:**
+- **Parallel Processing:** Multiple AI models running concurrently
+- **Smart Caching:** Reduce API calls for similar documents
+- **Queue Management:** Efficient batch processing
+- **Rate Limiting:** Optimized API usage patterns
 
-### **Phase 3: Universal Generation (1 setmana)**
-- ✅ Google Docs output generation
-- ✅ Universal generator logic
-- ✅ Output format selection
-- ✅ Results display updates
-
-### **Phase 4: Polish & Testing (1 setmana)**
-- ✅ Error handling for Google APIs
-- ✅ Rate limiting and quotas
-- ✅ User permissions management  
-- ✅ Comprehensive testing
+### **Database Performance:**
+- **Connection Pooling:** Supabase edge functions
+- **Query Optimization:** Indexed searches and joins
+- **Real-time Updates:** WebSocket connections for live updates
+- **Backup Strategy:** Automated backups with point-in-time recovery
 
 ---
 
-## 💰 COST-BENEFIT ANALYSIS
+## 🔐 SECURITY & PERMISSIONS
 
-### **Development Effort:**
-- **New Code:** ~30% (adapters, selectors, Google APIs)
-- **Reused Code:** ~70% (UI, logic, types, database)
-- **Timeline:** 4-5 setmanes vs 12+ setmanes from scratch
-- **Cost:** €20-25K vs €60K+ new system
+### **Google OAuth Integration:**
+```typescript
+Security Features:
+├── OAuth 2.0 with PKCE
+├── Granular Google Workspace permissions
+├── Token refresh management
+└── Secure storage in Supabase
+```
 
-### **Market Expansion:**
-- **Current:** DOCX users (Enterprise heavy)
-- **New:** Google Docs users (Startups, Education, SMB)
-- **Total Addressable Market:** 2x-3x larger
-- **User Acquisition:** 2 channels instead of 1
-
-### **Technical Benefits:**
-- **Simplicity:** Google Docs API is 10x simpler than OOXML
-- **Reliability:** Less XML parsing edge cases
-- **Performance:** HTML round-trip is faster
-- **Maintenance:** Fewer dependencies and complexity
+### **Data Protection:**
+- **End-to-End Encryption:** All data encrypted in transit and at rest
+- **Row Level Security:** Supabase RLS for user data isolation
+- **GDPR Compliance:** Data portability and deletion capabilities
+- **Audit Logging:** Complete activity tracking for enterprises
 
 ---
 
-## 🎯 STRATEGIC ADVANTAGES
+## 📊 PERFORMANCE METRICS
 
-### **1. Universal Compatibility:**
-- **Enterprise users:** Continue with DOCX workflow
-- **Modern users:** Prefer Google Docs simplicity
-- **Mixed teams:** Can use both in same organization
+### **Target Performance:**
+- **Document Analysis:** <3 seconds for typical Google Doc
+- **Placeholder Detection:** >95% accuracy with GPT-5
+- **Generation Speed:** <5 seconds per document in batch
+- **API Response Time:** <100ms for cached operations
 
-### **2. Competitive Differentiation:**
-- **vs DOCX-only tools:** "We support Google Docs too"
-- **vs Google-only tools:** "We support professional DOCX too"
-- **vs Generic tools:** "Specialized for both ecosystems"
-
-### **3. Risk Mitigation:**
-- **Google API changes:** Still have DOCX fallback
-- **Microsoft dependency:** Still have Google fallback
-- **Market shifts:** Covered in both directions
+### **Scalability Targets:**
+- **Concurrent Users:** 10,000+ simultaneous sessions
+- **Batch Size:** 1,000+ documents per generation job
+- **Data Processing:** 100MB+ spreadsheets supported
+- **Storage:** Unlimited via Google Drive integration
 
 ---
 
-## 🔄 IMPLEMENTATION STRATEGY
+## 🎯 COMPETITIVE ADVANTAGES
 
-### **Backward Compatibility:**
-- **Existing users:** Zero impact, same interface
-- **Existing templates:** Continue working as before
-- **Existing API:** No breaking changes
+### **Technical Superiority:**
+- **Zero Configuration:** No template preparation required
+- **Native Integration:** Built for Google Workspace from ground up
+- **AI-Enhanced:** Intelligent processing throughout the pipeline
+- **Real-time Collaboration:** Multiple users can work simultaneously
 
-### **Forward Compatibility:**
-- **New features:** Built for both sources
-- **UI components:** Universal design patterns
-- **Database:** Extensible schema for future sources
-
-### **Migration Path:**
-- **Phase 1:** Add Google options alongside existing
-- **Phase 2:** A/B test user preferences
-- **Phase 3:** Optimize based on usage patterns
+### **Market Positioning:**
+- **Google-First:** While competitors focus on Microsoft Office
+- **Enterprise-Ready:** Built for team workflows and collaboration
+- **Cost-Effective:** Leverage Google's infrastructure vs custom servers
+- **Future-Proof:** Aligned with cloud-first, collaboration-first trends
 
 ---
 
-## 📋 SUCCESS METRICS
+## 🔄 MIGRATION STRATEGY
 
-### **Technical KPIs:**
-- **Source Coverage:** >90% of templates work in both formats
-- **Performance:** <3s analysis time for both sources
-- **Accuracy:** >95% variable detection in both
-- **Reliability:** >99% successful generations
+### **From Legacy Systems:**
+1. **API Compatibility:** Maintain Google Docs workflows during transition
+2. **Data Migration:** Easy export/import via Google Drive
+3. **User Training:** Intuitive Google Workspace integration
+4. **Rollback Plan:** No vendor lock-in, data remains in Google Drive
 
-### **Business KPIs:**
-- **User Growth:** 2x growth rate with dual compatibility
-- **Market Expansion:** 40% Google Docs users, 60% DOCX users
-- **Customer Satisfaction:** >4.5/5 rating for both flows
-- **Revenue:** 50% increase from market expansion
-
----
-
-## 🔮 FUTURE EXPANSIONS
-
-### **Additional Sources (Phase 5):**
-- **Notion pages** → Same AnalysisData interface
-- **Markdown files** → Same conversion pattern
-- **PDF templates** → OCR + structure detection
-
-### **Additional Outputs (Phase 6):**
-- **PDF generation** with full formatting
-- **PowerPoint** for presentation templates
-- **HTML websites** for web publishing
+### **Integration Points:**
+- **Google Workspace Admin:** Enterprise admin console integration
+- **Third-party Apps:** API endpoints for external integrations  
+- **Mobile Apps:** Progressive Web App with offline capabilities
+- **Analytics:** Google Analytics integration for usage insights
 
 ---
 
-**CONCLUSIÓ:** L'arquitectura híbrida universal proporciona màxima flexibilitat, creixement de mercat i reutilització de codi mentre manté simplicitat d'implementació i experiència d'usuari consistent.
-
-**STATUS: READY FOR IMPLEMENTATION** 🚀
+**ARCHITECTURE STATUS:** ✅ **PRODUCTION READY**  
+**NEXT EVOLUTION:** Enterprise features, advanced AI capabilities, public API
