@@ -13,7 +13,7 @@ interface RenderRequest {
     data: Record<string, any>;
     fileName: string;
   }>;
-  outputFormat?: 'html' | 'pdf' | 'docx';
+  outputFormat?: 'html' | 'pdf' | 'google-docs';
   instructions?: string;
 }
 
@@ -128,9 +128,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<RenderRes
           // Future: Convert HTML to PDF using puppeteer or similar
           log.debug('⚠️ PDF conversion not yet implemented, returning HTML');
           contentType = 'text/html';
-        } else if (outputFormat === 'docx') {
-          // Future: Use docxtemplater PRO with HTML module
-          log.debug('⚠️ DOCX conversion not yet implemented, returning HTML');
+        } else if (outputFormat === 'google-docs') {
+          // Future: Use Google Docs API for direct document generation
+          log.debug('⚠️ Google Docs conversion not yet implemented, returning HTML');
           contentType = 'text/html';
         }
         
