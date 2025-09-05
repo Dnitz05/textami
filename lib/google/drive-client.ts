@@ -21,7 +21,7 @@ export class GoogleDriveClient {
     try {
       const {
         mimeType = 'application/vnd.google-apps.document', // Default to Google Docs
-        pageSize = 50,
+        pageSize = 100,
         orderBy = 'modifiedTime desc',
         q
       } = options;
@@ -196,7 +196,7 @@ export class GoogleDriveClient {
   }
 
   // Get recent Google Docs
-  async getRecentDocuments(limit: number = 10): Promise<GoogleDriveFile[]> {
+  async getRecentDocuments(limit: number = 50): Promise<GoogleDriveFile[]> {
     return this.listFiles({
       mimeType: 'application/vnd.google-apps.document',
       pageSize: limit,
@@ -205,7 +205,7 @@ export class GoogleDriveClient {
   }
 
   // Get recent Google Sheets
-  async getRecentSpreadsheets(limit: number = 10): Promise<GoogleDriveFile[]> {
+  async getRecentSpreadsheets(limit: number = 50): Promise<GoogleDriveFile[]> {
     return this.listFiles({
       mimeType: 'application/vnd.google-apps.spreadsheet',
       pageSize: limit,
