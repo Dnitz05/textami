@@ -24,7 +24,10 @@ export default function Dashboard() {
     // This prevents infinite redirect loops with landing page
     if (!isAuthenticated && user === null) {
       console.log('🔄 Redirecting to landing page - not authenticated');
-      router.push('/');
+      // Small delay to prevent rapid redirects causing flickering
+      setTimeout(() => {
+        router.push('/');
+      }, 100);
     }
   }, [isAuthenticated, user, router]);
 

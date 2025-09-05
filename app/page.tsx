@@ -54,12 +54,15 @@ export default function LandingPage() {
     handleMagicLinkAuth();
   }, []);
   
-  // Redirect authenticated users to dashboard
+  // Redirect authenticated users to dashboard with delay to prevent flickering
   useEffect(() => {
     console.log('🔍 Landing auth debug:', { isAuthenticated, loading });
     if (!loading && isAuthenticated) {
       console.log('🔄 Redirecting to dashboard - authenticated');
-      router.push('/dashboard');
+      // Small delay to prevent rapid state changes causing flickering
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 100);
     }
   }, [isAuthenticated, loading, router]);
 
