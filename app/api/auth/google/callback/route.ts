@@ -261,54 +261,31 @@ async function handleOAuthCallback(request: NextRequest) {
 
           actualFinalUserId = userData.user.id;
 
-          // 🚀 ULTRA-FIABLE: Generate official magic link for session establishment
-          log.info('🔗 Generating official Supabase magic link for OAuth session:', {
+          // 🚀 SIMPLE REDIRECT: Skip complex session setup, let frontend handle it
+          log.info('🔗 OAuth completed successfully, redirecting to dashboard:', {
             userId: actualFinalUserId.substring(0, 8) + '...',
             email: profile.email,
             flow: 'oauth-signin'
           });
 
-          // 🎯 Generate magic link for session establishment (works for both new and existing users)
-          const { data: magicLinkData, error: linkError } = await supabase.auth.admin.generateLink({
-            type: 'magiclink',
-            email: profile.email,
-            options: {
-              redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard`,
-              data: {
-                oauth_provider: 'google',
-                oauth_user_id: profile.id,
-                oauth_flow: 'signin',
-                user_exists: !!existingUser
-              }
-            }
-          });
-
-          if (linkError || !magicLinkData?.properties?.action_link) {
-            log.error('❌ Failed to generate magic link for OAuth session:', {
-              error: linkError?.message || 'No action link generated',
-              userId: actualFinalUserId.substring(0, 8) + '...',
-              email: profile.email
-            });
-            
-            return NextResponse.redirect(
-              `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Session+creation+failed`
-            );
-          }
-
-          // 🎯 CRITICAL: Auto-redirect to official magic link to establish session
-          log.info('✅ Magic link generated successfully, redirecting to establish session:', {
-            userId: actualFinalUserId.substring(0, 8) + '...',
-            hasActionLink: !!magicLinkData.properties.action_link,
-            email: profile.email
-          });
-
-          // Store temporary data for post-auth processing if needed
-          const response = NextResponse.redirect(magicLinkData.properties.action_link);
+          // Create simple redirect with success parameters
+          const dashboardUrl = new URL(`${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard`);
+          dashboardUrl.searchParams.set('google_auth', 'success');
+          dashboardUrl.searchParams.set('email', profile.email);
+          dashboardUrl.searchParams.set('user_id', actualFinalUserId);
+          
+          const response = NextResponse.redirect(dashboardUrl.toString());
           
           // Clean up temporary OAuth cookies
           response.cookies.delete('google_auth_user_id');
           response.cookies.delete('google_auth_state'); 
           response.cookies.delete('google_signin_state');
+          
+          log.info('✅ Redirecting to dashboard with success parameters:', {
+            userId: actualFinalUserId.substring(0, 8) + '...',
+            email: profile.email,
+            redirectUrl: dashboardUrl.toString()
+          });
           
           return response;
         } catch (authError) {

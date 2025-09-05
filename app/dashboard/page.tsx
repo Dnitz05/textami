@@ -8,21 +8,57 @@ import { useRouter } from 'next/navigation';
 import TopNavBar from '@/components/TopNavBar';
 import { useUser } from '@/hooks/useUser';
 import { useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import TemplateSourceSelector from '@/components/TemplateSourceSelector';
 import GoogleAuthButton from '@/components/google/GoogleAuthButton';
 
 export default function Dashboard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated, user } = useUser();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showTemplateSourceModal, setShowTemplateSourceModal] = useState(false);
+  const [sessionLoading, setSessionLoading] = useState(false);
 
-  // Redirect unauthenticated users to landing page
+  // Handle Google OAuth callback
   useEffect(() => {
-    if (!isAuthenticated && user !== null) {
+    const googleAuth = searchParams.get('google_auth');
+    const email = searchParams.get('email');
+    const userId = searchParams.get('user_id');
+
+    if (googleAuth === 'success' && email && userId) {
+      setSessionLoading(true);
+      
+      // Create Supabase session
+      fetch('/api/auth/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, user_id: userId })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.session_url) {
+          // Redirect to session URL to establish auth
+          window.location.href = data.session_url;
+        } else {
+          console.error('Session creation failed:', data);
+          setSessionLoading(false);
+        }
+      })
+      .catch(error => {
+        console.error('Error creating session:', error);
+        setSessionLoading(false);
+      });
+    }
+  }, [searchParams]);
+
+  // Redirect unauthenticated users to landing page (skip if handling OAuth)
+  useEffect(() => {
+    const isHandlingOAuth = searchParams.get('google_auth') === 'success';
+    if (!isHandlingOAuth && !isAuthenticated && user !== null) {
       router.push('/');
     }
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, user, router, searchParams]);
 
   const handleNovaPlantillaClick = () => {
     setShowTemplateSourceModal(true);
@@ -77,13 +113,18 @@ export default function Dashboard() {
     }
   };
 
-  // Show loading while checking authentication
-  if (user === null) {
+  // Show loading while checking authentication or handling OAuth
+  if (user === null || sessionLoading) {
+    const isHandlingOAuth = searchParams.get('google_auth') === 'success';
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregant...</p>
+          <p className="text-gray-600">
+            {sessionLoading ? 'Establint sessió...' : 
+             isHandlingOAuth ? 'Processant autenticació Google...' : 
+             'Carregant...'}
+          </p>
         </div>
       </div>
     );
