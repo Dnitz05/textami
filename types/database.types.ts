@@ -17,7 +17,21 @@ export type Database = {
           id: string
           email: string
           full_name: string | null
+          company: string | null
+          avatar_url: string | null
+          language: string
+          timezone: string
+          credits_used: number
+          credits_limit: number
+          plan: string
+          subscription_status: string
+          subscription_expires_at: string | null
+          last_login_at: string | null
           is_active: boolean
+          google_tokens: Json | null
+          google_refresh_token: string | null
+          google_connected: boolean
+          google_connected_at: string | null
           created_at: string
           updated_at: string
         }
@@ -25,7 +39,21 @@ export type Database = {
           id: string
           email: string
           full_name?: string | null
+          company?: string | null
+          avatar_url?: string | null
+          language?: string
+          timezone?: string
+          credits_used?: number
+          credits_limit?: number
+          plan?: string
+          subscription_status?: string
+          subscription_expires_at?: string | null
+          last_login_at?: string | null
           is_active?: boolean
+          google_tokens?: Json | null
+          google_refresh_token?: string | null
+          google_connected?: boolean
+          google_connected_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -33,7 +61,21 @@ export type Database = {
           id?: string
           email?: string
           full_name?: string | null
+          company?: string | null
+          avatar_url?: string | null
+          language?: string
+          timezone?: string
+          credits_used?: number
+          credits_limit?: number
+          plan?: string
+          subscription_status?: string
+          subscription_expires_at?: string | null
+          last_login_at?: string | null
           is_active?: boolean
+          google_tokens?: Json | null
+          google_refresh_token?: string | null
+          google_connected?: boolean
+          google_connected_at?: string | null
           created_at?: string
           updated_at?: string
         }
