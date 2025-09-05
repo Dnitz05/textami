@@ -16,7 +16,7 @@ import GoogleAuthButton from '@/components/google/GoogleAuthButton';
 function DashboardWithParams() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isAuthenticated, user } = useUser();
+  const { isAuthenticated, user, loading } = useUser();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showTemplateSourceModal, setShowTemplateSourceModal] = useState(false);
   const [sessionLoading, setSessionLoading] = useState(false);
@@ -96,8 +96,8 @@ function DashboardWithParams() {
     }
   };
 
-  // Show loading while checking authentication or handling OAuth
-  if (user === null || sessionLoading) {
+  // Show loading while checking authentication, handling OAuth, or user loading state is true
+  if (user === null || sessionLoading || loading) {
     const isHandlingOAuth = searchParams.get('google_auth') === 'success';
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
