@@ -16,10 +16,17 @@ export default function Dashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showTemplateSourceModal, setShowTemplateSourceModal] = useState(false);
 
-  // TEMPORARILY DISABLED - Auth guard to prevent redirect loops
+  // SAFE AUTH GUARD with singleton client - should prevent loops
   useEffect(() => {
     console.log('🔍 Dashboard auth debug:', { isAuthenticated, user: user ? 'exists' : 'null' });
-    // Auth guard disabled to prevent loops - will show manual login message if needed
+    
+    // SAFE AUTH GUARD: Only redirect if definitely not authenticated
+    if (!isAuthenticated && user === null && typeof window !== 'undefined' && window.location.pathname.startsWith('/dashboard')) {
+      console.log('🔄 SAFE REDIRECT: Redirecting unauthenticated user to landing');
+      setTimeout(() => {
+        router.push('/');
+      }, 2500); // Even longer delay for dashboard to avoid conflicts
+    }
   }, [isAuthenticated, user, router]);
 
   const handleNovaPlantillaClick = () => {

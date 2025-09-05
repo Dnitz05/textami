@@ -5,7 +5,7 @@
 
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { User, AuthError as SupabaseAuthError } from '@supabase/supabase-js'
 import { createBrowserSupabaseClient } from '@/lib/supabase/browserClient'
 import { AuthError, ValidationError, DatabaseError, ErrorCode, logError } from '@/lib/errors/custom-errors'
@@ -64,15 +64,16 @@ function checkProfileComplete(profile: UserProfile | null): boolean {
 // Main useUser hook
 export function useUser(): UseUserReturn {
   const [state, setState] = useState<UserState>(initialState)
-  const [supabase] = useState<SupabaseClient | null>(() => {
+  // SINGLETON CLIENT - No més múltiples instàncies!
+  const supabase = useMemo(() => {
     try {
-      log.debug('🔧 Creating unified Supabase client with proper SSR configuration')
+      log.debug('🔧 Getting singleton Supabase client')
       return createBrowserSupabaseClient()
     } catch (error) {
       log.debug('⚠️ Supabase client initialization failed (build time?):', error)
       return null
     }
-  })
+  }, []) // Empty deps - always return the same singleton instance
 
   // Update state helper with proper typing
   const updateState = useCallback((updates: Partial<UserState>) => {
@@ -619,9 +620,46 @@ export function useUser(): UseUserReturn {
 
         authSubscription = subscription
 
-        // Then initialize the current session
+        // Then initialize the current session inline
         log.info('🔍 USEUSER DEBUG - Initializing user session');
-        await initializeUser()
+        
+        // INLINE initializeUser to avoid dependency loop
+        try {
+          const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+          // Fast path - just check if user exists, skip profile
+          if (authError || !user) {
+            updateState({
+              user: null,
+              profile: null,
+              loading: false,
+              error: null,
+              isAuthenticated: false,
+              isProfileComplete: false
+            })
+            return
+          }
+
+          // Immediate authentication response
+          updateState({
+            user,
+            profile: null,
+            loading: false,
+            error: null,
+            isAuthenticated: true,
+            isProfileComplete: false
+          })
+
+        } catch (error) {
+          updateState({
+            user: null,
+            profile: null,
+            loading: false,
+            error: null,
+            isAuthenticated: false,
+            isProfileComplete: false
+          })
+        }
         
       } catch (error) {
         log.error('🔥 Auth initialization error:', error)
@@ -634,7 +672,7 @@ export function useUser(): UseUserReturn {
       isMounted = false
       authSubscription?.unsubscribe()
     }
-  }, [supabase, fetchProfile, updateState, initializeUser])
+  }, [supabase]) // SIMPLIFIED - només supabase dependency per evitar loops
 
   return {
     // State
