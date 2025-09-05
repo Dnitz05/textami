@@ -5,12 +5,19 @@ import { User } from '@supabase/supabase-js';
 import { createBrowserSupabaseClient } from '@/lib/supabase/browserClient';
 import { log } from '@/lib/logger';
 
-// SINGLE GLOBAL AUTH STATE - No more multiple useUser instances!
+// COMPLETE GLOBAL AUTH STATE - Replaces all useUser functionality
 interface AuthContextType {
+  // State
   user: User | null;
   isAuthenticated: boolean;
   loading: boolean;
   error: string | null;
+  
+  // Actions
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -20,8 +27,96 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // SINGLETON CLIENT
+  // SINGLETON CLIENT - Single instance for entire app
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
+
+  // AUTH ACTIONS - Available globally
+  const signIn = useCallback(async (email: string, password: string) => {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (signInError) {
+        throw new Error(signInError.message);
+      }
+
+      log.info('🔍 AuthContext: Sign in successful', { userId: data.user?.id });
+      // Auth listener will handle state updates
+      
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Sign in failed';
+      setError(errorMessage);
+      setLoading(false);
+      throw err;
+    }
+  }, [supabase]);
+
+  const signUp = useCallback(async (email: string, password: string) => {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password
+      });
+
+      if (signUpError) {
+        throw new Error(signUpError.message);
+      }
+
+      log.info('🔍 AuthContext: Sign up successful', { userId: data.user?.id });
+      
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Sign up failed';
+      setError(errorMessage);
+      setLoading(false);
+      throw err;
+    }
+  }, [supabase]);
+
+  const signOut = useCallback(async () => {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { error: signOutError } = await supabase.auth.signOut();
+
+      if (signOutError) {
+        throw new Error(signOutError.message);
+      }
+
+      log.info('🔍 AuthContext: Sign out successful');
+      // Auth listener will handle state updates
+      
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Sign out failed';
+      setError(errorMessage);
+      setLoading(false);
+      throw err;
+    }
+  }, [supabase]);
+
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
 
   // SINGLE AUTH INITIALIZATION
   useEffect(() => {
@@ -88,10 +183,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useMemo(() => !!user, [user]);
 
   const contextValue: AuthContextType = {
+    // State
     user,
     isAuthenticated,
     loading,
-    error
+    error,
+    // Actions
+    signIn,
+    signUp,
+    signOut,
+    clearError
   };
 
   return (

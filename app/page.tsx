@@ -6,13 +6,13 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthForm from '@/components/AuthForm';
-import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/contexts/AuthContext';
 import { createBrowserSupabaseClient } from '@/lib/supabase/browserClient';
 
 export default function LandingPage() {
   const router = useRouter();
   const [showAuthForm, setShowAuthForm] = useState(false);
-  const { isAuthenticated, loading } = useUser();
+  const { isAuthenticated, loading } = useAuth();
   
   // Process magic link authentication on page load
   useEffect(() => {
@@ -54,10 +54,17 @@ export default function LandingPage() {
     handleMagicLinkAuth();
   }, []);
   
-  // REDIRECTS COMPLETELY DISABLED - Manual navigation only
+  // GLOBAL STATE REDIRECTS - Now safe with single auth state
   useEffect(() => {
-    console.log('🔍 Landing auth debug:', { isAuthenticated, loading });
-    // All redirects disabled - user must manually navigate
+    console.log('🔍 Landing GLOBAL STATE debug:', { isAuthenticated, loading });
+    
+    // Safe redirect with global state - no more multiple instances
+    if (!loading && isAuthenticated && typeof window !== 'undefined' && window.location.pathname === '/') {
+      console.log('🚀 GLOBAL STATE REDIRECT: Authenticated user → Dashboard');
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 1000); // Moderate delay with global state
+    }
   }, [isAuthenticated, loading, router]);
 
   return (

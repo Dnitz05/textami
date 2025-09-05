@@ -6,20 +6,27 @@ export const dynamic = 'force-dynamic';
 import { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import TopNavBar from '@/components/TopNavBar';
-import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/contexts/AuthContext';
 import TemplateSourceSelector from '@/components/TemplateSourceSelector';
 import GoogleAuthButton from '@/components/google/GoogleAuthButton';
 
 export default function Dashboard() {
   const router = useRouter();
-  const { isAuthenticated, user } = useUser();
+  const { isAuthenticated, user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showTemplateSourceModal, setShowTemplateSourceModal] = useState(false);
 
-  // ALL REDIRECTS DISABLED - No auth guard redirects
+  // GLOBAL STATE AUTH GUARD - Now safe with single auth state
   useEffect(() => {
-    console.log('🔍 Dashboard auth debug:', { isAuthenticated, user: user ? 'exists' : 'null' });
-    // All redirects disabled - will show login prompt if needed
+    console.log('🔍 Dashboard GLOBAL STATE debug:', { isAuthenticated, user: user ? 'exists' : 'null' });
+    
+    // Safe auth guard with global state - no more competing states
+    if (!isAuthenticated && user === null && typeof window !== 'undefined' && window.location.pathname.startsWith('/dashboard')) {
+      console.log('🚀 GLOBAL STATE REDIRECT: Unauthenticated user → Landing');
+      setTimeout(() => {
+        router.push('/');
+      }, 1500); // Slightly longer delay for dashboard
+    }
   }, [isAuthenticated, user, router]);
 
   const handleNovaPlantillaClick = () => {

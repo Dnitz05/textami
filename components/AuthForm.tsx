@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/contexts/AuthContext';
 import { log } from '@/lib/logger';
 import GoogleAuthButton from '@/components/google/GoogleAuthButton';
 
@@ -12,7 +12,7 @@ interface AuthFormProps {
 }
 
 const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
-  const { signIn, signUp, user, loading: authLoading } = useUser();
+  const { signIn, signUp, user, loading: authLoading } = useAuth();
   const [mode, setMode] = useState<AuthMode>('login');
   const [showAlternative, setShowAlternative] = useState(false);
   const [email, setEmail] = useState('');

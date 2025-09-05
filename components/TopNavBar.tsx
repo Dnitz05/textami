@@ -5,7 +5,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useUser } from '../hooks/useUser';
+import { useAuth } from '@/contexts/AuthContext';
 import { log } from '@/lib/logger';
 import AuthForm from './AuthForm';
 
@@ -18,7 +18,7 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showAuthForm, setShowAuthForm] = useState(false);
-  const { user, isAuthenticated, signOut } = useUser();
+  const { user, isAuthenticated, signOut } = useAuth();
   
   // Clean up duplicate templates on component mount
   React.useEffect(() => {
