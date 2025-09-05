@@ -5,7 +5,7 @@ import { useUser } from '@/hooks/useUser';
 import { log } from '@/lib/logger';
 import GoogleAuthButton from '@/components/google/GoogleAuthButton';
 
-type AuthMode = 'login' | 'signup' | 'alternative';
+type AuthMode = 'login' | 'signup';
 
 interface AuthFormProps {
   onSuccess?: () => void;
@@ -14,6 +14,7 @@ interface AuthFormProps {
 const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
   const { signIn, signUp, user, loading: authLoading } = useUser();
   const [mode, setMode] = useState<AuthMode>('login');
+  const [showAlternative, setShowAlternative] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -190,15 +191,15 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
         </div>
         <div className="relative flex justify-center text-sm">
           <button
-            onClick={() => setMode(mode === 'alternative' ? 'login' : 'alternative')}
+            onClick={() => setShowAlternative(!showAlternative)}
             className="px-4 bg-white text-gray-500 hover:text-gray-700"
           >
-            {mode === 'alternative' ? 'Amagar opcions alternatives' : 'O utilitza email/contrasenya'}
+            {showAlternative ? 'Amagar opcions alternatives' : 'O utilitza email/contrasenya'}
           </button>
         </div>
       </div>
 
-      {mode === 'alternative' && (
+      {showAlternative && (
         <>
           {/* Mode Toggle */}
           <div className="flex mt-6 mb-6 bg-gray-100 rounded-lg p-1">
