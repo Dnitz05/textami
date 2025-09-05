@@ -50,12 +50,16 @@ export default function GoogleAuthButton({ onConnectionChange }: GoogleAuthButto
 
       if (response.ok) {
         const data = await response.json();
+        console.log('🔍 Google connection status response:', data);
         setStatus(data.status);
         onConnectionChange?.(data.status.connected);
       } else if (response.status === 401) {
         // User not authenticated - this is expected for new users
+        console.log('🔍 User not authenticated for Google connection check');
         setStatus({ connected: false });
         onConnectionChange?.(false);
+      } else {
+        console.log('🔍 Google connection check failed:', { status: response.status });
       }
     } catch (error) {
       console.error('Error checking Google connection status:', error);

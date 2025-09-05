@@ -191,7 +191,9 @@ export default function Dashboard() {
         <div className="mt-16 max-w-md mx-auto">
           <div className="bg-white rounded-lg p-6 shadow-md">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Google Integration</h3>
-            <GoogleAuthButton />
+            <GoogleAuthButton onConnectionChange={(connected) => {
+              console.log('🔍 Google connection status changed:', { connected, userId: user?.id });
+            }} />
           </div>
         </div>
 
