@@ -18,7 +18,9 @@ export default function Dashboard() {
 
   // Simple auth guard - redirect unauthenticated users to landing page
   useEffect(() => {
+    console.log('🔍 Dashboard auth debug:', { isAuthenticated, user: user ? 'exists' : 'null' });
     if (!isAuthenticated && user !== null) {
+      console.log('🔄 Redirecting to landing page - not authenticated');
       router.push('/');
     }
   }, [isAuthenticated, user, router]);
