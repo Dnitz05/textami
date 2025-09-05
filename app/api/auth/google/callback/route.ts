@@ -218,7 +218,7 @@ async function handleOAuthCallback(request: NextRequest) {
           const existingUser = existingUsers.users.find(user => user.email === profile.email);
           
           if (existingUser) {
-            // User exists, create session for them
+            // User exists, generate magic link for existing user
             userData = { user: existingUser };
             log.debug('Existing user found for Google signin:', {
               userId: existingUser.id.substring(0, 8) + '...',
@@ -261,31 +261,35 @@ async function handleOAuthCallback(request: NextRequest) {
 
           actualFinalUserId = userData.user.id;
 
-          // 🚀 SIMPLE REDIRECT: Skip complex session setup, let frontend handle it
-          log.info('🔗 OAuth completed successfully, redirecting to dashboard:', {
-            userId: actualFinalUserId.substring(0, 8) + '...',
+          // Generate magic link for automatic login
+          const { data: magicLinkData, error: magicLinkError } = await supabase.auth.admin.generateLink({
+            type: 'magiclink',
             email: profile.email,
-            flow: 'oauth-signin'
+            options: {
+              redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard`,
+            }
           });
 
-          // Create simple redirect with success parameters
-          const dashboardUrl = new URL(`${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard`);
-          dashboardUrl.searchParams.set('google_auth', 'success');
-          dashboardUrl.searchParams.set('email', profile.email);
-          dashboardUrl.searchParams.set('user_id', actualFinalUserId);
-          
-          const response = NextResponse.redirect(dashboardUrl.toString());
-          
+          if (magicLinkError || !magicLinkData?.properties?.action_link) {
+            log.error('Failed to generate magic link:', {
+              error: magicLinkError?.message,
+              userId: actualFinalUserId.substring(0, 8) + '...'
+            });
+            const magicLinkFailedUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Session+creation+failed`;
+            return NextResponse.redirect(magicLinkFailedUrl);
+          }
+
+          log.info('✅ Magic link generated, redirecting for auto-login:', {
+            userId: actualFinalUserId.substring(0, 8) + '...',
+            email: profile.email,
+            flow: 'magic-link-signin'
+          });
+
           // Clean up temporary OAuth cookies
+          const response = NextResponse.redirect(magicLinkData.properties.action_link);
           response.cookies.delete('google_auth_user_id');
           response.cookies.delete('google_auth_state'); 
           response.cookies.delete('google_signin_state');
-          
-          log.info('✅ Redirecting to dashboard with success parameters:', {
-            userId: actualFinalUserId.substring(0, 8) + '...',
-            email: profile.email,
-            redirectUrl: dashboardUrl.toString()
-          });
           
           return response;
         } catch (authError) {

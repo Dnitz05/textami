@@ -21,35 +21,17 @@ function DashboardWithParams() {
   const [showTemplateSourceModal, setShowTemplateSourceModal] = useState(false);
   const [sessionLoading, setSessionLoading] = useState(false);
 
-  // Handle Google OAuth callback
+  // Handle Google OAuth callback success notification
   useEffect(() => {
     const googleAuth = searchParams.get('google_auth');
-    const email = searchParams.get('email');
-    const userId = searchParams.get('user_id');
-
-    if (googleAuth === 'success' && email && userId) {
-      setSessionLoading(true);
-      
-      // Create Supabase session
-      fetch('/api/auth/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, user_id: userId })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && data.session_url) {
-          // Redirect to session URL to establish auth
-          window.location.href = data.session_url;
-        } else {
-          console.error('Session creation failed:', data);
-          setSessionLoading(false);
-        }
-      })
-      .catch(error => {
-        console.error('Error creating session:', error);
-        setSessionLoading(false);
-      });
+    
+    if (googleAuth === 'success') {
+      // Clean up URL parameters
+      const url = new URL(window.location.href);
+      url.searchParams.delete('google_auth');
+      url.searchParams.delete('email');
+      url.searchParams.delete('user_id');
+      window.history.replaceState({}, document.title, url.toString());
     }
   }, [searchParams]);
 
