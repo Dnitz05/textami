@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
       hasGoogleClientSecret: !!process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_CLIENT_SECRET !== 'your_google_oauth_client_secret',
       googleClientIdPreview: process.env.GOOGLE_CLIENT_ID?.substring(0, 20) + '...',
       baseDomain: process.env.NEXT_PUBLIC_BASE_DOMAIN || 'docmile.com',
-      appUrl: process.env.NEXT_PUBLIC_APP_URL || 'not_set',
+      appUrl: process.env.NEXT_PUBLIC_SITE_URL || 'not_set',
       nodeEnv: process.env.NODE_ENV
     };
 

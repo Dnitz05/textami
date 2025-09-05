@@ -51,7 +51,7 @@ async function handleOAuthCallback(request: NextRequest) {
     
     if (!allowed) {
       log.warn('OAuth callback rate limit exceeded:', { ip: clientIp });
-        const rateLimitUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Too+many+attempts`;
+        const rateLimitUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Too+many+attempts`;
         return NextResponse.redirect(rateLimitUrl);
     }
 
@@ -87,7 +87,7 @@ async function handleOAuthCallback(request: NextRequest) {
         ip: clientIp,
         userAgent: request.headers.get('user-agent')?.substring(0, 100)
       });
-      const errorUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=${encodeURIComponent(error)}`;
+      const errorUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=${encodeURIComponent(error)}`;
       return NextResponse.redirect(errorUrl);
     }
 
@@ -110,7 +110,7 @@ async function handleOAuthCallback(request: NextRequest) {
         ? 'User cancelled authentication'
         : 'Invalid callback parameters';
         
-      const callbackErrorUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=${encodeURIComponent(errorMessage)}`;
+      const callbackErrorUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=${encodeURIComponent(errorMessage)}`;
       return NextResponse.redirect(callbackErrorUrl);
     }
 
@@ -130,7 +130,7 @@ async function handleOAuthCallback(request: NextRequest) {
         hasSigninState: !!signinState,
         allCookiesCount: cookieStore.getAll().length
       });
-      const sessionExpiredUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Session+expired`;
+      const sessionExpiredUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Session+expired`;
       return NextResponse.redirect(sessionExpiredUrl);
     }
 
@@ -142,7 +142,7 @@ async function handleOAuthCallback(request: NextRequest) {
         hasCallbackState: !!state,
         isSigninFlow
       });
-        const securityErrorUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Security+validation+failed`;
+        const securityErrorUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Security+validation+failed`;
         return NextResponse.redirect(securityErrorUrl);
     }
 
@@ -177,7 +177,7 @@ async function handleOAuthCallback(request: NextRequest) {
           isSigninFlow
         });
         
-        const emailNotVerifiedUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Email+not+verified`;
+        const emailNotVerifiedUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Email+not+verified`;
         return NextResponse.redirect(emailNotVerifiedUrl);
       }
 
@@ -242,7 +242,7 @@ async function handleOAuthCallback(request: NextRequest) {
                 error: createError.message,
                 googleEmail: profile.email
               });
-              const userCreationFailedUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=User+creation+failed`;
+              const userCreationFailedUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=User+creation+failed`;
               return NextResponse.redirect(userCreationFailedUrl);
             }
 
@@ -255,7 +255,7 @@ async function handleOAuthCallback(request: NextRequest) {
 
           if (!userData?.user?.id) {
             log.error('No user ID available after Google signin:', { googleEmail: profile.email });
-            const noUserIdUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=User+creation+failed`;
+            const noUserIdUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=User+creation+failed`;
             return NextResponse.redirect(noUserIdUrl);
           }
 
@@ -266,7 +266,7 @@ async function handleOAuthCallback(request: NextRequest) {
             type: 'magiclink',
             email: profile.email,
             options: {
-              redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard`,
+              redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.docmile.com'}/dashboard`,
             }
           });
 
@@ -275,7 +275,7 @@ async function handleOAuthCallback(request: NextRequest) {
               error: magicLinkError?.message,
               userId: actualFinalUserId.substring(0, 8) + '...'
             });
-            const magicLinkFailedUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Session+creation+failed`;
+            const magicLinkFailedUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Session+creation+failed`;
             return NextResponse.redirect(magicLinkFailedUrl);
           }
 
@@ -297,7 +297,7 @@ async function handleOAuthCallback(request: NextRequest) {
             error: authError instanceof Error ? authError.message : 'Unknown error',
             googleEmail: profile.email
           });
-          const authFailedUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Authentication+failed`;
+          const authFailedUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Authentication+failed`;
           return NextResponse.redirect(authFailedUrl);
         }
       }
@@ -311,7 +311,7 @@ async function handleOAuthCallback(request: NextRequest) {
           ip: clientIp,
           googleEmail: profile.email
         });
-        const criticalUserIdUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=User+creation+failed`;
+        const criticalUserIdUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=User+creation+failed`;
         return NextResponse.redirect(criticalUserIdUrl);
       }
 
@@ -322,7 +322,7 @@ async function handleOAuthCallback(request: NextRequest) {
           hasAccessToken: !!tokens?.access_token,
           ip: clientIp
         });
-        const invalidTokensUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Invalid+tokens`;
+        const invalidTokensUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Invalid+tokens`;
         return NextResponse.redirect(invalidTokensUrl);
       }
 
@@ -371,7 +371,7 @@ async function handleOAuthCallback(request: NextRequest) {
         }
         
         // REDIRECT WITH ERROR instead of continuing
-        const tokenStorageFailedUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Connection+setup+failed`;
+        const tokenStorageFailedUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Connection+setup+failed`;
         const response = NextResponse.redirect(tokenStorageFailedUrl);
         
         // Clean up OAuth cookies
@@ -391,7 +391,7 @@ async function handleOAuthCallback(request: NextRequest) {
       });
 
       // Create success redirect to dashboard
-      const successUrl = new URL(`${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard`);
+      const successUrl = new URL(`${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.docmile.com'}/dashboard`);
       successUrl.searchParams.set('google_auth', 'success');
       
       const response = NextResponse.redirect(successUrl.toString());
@@ -411,7 +411,7 @@ async function handleOAuthCallback(request: NextRequest) {
       });
       
       // Clear temporary cookies securely and redirect with simple URL
-      const errorRedirectUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Authentication+failed`;
+      const errorRedirectUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Authentication+failed`;
       const response = NextResponse.redirect(errorRedirectUrl);
       
       // Clean up OAuth cookies
@@ -429,7 +429,7 @@ async function handleOAuthCallback(request: NextRequest) {
     });
     
     // Clear temporary cookies in case of error and use simple redirect URL
-    const errorRedirectUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Unexpected+error`;
+    const errorRedirectUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Unexpected+error`;
     const response = NextResponse.redirect(errorRedirectUrl);
     
     // Clean up OAuth cookies
