@@ -3,7 +3,7 @@
 // Force dynamic rendering to avoid SSR issues with Supabase
 export const dynamic = 'force-dynamic';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import TopNavBar from '@/components/TopNavBar';
 import { useUser } from '@/hooks/useUser';
@@ -12,7 +12,8 @@ import { useSearchParams } from 'next/navigation';
 import TemplateSourceSelector from '@/components/TemplateSourceSelector';
 import GoogleAuthButton from '@/components/google/GoogleAuthButton';
 
-export default function Dashboard() {
+// Component that uses searchParams - must be wrapped in Suspense
+function DashboardWithParams() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, user } = useUser();
@@ -253,5 +254,21 @@ export default function Dashboard() {
         />
       )}
     </div>
+  );
+}
+
+// Main component with Suspense wrapper
+export default function Dashboard() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregant dashboard...</p>
+        </div>
+      </div>
+    }>
+      <DashboardWithParams />
+    </Suspense>
   );
 }
