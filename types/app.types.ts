@@ -17,21 +17,11 @@ export type Template = Database['public']['Tables']['templates']['Row']
 export type TemplateInsert = Database['public']['Tables']['templates']['Insert']
 export type TemplateUpdate = Database['public']['Tables']['templates']['Update']
 
-export type DataSource = Database['public']['Tables']['data_sources']['Row']
-export type DataSourceInsert = Database['public']['Tables']['data_sources']['Insert']
-export type DataSourceUpdate = Database['public']['Tables']['data_sources']['Update']
-
-export type VariableMapping = Database['public']['Tables']['variable_mappings']['Row']
-export type VariableMappingInsert = Database['public']['Tables']['variable_mappings']['Insert']
-export type VariableMappingUpdate = Database['public']['Tables']['variable_mappings']['Update']
-
-export type Generation = Database['public']['Tables']['generations']['Row']
-export type GenerationInsert = Database['public']['Tables']['generations']['Insert']
-export type GenerationUpdate = Database['public']['Tables']['generations']['Update']
-
-export type UsageLog = Database['public']['Tables']['usage_logs']['Row']
-export type UsageLogInsert = Database['public']['Tables']['usage_logs']['Insert']
-export type UsageLogUpdate = Database['public']['Tables']['usage_logs']['Update']
+// Note: The following table types were removed during Google-first refactor:
+// - data_sources (Excel files now processed directly via API)
+// - variable_mappings (AI handles mapping automatically)  
+// - generations (simplified to direct generation API calls)
+// - usage_logs (logging handled by application layer)
 
 // =============================================================================
 // BUSINESS DOMAIN TYPES
