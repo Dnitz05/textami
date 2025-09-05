@@ -3,45 +3,25 @@
 // Force dynamic rendering to avoid SSR issues with Supabase
 export const dynamic = 'force-dynamic';
 
-import { useRef, useState, Suspense } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import TopNavBar from '@/components/TopNavBar';
 import { useUser } from '@/hooks/useUser';
-import { useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
 import TemplateSourceSelector from '@/components/TemplateSourceSelector';
 import GoogleAuthButton from '@/components/google/GoogleAuthButton';
 
-// Component that uses searchParams - must be wrapped in Suspense
-function DashboardWithParams() {
+export default function Dashboard() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const { isAuthenticated, user, loading } = useUser();
+  const { isAuthenticated, user } = useUser();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showTemplateSourceModal, setShowTemplateSourceModal] = useState(false);
-  const [sessionLoading, setSessionLoading] = useState(false);
 
-  // Handle Google OAuth callback success notification
+  // Simple auth guard - redirect unauthenticated users to landing page
   useEffect(() => {
-    const googleAuth = searchParams.get('google_auth');
-    
-    if (googleAuth === 'success') {
-      // Clean up URL parameters
-      const url = new URL(window.location.href);
-      url.searchParams.delete('google_auth');
-      url.searchParams.delete('email');
-      url.searchParams.delete('user_id');
-      window.history.replaceState({}, document.title, url.toString());
-    }
-  }, [searchParams]);
-
-  // Redirect unauthenticated users to landing page (skip if handling OAuth)
-  useEffect(() => {
-    const isHandlingOAuth = searchParams.get('google_auth') === 'success';
-    if (!isHandlingOAuth && !isAuthenticated && user !== null) {
+    if (!isAuthenticated && user !== null) {
       router.push('/');
     }
-  }, [isAuthenticated, user, router, searchParams]);
+  }, [isAuthenticated, user, router]);
 
   const handleNovaPlantillaClick = () => {
     setShowTemplateSourceModal(true);
@@ -75,7 +55,7 @@ function DashboardWithParams() {
           type: file.type,
           lastModified: file.lastModified
         },
-        templateId: templateId  // 🔥 Include templateId
+        templateId: templateId
       };
       sessionStorage.setItem('selectedFile', JSON.stringify(fileData));
       sessionStorage.setItem('templateName', file.name.replace('.docx', ''));
@@ -96,18 +76,13 @@ function DashboardWithParams() {
     }
   };
 
-  // Show loading while checking authentication, handling OAuth, or user loading state is true
-  if (user === null || sessionLoading || loading) {
-    const isHandlingOAuth = searchParams.get('google_auth') === 'success';
+  // Show simple loading while checking authentication
+  if (user === null) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">
-            {sessionLoading ? 'Establint sessió...' : 
-             isHandlingOAuth ? 'Processant autenticació Google...' : 
-             'Carregant...'}
-          </p>
+          <p className="text-gray-600">Carregant...</p>
         </div>
       </div>
     );
@@ -236,21 +211,5 @@ function DashboardWithParams() {
         />
       )}
     </div>
-  );
-}
-
-// Main component with Suspense wrapper
-export default function Dashboard() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregant dashboard...</p>
-        </div>
-      </div>
-    }>
-      <DashboardWithParams />
-    </Suspense>
   );
 }

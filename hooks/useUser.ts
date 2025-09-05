@@ -192,7 +192,7 @@ export function useUser(): UseUserReturn {
       updateState({
         user,
         profile: null,
-        loading: true,  // Keep loading until full session establishment
+        loading: false,
         error: null,
         isAuthenticated: true,
         isProfileComplete: false
@@ -599,7 +599,7 @@ export function useUser(): UseUserReturn {
             updateState({
               user: session.user,
               profile: null,
-              loading: true,  // Keep loading until full session establishment
+              loading: false,
               error: null,
               isAuthenticated: true,
               isProfileComplete: false
