@@ -332,17 +332,26 @@ async function handleOAuthCallback(request: NextRequest) {
       
       await initializeGoogleConnection(actualFinalUserId, tokens, profile.email);
 
-      // 10. ✅ SESSION ESTABLISHED VIA MAGIC LINK - Direct success redirect
-      log.info('🎯 OAuth signin flow completed - session established via official magic link:', {
+      // 10. ✅ Google connection established successfully - redirect to dashboard
+      log.info('🎯 OAuth connection flow completed successfully:', {
         userId: actualFinalUserId.substring(0, 8) + '...',
         googleEmail: profile.email,
         ip: clientIp,
-        flow: 'magic-link-redirect'
+        flow: 'google-connection'
       });
 
-      // Note: Session is established by the magic link redirect above
-      // No manual cookie setting needed - Supabase handles it officially
-      return; // Early return as magic link redirect already happened
+      // Create success redirect to dashboard
+      const successUrl = new URL(`${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard`);
+      successUrl.searchParams.set('google_auth', 'success');
+      
+      const response = NextResponse.redirect(successUrl.toString());
+      
+      // Clean up temporary OAuth cookies
+      response.cookies.delete('google_auth_user_id');
+      response.cookies.delete('google_auth_state');
+      response.cookies.delete('google_signin_state');
+      
+      return response;
     } catch (tokenError) {
       log.error('Error processing Google OAuth tokens:', {
         error: tokenError instanceof Error ? tokenError.message : 'Unknown error',
