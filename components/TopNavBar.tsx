@@ -155,7 +155,7 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ className = '' }) => {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".pdf,.docx"
+              accept=".pdf"
               onChange={handleFileSelect}
               className="hidden"
             />

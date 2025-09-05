@@ -5,18 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 
-interface TemplateSourceOption {
-  type: 'docx' | 'google-docs';
-  title: string;
-  description: string;
-  icon: string;
-  features: string[];
-  disabled?: boolean;
-  comingSoon?: boolean;
-}
-
 interface TemplateSourceSelectorProps {
-  onSourceSelected: (sourceType: 'docx' | 'google-docs') => void;
+  onSourceSelected: (sourceType: 'google-docs') => void;
   onClose: () => void;
   className?: string;
 }
@@ -26,45 +16,12 @@ export default function TemplateSourceSelector({
   onClose,
   className = ''
 }: TemplateSourceSelectorProps) {
-  const [selectedSource, setSelectedSource] = useState<'docx' | 'google-docs' | null>(null);
-
-  const sourceOptions: TemplateSourceOption[] = [
-    {
-      type: 'docx',
-      title: 'Document Word (.docx)',
-      description: 'Puja un fitxer Word des del teu ordinador',
-      icon: '📄',
-      features: [
-        'Preservació d\'estils perfecta',
-        'Taules complexes',
-        'Format avançat',
-        'Compatible amb totes les versions'
-      ]
-    },
-    {
-      type: 'google-docs',
-      title: 'Google Docs',
-      description: 'Importa des de Google Drive',
-      icon: '📝',
-      features: [
-        'Accés directe desde Drive',
-        'Col·laboració en temps real',
-        'Sempre actualitzat',
-        'Generació ràpida'
-      ],
-      comingSoon: false // Google Docs is now ready!
-    }
-  ];
-
-  const handleSourceSelect = (sourceType: 'docx' | 'google-docs') => {
-    setSelectedSource(sourceType);
-  };
+  // Always auto-select Google Docs since it's the only option
+  const [selectedSource] = useState<'google-docs'>('google-docs');
 
   const handleConfirm = () => {
-    if (selectedSource) {
-      onSourceSelected(selectedSource);
-      onClose();
-    }
+    onSourceSelected('google-docs');
+    onClose();
   };
 
   return (
@@ -74,10 +31,10 @@ export default function TemplateSourceSelector({
         <div className="flex items-center justify-between p-6 border-b">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
-              Escull el tipus de plantilla
+              Importar des de Google Docs
             </h2>
             <p className="text-sm text-gray-600 mt-1">
-              Selecciona d'on vols importar la teva plantilla de document
+              Connecta amb Google Drive per importar la teva plantilla
             </p>
           </div>
           <Button
@@ -90,69 +47,50 @@ export default function TemplateSourceSelector({
           </Button>
         </div>
 
-        {/* Options */}
+        {/* Google Docs Option */}
         <div className="p-6">
-          <div className="grid gap-4 md:grid-cols-2">
-            {sourceOptions.map((option) => (
-              <Card
-                key={option.type}
-                className={`relative cursor-pointer transition-all duration-200 ${
-                  selectedSource === option.type
-                    ? 'ring-2 ring-blue-500 border-blue-500'
-                    : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
-                } ${
-                  option.comingSoon || option.disabled
-                    ? 'opacity-50 cursor-not-allowed'
-                    : ''
-                }`}
-                onClick={() => handleSourceSelect(option.type)}
-              >
-                {/* Coming Soon Badge */}
-                {option.comingSoon && (
-                  <div className="absolute top-2 right-2 bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded-full font-medium">
-                    Coming Soon
-                  </div>
-                )}
-
-                <div className="p-6">
-                  {/* Icon and Title */}
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="text-2xl">{option.icon}</div>
-                    <div>
-                      <h3 className="font-medium text-gray-900">
-                        {option.title}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        {option.description}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Features */}
-                  <div className="space-y-2">
-                    {option.features.map((feature, index) => (
-                      <div key={index} className="flex items-center space-x-2 text-sm text-gray-600">
-                        <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                        <span>{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Selection Indicator */}
-                  {selectedSource === option.type && (
-                    <div className="mt-4 flex items-center space-x-2 text-blue-600">
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      <span className="text-sm font-medium">Seleccionat</span>
-                    </div>
-                  )}
+          <Card className="ring-2 ring-blue-500 border-blue-500">
+            <div className="p-6">
+              {/* Icon and Title */}
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="text-2xl">📝</div>
+                <div>
+                  <h3 className="font-medium text-gray-900">
+                    Google Docs
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Importa des de Google Drive
+                  </p>
                 </div>
-              </Card>
-            ))}
-          </div>
+              </div>
+
+              {/* Features */}
+              <div className="space-y-2">
+                {[
+                  'Accés directe desde Drive',
+                  'Col·laboració en temps real', 
+                  'Sempre actualitzat',
+                  'Generació ràpida',
+                  'Anàlisi IA optimitzada'
+                ].map((feature, index) => (
+                  <div key={index} className="flex items-center space-x-2 text-sm text-gray-600">
+                    <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    <span>{feature}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Selection Indicator */}
+              <div className="mt-4 flex items-center space-x-2 text-blue-600">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span className="text-sm font-medium">Seleccionat</span>
+              </div>
+            </div>
+          </Card>
 
           {/* Google Docs Info */}
           <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -185,10 +123,9 @@ export default function TemplateSourceSelector({
           </Button>
           <Button
             onClick={handleConfirm}
-            disabled={!selectedSource}
             className="bg-blue-600 hover:bg-blue-700"
           >
-            Continuar
+            Connectar amb Google Drive
           </Button>
         </div>
       </div>
