@@ -279,6 +279,29 @@ async function handleOAuthCallback(request: NextRequest) {
             return NextResponse.redirect(magicLinkFailedUrl);
           }
 
+          // 🚨 CRITICAL: Save Google tokens BEFORE magic link redirect
+          log.info('🚀 Saving Google tokens for signin flow user before redirect:', {
+            userId: actualFinalUserId.substring(0, 8) + '...',
+            email: profile.email,
+            hasValidTokens: !!tokens.access_token,
+            hasRefreshToken: !!tokens.refresh_token
+          });
+
+          try {
+            await initializeGoogleConnection(actualFinalUserId, tokens, profile.email);
+            log.info('✅ Google tokens saved successfully for signin flow:', {
+              userId: actualFinalUserId.substring(0, 8) + '...',
+              email: profile.email
+            });
+          } catch (tokenStorageError) {
+            log.error('❌ CRITICAL: Failed to save Google tokens for signin flow:', {
+              error: tokenStorageError instanceof Error ? tokenStorageError.message : 'Unknown error',
+              userId: actualFinalUserId.substring(0, 8) + '...',
+              email: profile.email
+            });
+            // Continue with magic link but log the error
+          }
+
           log.info('✅ Magic link generated, redirecting for auto-login:', {
             userId: actualFinalUserId.substring(0, 8) + '...',
             email: profile.email,
