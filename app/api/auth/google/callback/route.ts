@@ -349,7 +349,37 @@ async function handleOAuthCallback(request: NextRequest) {
           email: profile.email,
           stack: tokenStorageError instanceof Error ? tokenStorageError.stack : undefined
         });
-        // Continue with redirect even if token storage fails
+        
+        // ROLLBACK user creation if this was a signin flow
+        if (isSigninFlow && actualFinalUserId) {
+          try {
+            const supabase = createServerClient(
+              process.env.NEXT_PUBLIC_SUPABASE_URL!,
+              process.env.SUPABASE_SERVICE_ROLE_KEY!,
+              { cookies: { getAll: () => [], setAll: () => {} } }
+            );
+            await supabase.auth.admin.deleteUser(actualFinalUserId);
+            log.info('🗑️ Rolled back user creation due to token storage failure:', {
+              userId: actualFinalUserId.substring(0, 8) + '...'
+            });
+          } catch (rollbackError) {
+            log.error('❌ Failed to rollback user creation:', {
+              error: rollbackError instanceof Error ? rollbackError.message : 'Unknown error',
+              userId: actualFinalUserId.substring(0, 8) + '...'
+            });
+          }
+        }
+        
+        // REDIRECT WITH ERROR instead of continuing
+        const tokenStorageFailedUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.docmile.com'}/dashboard?google_auth=error&message=Connection+setup+failed`;
+        const response = NextResponse.redirect(tokenStorageFailedUrl);
+        
+        // Clean up OAuth cookies
+        response.cookies.delete('google_auth_user_id');
+        response.cookies.delete('google_auth_state');
+        response.cookies.delete('google_signin_state');
+        
+        return response;
       }
 
       // 10. ✅ Google connection established successfully - redirect to dashboard
