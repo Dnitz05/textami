@@ -140,15 +140,35 @@ class GoogleDocsService {
         throw new Error('No document data received from Google Docs API');
       }
 
-      if (!response.data.body) {
-        console.error('❌ Document response has no body property:', {
+      // Handle both new Tab-based structure and legacy body structure
+      let documentBody = response.data.body;
+      
+      if (!documentBody && response.data.tabs && response.data.tabs.length > 0) {
+        // New tab-based structure - use first tab's document body
+        const firstTab = response.data.tabs[0];
+        if (firstTab.documentTab?.body) {
+          documentBody = firstTab.documentTab.body;
+          console.log('✅ Using tab-based document structure');
+        }
+      }
+
+      if (!documentBody) {
+        console.error('❌ Document response has no body property in main document or tabs:', {
           availableKeys: Object.keys(response.data),
+          hasTabs: !!response.data.tabs,
+          tabCount: response.data.tabs?.length || 0,
           fullResponse: JSON.stringify(response.data, null, 2).substring(0, 500) + '...'
         });
         throw new Error('No document body received - document may be empty or access restricted');
       }
 
-      const structure = this.parseDocumentStructure(response.data);
+      // Create modified document structure for parsing
+      const documentForParsing = {
+        ...response.data,
+        body: documentBody
+      };
+
+      const structure = this.parseDocumentStructure(documentForParsing);
       return structure;
     } catch (error) {
       console.error('❌ Document structure fetch failed:', error);
@@ -233,30 +253,50 @@ class GoogleDocsService {
         throw new Error('No document data received from Google Docs API');
       }
 
-      if (!response.data.body) {
-        console.error('❌ CRITICAL: response.data exists but has no body property:', {
+      // Handle both new Tab-based structure and legacy body structure
+      let documentBody = response.data.body;
+      
+      if (!documentBody && response.data.tabs && response.data.tabs.length > 0) {
+        // New tab-based structure - use first tab's document body
+        const firstTab = response.data.tabs[0];
+        if (firstTab.documentTab?.body) {
+          documentBody = firstTab.documentTab.body;
+          console.log('✅ Using tab-based document structure for content parsing');
+        }
+      }
+
+      if (!documentBody) {
+        console.error('❌ CRITICAL: response.data exists but has no body property in main document or tabs:', {
           availableDataKeys: Object.keys(response.data),
           dataTitle: response.data.title,
           dataDocId: response.data.documentId,
-          fullDataStructure: JSON.stringify(response.data, null, 2)
+          hasTabs: !!response.data.tabs,
+          tabCount: response.data.tabs?.length || 0,
+          fullDataStructure: JSON.stringify(response.data, null, 2).substring(0, 1000) + '...'
         });
         
         // Provide specific guidance based on what we have
         if (response.data.title && response.data.documentId) {
-          throw new Error(`Document "${response.data.title}" (ID: ${response.data.documentId}) has no body content. This usually indicates: 1) The document is completely empty, 2) Permission issues preventing content access, or 3) The document contains only unsupported content types. Please check the document exists and has readable content.`);
+          throw new Error(`Document "${response.data.title}" (ID: ${response.data.documentId}) has no body content. This may indicate the new Google Docs tab structure is not being handled correctly, or the document is empty. Please check the document has content and try again.`);
         } else {
           throw new Error('No document body received - this indicates either an empty document, access restrictions, or API response format issue');
         }
       }
 
+      // Create modified document structure for processing
+      const documentForProcessing = {
+        ...response.data,
+        body: documentBody
+      };
+
       // Convert to HTML
-      const html = await this.convertDocumentToHTML(response.data);
+      const html = await this.convertDocumentToHTML(documentForProcessing);
       
       // Clean HTML using the advanced cleaning pipeline
       const cleaningResult = cleanGoogleDocsHTML(html, cleaningOptions);
       
       // Parse structure
-      const structure = this.parseDocumentStructure(response.data);
+      const structure = this.parseDocumentStructure(documentForProcessing);
       
       // Get metadata
       const metadata: GoogleDocMetadata = {

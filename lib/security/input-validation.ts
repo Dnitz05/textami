@@ -155,7 +155,7 @@ export function validateFilename(filename: unknown): ValidationResult {
   if (!VALIDATION_PATTERNS.FILENAME.test(sanitized)) {
     return {
       isValid: false,
-      errors: ['Filename contains invalid characters']
+      errors: [`Filename contains invalid characters: "${sanitized}"`]
     };
   }
 
