@@ -108,12 +108,18 @@ export async function POST(request: NextRequest) {
     // 3. Get connection status
     let status = { connected: false };
     if (user) {
-      const { getGoogleConnectionStatus } = await import('@/lib/google/token-manager');
-      status = await getGoogleConnectionStatus(user.id);
+      const { getValidGoogleTokens } = await import('@/lib/google/token-manager');
+      const tokens = await getValidGoogleTokens(user.id);
+      
+      status = { 
+        connected: !!tokens,
+        needsReauth: !tokens
+      };
 
-      log.debug('Google connection status checked:', {
+      log.debug('Google connection status checked with auto-refresh:', {
         userId: user.id.substring(0, 8) + '...',
-        connected: status.connected
+        connected: status.connected,
+        tokensAvailable: !!tokens
       });
     } else {
       log.debug('Google connection status checked for anonymous user:', {
