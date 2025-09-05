@@ -54,11 +54,18 @@ export async function saveGoogleTokens(
     });
 
     // 🚨 ENSURE USER PROFILE EXISTS FIRST
+    log.debug('🔍 Checking if user profile exists:', { userId: userId.substring(0, 8) + '...' });
     const { data: existingProfile, error: profileError } = await getSupabaseClient()
       .from('profiles')
       .select('id')
       .eq('id', userId)
       .single();
+    
+    log.debug('🔍 Profile check result:', { 
+      profileExists: !!existingProfile,
+      profileError: profileError?.message,
+      userId: userId.substring(0, 8) + '...'
+    });
 
     if (profileError || !existingProfile) {
       log.warn('🔥 Profile not found, creating one:', {
@@ -89,7 +96,25 @@ export async function saveGoogleTokens(
     }
 
     // Encrypt tokens before storing
+    log.debug('🔐 Encrypting tokens before database storage:', {
+      userId: userId.substring(0, 8) + '...',
+      hasAccessToken: !!tokens.access_token,
+      hasRefreshToken: !!tokens.refresh_token,
+      tokenType: tokens.token_type
+    });
+    
     const encryptedTokens = encryptGoogleTokens(tokens);
+    
+    log.debug('🔐 Tokens encrypted successfully, proceeding with database update:', {
+      userId: userId.substring(0, 8) + '...',
+      hasEncryptedData: !!encryptedTokens,
+      updateData: {
+        hasEncryptedTokens: !!encryptedTokens,
+        hasRefreshToken: !!tokens.refresh_token,
+        google_connected: true,
+        timestamp: new Date().toISOString()
+      }
+    });
     
     const { error, data } = await getSupabaseClient()
       .from('profiles')
@@ -102,6 +127,18 @@ export async function saveGoogleTokens(
       })
       .eq('id', userId)
       .select();
+
+    log.debug('💾 Database update completed:', {
+      userId: userId.substring(0, 8) + '...',
+      hasError: !!error,
+      errorCode: error?.code,
+      errorMessage: error?.message,
+      errorDetails: error?.details,
+      errorHint: error?.hint,
+      dataReturned: !!data,
+      rowsAffected: data?.length || 0,
+      updateSuccess: !error && !!data
+    });
 
     if (error) {
       log.error('❌ Failed to save encrypted Google tokens:', {
@@ -134,11 +171,26 @@ export async function saveGoogleTokens(
 // Load Google tokens from Supabase (decrypted)
 export async function loadGoogleTokens(userId: string): Promise<GoogleAuthTokens | null> {
   try {
+    log.debug('🔍 Loading Google tokens from database:', {
+      userId: userId.substring(0, 8) + '...'
+    });
+    
     const { data, error } = await getSupabaseClient()
       .from('profiles')
       .select('google_tokens, google_refresh_token, google_connected')
       .eq('id', userId)
       .single();
+
+    log.debug('📊 Database query result for token loading:', {
+      userId: userId.substring(0, 8) + '...',
+      hasError: !!error,
+      errorMessage: error?.message,
+      errorCode: error?.code,
+      hasData: !!data,
+      hasTokens: !!data?.google_tokens,
+      hasRefreshToken: !!data?.google_refresh_token,
+      connected: data?.google_connected
+    });
 
     if (error) {
       log.error('Database error loading Google tokens:', {
