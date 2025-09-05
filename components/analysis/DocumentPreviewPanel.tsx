@@ -555,6 +555,151 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           border-color: #8b5cf6;
           background: rgba(139, 92, 246, 0.08);
         }
+
+        /* GOOGLE DOCS HTML RENDERING STYLES */
+        .google-docs-html {
+          font-family: 'Times New Roman', Times, serif;
+          line-height: 1.15;
+          color: #000;
+        }
+
+        /* Remove unwanted horizontal lines */
+        .google-docs-html hr {
+          display: none !important;
+        }
+
+        .google-docs-html::before,
+        .google-docs-html::after {
+          display: none !important;
+        }
+
+        .google-docs-html > *:first-child {
+          border-top: none !important;
+        }
+
+        /* Google Docs header styles */
+        .google-docs-html h1 {
+          font-size: 20pt !important;
+          font-weight: 400 !important;
+          color: #000 !important;
+          margin: 20pt 0 6pt 0 !important;
+          line-height: 1.15 !important;
+          font-family: 'Times New Roman', Times, serif !important;
+        }
+
+        .google-docs-html h2 {
+          font-size: 16pt !important;
+          font-weight: 400 !important;
+          color: #000 !important;
+          margin: 18pt 0 6pt 0 !important;
+          line-height: 1.15 !important;
+          font-family: 'Times New Roman', Times, serif !important;
+        }
+
+        .google-docs-html h3 {
+          font-size: 14pt !important;
+          font-weight: 400 !important;
+          color: #000 !important;
+          margin: 16pt 0 4pt 0 !important;
+          line-height: 1.15 !important;
+          font-family: 'Times New Roman', Times, serif !important;
+        }
+
+        .google-docs-html h4 {
+          font-size: 12pt !important;
+          font-weight: 400 !important;
+          color: #000 !important;
+          margin: 14pt 0 4pt 0 !important;
+          line-height: 1.15 !important;
+          font-family: 'Times New Roman', Times, serif !important;
+        }
+
+        /* Google Docs paragraph styles */
+        .google-docs-html p {
+          margin: 0pt 0pt 8pt 0pt !important;
+          line-height: 1.15 !important;
+          font-size: 11pt !important;
+          font-family: 'Times New Roman', Times, serif !important;
+          color: #000 !important;
+        }
+
+        /* Bold text preservation */
+        .google-docs-html strong,
+        .google-docs-html b,
+        .google-docs-html .c5,
+        .google-docs-html .c6 {
+          font-weight: 700 !important;
+        }
+
+        /* Italic text preservation */
+        .google-docs-html em,
+        .google-docs-html i,
+        .google-docs-html .c7 {
+          font-style: italic !important;
+        }
+
+        /* Underlined text */
+        .google-docs-html u,
+        .google-docs-html .c8 {
+          text-decoration: underline !important;
+        }
+
+        /* Google Docs table styles */
+        .google-docs-html table {
+          border-collapse: collapse !important;
+          border-spacing: 0 !important;
+          width: 100% !important;
+          margin: 9pt 0pt 9pt 0pt !important;
+          border: 1px solid #000 !important;
+        }
+
+        .google-docs-html td,
+        .google-docs-html th {
+          border: 1px solid #000 !important;
+          padding: 5pt 5pt 5pt 5pt !important;
+          text-align: left !important;
+          vertical-align: top !important;
+          line-height: 1.15 !important;
+          font-size: 11pt !important;
+          font-family: 'Times New Roman', Times, serif !important;
+        }
+
+        .google-docs-html th {
+          background-color: transparent !important;
+          font-weight: 400 !important;
+        }
+
+        /* Google Docs spacing classes */
+        .google-docs-html .c0 { margin: 0pt 0pt 0pt 0pt !important; line-height: 1.15 !important; }
+        .google-docs-html .c1 { margin: 0pt 0pt 8pt 0pt !important; line-height: 1.15 !important; }
+        .google-docs-html .c2 { margin: 0pt 0pt 12pt 0pt !important; line-height: 1.15 !important; }
+        .google-docs-html .c3 { margin: 0pt 0pt 16pt 0pt !important; line-height: 1.15 !important; }
+
+        /* Clean artifacts */
+        .google-docs-html *[style*="border-top"],
+        .google-docs-html *[style*="border: 1pt solid transparent"] {
+          border-top: none !important;
+        }
+
+        /* List styles for Google Docs */
+        .google-docs-html ul {
+          margin: 0pt 0pt 0pt 0pt !important;
+          padding: 0pt 0pt 0pt 48pt !important;
+          list-style-type: disc !important;
+        }
+
+        .google-docs-html ol {
+          margin: 0pt 0pt 0pt 0pt !important;
+          padding: 0pt 0pt 0pt 48pt !important;
+          list-style-type: decimal !important;
+        }
+
+        .google-docs-html li {
+          margin: 0pt 0pt 8pt 0pt !important;
+          line-height: 1.15 !important;
+          font-size: 11pt !important;
+          font-family: 'Times New Roman', Times, serif !important;
+        }
       `}</style>
       
       {/* Document Header - Matching sidebar style */}
@@ -704,7 +849,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
             <div>
               {/* Always show the structured HTML content from markdown field */}
               <div 
-                className="document-content"
+                className="document-content google-docs-html"
                 dangerouslySetInnerHTML={{ __html: highlightedHtml }}
               />
             </div>
