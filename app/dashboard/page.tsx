@@ -20,13 +20,13 @@ export default function Dashboard() {
   useEffect(() => {
     console.log('🔍 Dashboard auth debug:', { isAuthenticated, user: user ? 'exists' : 'null' });
     
-    // If user is not authenticated, redirect to landing page
-    // This covers both initial load and logout scenarios
-    if (!isAuthenticated) {
+    // Only redirect if we're sure user is not authenticated (not during loading)
+    // This prevents infinite redirect loops with landing page
+    if (!isAuthenticated && user === null) {
       console.log('🔄 Redirecting to landing page - not authenticated');
       router.push('/');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, user, router]);
 
   const handleNovaPlantillaClick = () => {
     setShowTemplateSourceModal(true);
