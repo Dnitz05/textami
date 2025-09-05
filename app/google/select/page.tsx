@@ -18,6 +18,30 @@ export default function GoogleSelectPage() {
     setIsGoogleConnected(connected);
   };
 
+  // SMART DETECTION: Skip Google connection modal for authenticated users
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const googleAuth = urlParams.get('google_auth');
+    
+    if (googleAuth === 'success') {
+      // User just completed Google OAuth - should be connected automatically
+      console.log('🚀 SMART DETECTION: User completed Google OAuth - skipping connection modal');
+      setIsGoogleConnected(true);
+      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (isAuthenticated && user?.email) {
+      // If user is authenticated with email, they likely used Google OAuth
+      // Skip the connection modal to improve UX
+      console.log('🚀 SMART DETECTION: Authenticated user detected - skipping Google Drive connection modal');
+      console.log('🔍 User details:', { 
+        authenticated: isAuthenticated, 
+        email: user?.email?.substring(0, 5) + '...',
+        provider: user?.app_metadata?.provider || 'unknown'
+      });
+      setIsGoogleConnected(true); // Skip modal for better UX
+    }
+  }, [isAuthenticated, user]);
+
   const handleFileSelected = async (file: GoogleDriveFile) => {
     try {
       // 🎯 Generate unique templateId for Google Docs
@@ -112,7 +136,10 @@ export default function GoogleSelectPage() {
                   </div>
                   <div className="ml-3">
                     <p className="text-sm text-green-800">
-                      <strong>Google Drive connectat!</strong> Ara pots seleccionar els teus documents.
+                      <strong>Accés a Google Drive disponible!</strong> Pots seleccionar els teus documents.
+                    </p>
+                    <p className="text-xs text-green-700 mt-1">
+                      Si tens problemes d'accés, pots reconnectar des del dashboard.
                     </p>
                   </div>
                 </div>
