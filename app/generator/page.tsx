@@ -59,7 +59,7 @@ export default function GeneratorPage() {
   
   const [sourceSelector, setSourceSelector] = useState<{
     show: boolean;
-    selectedSource: 'docx' | 'google-docs' | null;
+    selectedSource: 'google-docs' | null;
   }>({
     show: false,
     selectedSource: null
@@ -90,7 +90,7 @@ export default function GeneratorPage() {
       htmlPreview?: string;
     } | null;
     error: string | null;
-    sourceType?: 'docx' | 'google-docs';
+    sourceType?: 'google-docs';
     googleDocId?: string;
   }>({
     processing: false,
@@ -127,105 +127,14 @@ export default function GeneratorPage() {
     error: null
   });
 
+  // DOCX handling removed - Google-first architecture only
   const handleAiDocumentAnalysis = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const uploadId = Date.now();
-    const isPDF = false; // Only DOCX supported now
-    const isDOCX = file.name.toLowerCase().endsWith('.docx');
-    
-    log.debug(`📤 UPLOAD #${uploadId} - Starting DOCX upload:`, {
-      fileName: file.name,
-      size: file.size,
-      fileType: 'DOCX',
-      currentState: {
-        hasTemplate: !!aiState.template,
-        hasAnalysis: !!aiState.aiAnalysis,
-        processing: aiState.processing
-      }
-    });
-
-    if (!isDOCX) {
-      log.error('❌ Unsupported file type');
-      setAiState(prevState => ({
-        ...prevState,
-        error: 'Only DOCX files are supported'
-      }));
-      return;
-    }
-
-    setAiState(prevState => ({ 
-      ...prevState, 
-      processing: true, 
-      error: null 
+    // This function is now a stub - DOCX functionality removed for Google-first architecture
+    log.debug('🚫 DOCX upload attempted but not supported in Google-first architecture');
+    setAiState(prevState => ({
+      ...prevState,
+      error: 'Please use Google Docs instead - DOCX upload removed in Google-first architecture'
     }));
-
-    const formData = new FormData();
-    const templateId = `template_${Date.now()}_${Math.random().toString(36).substring(2)}`;
-    
-    // Only DOCX supported
-    formData.append('docx', file);
-
-    try {
-      const endpoint = '/api/ai-docx/analyze';
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        body: formData
-      });
-      
-      log.debug('📡 Response status:', response.status);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        log.error('❌ API Error:', errorData);
-        throw new Error(errorData.error || `HTTP ${response.status}`);
-      }
-      
-      const result = await response.json();
-      
-      if (result.success && result.data) {
-        const newAiState = {
-          processing: false,
-          template: {
-            success: true,
-            templateId: result.data.templateId,
-            fileName: result.data.fileName,
-            size: file.size,
-            storagePath: result.data.storageUrl || result.data.filePath || '',
-            message: 'Analysis completed successfully'
-          },
-          aiAnalysis: {
-            placeholders: [], // Smart mapping will generate these
-            transcription: result.data.transcription || result.data.markdown || 'DOCX transcribed with GPT-5',
-            htmlPreview: `<div class="p-8 text-center">
-              <div class="text-4xl mb-4">📄</div>
-              <h3 class="text-lg font-semibold mb-2">${result.data.fileName}</h3>
-              <p class="text-gray-600">DOCX transcribed successfully with GPT-5.</p>
-              <p class="text-sm text-blue-600 mt-2">Ready for smart mapping.</p>
-            </div>`
-          },
-          error: null
-        };
-        
-        log.debug(`🔄 UPLOAD #${uploadId} - Setting new state:`, newAiState);
-        setAiState(newAiState);
-        
-        // Guardar a localStorage per backup
-        localStorage.setItem('currentTemplate', JSON.stringify(result.data));
-        log.debug(`💾 UPLOAD #${uploadId} - Saved to localStorage`);
-      } else {
-        log.error(`❌ UPLOAD #${uploadId} - Invalid response format:`, result);
-        throw new Error('Invalid response format');
-      }
-    } catch (error) {
-      log.error(`❌ UPLOAD #${uploadId} - Upload failed:`, error);
-      setAiState(prevState => ({
-        ...prevState,
-        processing: false,
-        error: error instanceof Error ? error.message : 'Upload failed'
-      }));
-    }
   };
 
   const handleExcelAnalysis = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -239,8 +148,8 @@ export default function GeneratorPage() {
       const formData = new FormData();
       formData.append('excel', file);
 
-      log.debug('📤 Calling /api/ai-docx/excel...');
-      const response = await fetch('/api/ai-docx/excel', {
+      log.debug('📤 Calling /api/google/docs/excel...');
+      const response = await fetch('/api/google/docs/excel', {
         method: 'POST',
         body: formData,
       });
@@ -274,13 +183,9 @@ export default function GeneratorPage() {
     setSourceSelector({ show: true, selectedSource: null });
   };
 
-  const handleSourceSelected = (sourceType: 'docx' | 'google-docs') => {
+  const handleSourceSelected = (sourceType: 'google-docs') => {
     setSourceSelector({ show: false, selectedSource: sourceType });
-    
-    if (sourceType === 'google-docs') {
-      setGoogleDriveState({ show: true, processing: false, error: null });
-    }
-    // For DOCX, the existing file input will be used
+    setGoogleDriveState({ show: true, processing: false, error: null });
   };
 
   const handleGoogleDocSelected = async (file: any) => {
@@ -421,12 +326,12 @@ export default function GeneratorPage() {
     setMappingState({ loading: true, mappings: [], error: null });
 
     try {
-      log.debug('📤 Calling /api/ai-docx/mapping with data:', {
+      log.debug('📤 Calling /api/google/docs/mapping with data:', {
         placeholders: aiState.aiAnalysis.placeholders,
         columns: excelState.analysis.columns
       });
 
-      const response = await fetch('/api/ai-docx/mapping', {
+      const response = await fetch('/api/google/docs/mapping', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -638,8 +543,8 @@ export default function GeneratorPage() {
                 </h3>
                 <p className="text-gray-600 mb-4">
                   {aiState.template 
-                    ? `${aiState.sourceType === 'google-docs' ? 'Google Doc' : 'DOCX'} analyzed with AI placeholder detection`
-                    : 'Select DOCX upload or Google Docs import for instant AI analysis'
+                    ? `Google Doc analyzed with AI placeholder detection`
+                    : 'Select Google Docs import for instant AI analysis'
                   }
                 </p>
                 
@@ -664,15 +569,7 @@ export default function GeneratorPage() {
                       )}
                     </button>
                     
-                    {/* Hidden file input for DOCX upload when selected */}
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept=".docx,.doc"
-                      onChange={handleAiDocumentAnalysis}
-                      disabled={aiState.processing}
-                      id="docx-upload"
-                    />
+                    {/* DOCX upload removed - Google-first architecture */}
                     
                     {(aiState.error || googleDriveState.error) && (
                       <p className="text-xs text-red-600 mt-2">{aiState.error || googleDriveState.error}</p>
@@ -1122,12 +1019,6 @@ export default function GeneratorPage() {
           <TemplateSourceSelector
             onSourceSelected={(sourceType) => {
               handleSourceSelected(sourceType);
-              // If DOCX selected, trigger file input
-              if (sourceType === 'docx') {
-                setTimeout(() => {
-                  document.getElementById('docx-upload')?.click();
-                }, 100);
-              }
             }}
             onClose={() => setSourceSelector({ show: false, selectedSource: null })}
           />
