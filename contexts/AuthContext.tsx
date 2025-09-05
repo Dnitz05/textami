@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         // SINGLE AUTH LISTENER FOR ENTIRE APP
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event: any, session: any) => {
           if (!mounted) return;
 
           log.info('🔍 AuthContext: Auth state change', { event, hasUser: !!session?.user });
