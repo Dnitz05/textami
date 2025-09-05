@@ -10,8 +10,8 @@ export const VALIDATION_PATTERNS = {
   // UUID format for user IDs and template IDs
   UUID: /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
   
-  // Basic filename validation (alphanumeric, spaces, dots, hyphens, underscores)
-  FILENAME: /^[a-zA-Z0-9\s\.\-_]+$/,
+  // Filename validation (allow most printable characters, exclude dangerous ones)
+  FILENAME: /^[a-zA-Z0-9\s\.\-_,()\[\]!@#$%^&*+=:;'"?]+$/,
   
   // Email validation (basic)
   EMAIL: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
