@@ -78,24 +78,24 @@ export default function LandingPage() {
                 <g>
                   <rect x="10"  y="18"  width="18" height="18" rx="2" fill="black"/>
                   <rect x="36"  y="18"  width="18" height="18" rx="2" fill="black"/>
-                  <rect x="62"  y="18"  width="18" height="18" rx="2" fill="#60A5FA"/>
+                  <rect x="62"  y="18"  width="18" height="18" rx="2" fill="#2563EB"/>
 
                   <rect x="10"  y="44"  width="18" height="18" rx="2" fill="black"/>
-                  <rect x="36"  y="44"  width="18" height="18" rx="2" fill="#60A5FA"/>
+                  <rect x="36"  y="44"  width="18" height="18" rx="2" fill="#2563EB"/>
                   <rect x="62"  y="44"  width="18" height="18" rx="2" fill="black"/>
 
-                  <rect x="10"  y="70"  width="18" height="18" rx="2" fill="#60A5FA"/>
+                  <rect x="10"  y="70"  width="18" height="18" rx="2" fill="#2563EB"/>
                   <rect x="36"  y="70"  width="18" height="18" rx="2" fill="black"/>
                   <rect x="62"  y="70"  width="18" height="18" rx="2" fill="black"/>
                 </g>
 
-                <g stroke="#60A5FA" stroke-width="3" fill="none">
+                <g stroke="#2563EB" stroke-width="3" fill="none">
                   <line x1="71" y1="27" x2="45" y2="53"/>
                   <line x1="19" y1="79" x2="45" y2="53"/>
                 </g>
 
-                <text x="100" y="68" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="52" font-weight="700" fill="#2D3748">
-                  docmile
+                <text x="100" y="68" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="52" font-weight="700">
+                  <tspan fill="#2563EB">doc</tspan><tspan fill="#2D3748">mile</tspan>
                 </text>
               </svg>
             </div>
