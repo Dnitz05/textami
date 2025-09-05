@@ -108,6 +108,10 @@ export async function POST(request: NextRequest) {
     // 3. Get connection status
     let status = { connected: false };
     if (user) {
+      log.debug('🔍 Checking Google connection status for user:', {
+        userId: user.id.substring(0, 8) + '...'
+      });
+      
       const { getValidGoogleTokens } = await import('@/lib/google/token-manager');
       const tokens = await getValidGoogleTokens(user.id);
       
@@ -115,10 +119,12 @@ export async function POST(request: NextRequest) {
         connected: !!tokens
       };
 
-      log.debug('Google connection status checked with auto-refresh:', {
+      log.debug('✅ Google connection status checked with auto-refresh:', {
         userId: user.id.substring(0, 8) + '...',
         connected: status.connected,
-        tokensAvailable: !!tokens
+        tokensAvailable: !!tokens,
+        tokensIsNull: tokens === null,
+        tokensType: typeof tokens
       });
     } else {
       log.debug('Google connection status checked for anonymous user:', {
