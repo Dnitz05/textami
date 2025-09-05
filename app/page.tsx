@@ -7,11 +7,52 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthForm from '@/components/AuthForm';
 import { useUser } from '@/hooks/useUser';
+import { createBrowserSupabaseClient } from '@/lib/supabase/browserClient';
 
 export default function LandingPage() {
   const router = useRouter();
   const [showAuthForm, setShowAuthForm] = useState(false);
   const { isAuthenticated, loading } = useUser();
+  
+  // Process magic link authentication on page load
+  useEffect(() => {
+    const handleMagicLinkAuth = async () => {
+      // Check if URL contains magic link tokens (in hash fragment)
+      if (typeof window !== 'undefined' && window.location.hash) {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        
+        if (accessToken && refreshToken) {
+          console.log('🔗 Magic link detected, processing authentication...');
+          
+          try {
+            const supabase = createBrowserSupabaseClient();
+            if (supabase) {
+              // Set the session with the tokens from magic link
+              const { data, error } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken
+              });
+              
+              if (error) {
+                console.error('❌ Error setting session:', error);
+              } else {
+                console.log('✅ Session set successfully:', data);
+                // Clean up URL hash
+                window.location.hash = '';
+                window.history.replaceState({}, document.title, window.location.pathname);
+              }
+            }
+          } catch (error) {
+            console.error('❌ Error processing magic link:', error);
+          }
+        }
+      }
+    };
+
+    handleMagicLinkAuth();
+  }, []);
   
   // Redirect authenticated users to dashboard
   useEffect(() => {
