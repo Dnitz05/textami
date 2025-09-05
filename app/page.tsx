@@ -54,16 +54,10 @@ export default function LandingPage() {
     handleMagicLinkAuth();
   }, []);
   
-  // Redirect authenticated users to dashboard
+  // TEMPORARILY DISABLED - Manual navigation to avoid redirect loops
   useEffect(() => {
     console.log('🔍 Landing auth debug:', { isAuthenticated, loading });
-    if (!loading && isAuthenticated) {
-      console.log('🔄 Redirecting to dashboard - authenticated');
-      // Small delay to ensure auth state is fully propagated
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 500);
-    }
+    // Redirect logic disabled to prevent loops - users can manually click "Go to Dashboard"
   }, [isAuthenticated, loading, router]);
 
   return (
