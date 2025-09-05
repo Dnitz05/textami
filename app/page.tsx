@@ -54,16 +54,16 @@ export default function LandingPage() {
     handleMagicLinkAuth();
   }, []);
   
-  // Redirect authenticated users to dashboard - DISABLED to fix flickering
+  // Redirect authenticated users to dashboard
   useEffect(() => {
     console.log('🔍 Landing auth debug:', { isAuthenticated, loading });
-    // TEMPORARILY DISABLED - manual navigation only
-    // if (!loading && isAuthenticated) {
-    //   console.log('🔄 Redirecting to dashboard - authenticated');
-    //   setTimeout(() => {
-    //     router.push('/dashboard');
-    //   }, 100);
-    // }
+    if (!loading && isAuthenticated) {
+      console.log('🔄 Redirecting to dashboard - authenticated');
+      // Small delay to ensure auth state is fully propagated
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 500);
+    }
   }, [isAuthenticated, loading, router]);
 
   return (
