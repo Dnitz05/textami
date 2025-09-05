@@ -195,7 +195,12 @@ export async function getValidGoogleTokens(userId: string): Promise<GoogleAuthTo
 
     // Check if token needs refresh
     if (shouldRefreshToken(tokens.expiry_date)) {
-      console.log('Refreshing Google tokens for user:', userId);
+      log.info('Refreshing Google tokens for user (expiry check):', {
+        userId: userId.substring(0, 8) + '...',
+        expiryDate: new Date(tokens.expiry_date).toISOString(),
+        currentTime: new Date().toISOString(),
+        timeUntilExpiry: tokens.expiry_date - Date.now()
+      });
       
       if (!tokens.refresh_token) {
         console.error('No refresh token available for user:', userId);
