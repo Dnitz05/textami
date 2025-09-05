@@ -54,17 +54,10 @@ export default function LandingPage() {
     handleMagicLinkAuth();
   }, []);
   
-  // SAFE REDIRECT with singleton client - should prevent loops
+  // REDIRECTS COMPLETELY DISABLED - Manual navigation only
   useEffect(() => {
     console.log('🔍 Landing auth debug:', { isAuthenticated, loading });
-    
-    // SAFE REDIRECT: Only redirect if truly authenticated and on landing page
-    if (!loading && isAuthenticated && typeof window !== 'undefined' && window.location.pathname === '/') {
-      console.log('🔄 SAFE REDIRECT: Redirecting authenticated user to dashboard');
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 2000); // Longer delay to ensure singleton client is stable
-    }
+    // All redirects disabled - user must manually navigate
   }, [isAuthenticated, loading, router]);
 
   return (
