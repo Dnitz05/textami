@@ -103,13 +103,13 @@ export default function LandingPage() {
                 onClick={() => setShowAuthForm(true)}
                 className="px-6 py-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
               >
-                Entrar
+                Log In
               </button>
               <button
                 onClick={() => setShowAuthForm(true)}
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors shadow-md hover:shadow-lg"
               >
-                Començar Gratis
+                Get Started Free
               </button>
             </div>
           </div>
@@ -119,17 +119,17 @@ export default function LandingPage() {
       {/* Hero Section */}
       <div className="pt-16 px-4 flex-1 flex flex-col justify-center">
         <div className="max-w-6xl mx-auto text-center">
-          <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
-            🧠 Intel·ligència Artificial
-            <br />
-            <span className="text-blue-600">per a Documents</span>
-          </h1>
+            <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
+              🧠 Artificial Intelligence
+              <br />
+              <span className="text-blue-600">for Documents</span>
+            </h1>
           
-          <p className="text-lg lg:text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
-            Transforma plantilles Word i dades Excel en documents personalitzats amb 
-            <strong className="text-blue-600"> zero configuració manual</strong>. 
-            La nostra IA analitza, mapeja i genera documents automàticament.
-          </p>
+            <p className="text-lg lg:text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
+              Transform Word templates and Excel data into personalized documents with 
+              <strong className="text-blue-600"> zero manual configuration</strong>. 
+              Our AI analyzes, maps, and generates documents automatically.
+            </p>
 
           {/* CTA Button */}
           <button
@@ -139,7 +139,7 @@ export default function LandingPage() {
             <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
-            Començar Ara - És Gratis
+            Start Now - It's Free
           </button>
         </div>
 
@@ -149,27 +149,27 @@ export default function LandingPage() {
             {/* Feature 1 */}
             <div className="text-center p-4 rounded-xl bg-blue-50 border border-blue-100 hover:shadow-lg transition-shadow">
               <div className="text-4xl mb-3">📄</div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Anàlisi Automàtic</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Automatic Analysis</h3>
               <p className="text-sm text-gray-600">
-                Modificació i millora dels documents en segons, amb IA.
+                Modification and improvement of documents in seconds, with AI.
               </p>
             </div>
 
             {/* Feature 2 */}
             <div className="text-center p-4 rounded-xl bg-green-50 border border-green-100 hover:shadow-lg transition-shadow">
               <div className="text-4xl mb-3">🤖</div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Mapping Intel·ligent</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Intelligent Mapping</h3>
               <p className="text-sm text-gray-600">
-                Conecta dades Excel amb plantilles de forma automàtica amb alta precisió.
+                Connect Excel data with templates automatically with high precision.
               </p>
             </div>
 
             {/* Feature 3 */}
             <div className="text-center p-4 rounded-xl bg-purple-50 border border-purple-100 hover:shadow-lg transition-shadow">
               <div className="text-4xl mb-3">⚡</div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Generació Massiva</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Mass Generation</h3>
               <p className="text-sm text-gray-600">
-                Genera centenars de documents personalitzats mantenint format professional.
+                Generate hundreds of personalized documents while maintaining professional format.
               </p>
             </div>
           </div>
@@ -192,7 +192,7 @@ export default function LandingPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4">
             <div className="flex justify-between items-center p-6 border-b">
-              <h2 className="text-xl font-semibold text-gray-900">Comença amb DocMile</h2>
+              <h2 className="text-xl font-semibold text-gray-900">Get Started with DocMile</h2>
               <button
                 onClick={() => setShowAuthForm(false)}
                 className="text-gray-400 hover:text-gray-600"
