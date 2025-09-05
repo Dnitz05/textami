@@ -330,11 +330,27 @@ async function handleOAuthCallback(request: NextRequest) {
         userId: actualFinalUserId.substring(0, 8) + '...',
         googleEmail: profile.email,
         hasValidTokens: !!tokens.access_token,
+        hasRefreshToken: !!tokens.refresh_token,
+        tokenType: tokens.token_type,
         isSigninFlow,
         ip: clientIp
       });
       
-      await initializeGoogleConnection(actualFinalUserId, tokens, profile.email);
+      try {
+        await initializeGoogleConnection(actualFinalUserId, tokens, profile.email);
+        log.info('✅ Google connection initialized successfully:', {
+          userId: actualFinalUserId.substring(0, 8) + '...',
+          email: profile.email
+        });
+      } catch (tokenStorageError) {
+        log.error('❌ CRITICAL: Failed to initialize Google connection:', {
+          error: tokenStorageError instanceof Error ? tokenStorageError.message : 'Unknown error',
+          userId: actualFinalUserId.substring(0, 8) + '...',
+          email: profile.email,
+          stack: tokenStorageError instanceof Error ? tokenStorageError.stack : undefined
+        });
+        // Continue with redirect even if token storage fails
+      }
 
       // 10. ✅ Google connection established successfully - redirect to dashboard
       log.info('🎯 OAuth connection flow completed successfully:', {
