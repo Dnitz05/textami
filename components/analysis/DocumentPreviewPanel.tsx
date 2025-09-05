@@ -556,149 +556,216 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           background: rgba(139, 92, 246, 0.08);
         }
 
-        /* GOOGLE DOCS HTML RENDERING STYLES */
-        .google-docs-html {
-          font-family: 'Times New Roman', Times, serif;
-          line-height: 1.15;
-          color: #000;
-        }
-
-        /* Remove unwanted horizontal lines */
-        .google-docs-html hr {
-          display: none !important;
-        }
-
+        /* GOOGLE DOCS HTML RENDERING FIXES */
+        
+        /* 1. REMOVE UNWANTED TOP LINE/BORDER */
         .google-docs-html::before,
         .google-docs-html::after {
           display: none !important;
         }
-
+        
         .google-docs-html > *:first-child {
           border-top: none !important;
+          margin-top: 0 !important;
+          padding-top: 0 !important;
         }
-
-        /* Google Docs header styles */
-        .google-docs-html h1 {
-          font-size: 20pt !important;
-          font-weight: 400 !important;
-          color: #000 !important;
-          margin: 20pt 0 6pt 0 !important;
-          line-height: 1.15 !important;
-          font-family: 'Times New Roman', Times, serif !important;
+        
+        .google-docs-html hr {
+          display: none !important;
         }
-
-        .google-docs-html h2 {
-          font-size: 16pt !important;
-          font-weight: 400 !important;
-          color: #000 !important;
-          margin: 18pt 0 6pt 0 !important;
-          line-height: 1.15 !important;
-          font-family: 'Times New Roman', Times, serif !important;
-        }
-
-        .google-docs-html h3 {
-          font-size: 14pt !important;
-          font-weight: 400 !important;
-          color: #000 !important;
-          margin: 16pt 0 4pt 0 !important;
-          line-height: 1.15 !important;
-          font-family: 'Times New Roman', Times, serif !important;
-        }
-
-        .google-docs-html h4 {
-          font-size: 12pt !important;
-          font-weight: 400 !important;
-          color: #000 !important;
-          margin: 14pt 0 4pt 0 !important;
-          line-height: 1.15 !important;
-          font-family: 'Times New Roman', Times, serif !important;
-        }
-
-        /* Google Docs paragraph styles */
-        .google-docs-html p {
-          margin: 0pt 0pt 8pt 0pt !important;
-          line-height: 1.15 !important;
-          font-size: 11pt !important;
-          font-family: 'Times New Roman', Times, serif !important;
-          color: #000 !important;
-        }
-
-        /* Bold text preservation */
-        .google-docs-html strong,
-        .google-docs-html b,
-        .google-docs-html .c5,
-        .google-docs-html .c6 {
-          font-weight: 700 !important;
-        }
-
-        /* Italic text preservation */
-        .google-docs-html em,
-        .google-docs-html i,
-        .google-docs-html .c7 {
-          font-style: italic !important;
-        }
-
-        /* Underlined text */
-        .google-docs-html u,
-        .google-docs-html .c8 {
-          text-decoration: underline !important;
-        }
-
-        /* Google Docs table styles */
-        .google-docs-html table {
-          border-collapse: collapse !important;
-          border-spacing: 0 !important;
-          width: 100% !important;
-          margin: 9pt 0pt 9pt 0pt !important;
-          border: 1px solid #000 !important;
-        }
-
-        .google-docs-html td,
-        .google-docs-html th {
-          border: 1px solid #000 !important;
-          padding: 5pt 5pt 5pt 5pt !important;
-          text-align: left !important;
-          vertical-align: top !important;
-          line-height: 1.15 !important;
-          font-size: 11pt !important;
-          font-family: 'Times New Roman', Times, serif !important;
-        }
-
-        .google-docs-html th {
-          background-color: transparent !important;
-          font-weight: 400 !important;
-        }
-
-        /* Google Docs spacing classes */
-        .google-docs-html .c0 { margin: 0pt 0pt 0pt 0pt !important; line-height: 1.15 !important; }
-        .google-docs-html .c1 { margin: 0pt 0pt 8pt 0pt !important; line-height: 1.15 !important; }
-        .google-docs-html .c2 { margin: 0pt 0pt 12pt 0pt !important; line-height: 1.15 !important; }
-        .google-docs-html .c3 { margin: 0pt 0pt 16pt 0pt !important; line-height: 1.15 !important; }
-
-        /* Clean artifacts */
+        
         .google-docs-html *[style*="border-top"],
         .google-docs-html *[style*="border: 1pt solid transparent"] {
           border-top: none !important;
         }
 
-        /* List styles for Google Docs */
-        .google-docs-html ul {
-          margin: 0pt 0pt 0pt 0pt !important;
-          padding: 0pt 0pt 0pt 48pt !important;
-          list-style-type: disc !important;
+        /* 2. RESTORE ORIGINAL TYPOGRAPHY (Inter, not Times) */
+        .google-docs-html {
+          font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+          line-height: 1.6 !important;
+          color: #374151 !important;
         }
 
+        /* 3. PROPER SPACING BETWEEN ELEMENTS */
+        .google-docs-html h1 {
+          font-size: 24px !important;
+          font-weight: 600 !important;
+          color: #1f2937 !important;
+          margin: 32px 0 16px 0 !important;
+          line-height: 1.2 !important;
+          font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+        }
+
+        .google-docs-html h2 {
+          font-size: 20px !important;
+          font-weight: 600 !important;
+          color: #1f2937 !important;
+          margin: 28px 0 14px 0 !important;
+          line-height: 1.3 !important;
+          font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+        }
+
+        .google-docs-html h3 {
+          font-size: 18px !important;
+          font-weight: 600 !important;
+          color: #1f2937 !important;
+          margin: 24px 0 12px 0 !important;
+          line-height: 1.4 !important;
+          font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+        }
+
+        .google-docs-html h4 {
+          font-size: 16px !important;
+          font-weight: 600 !important;
+          color: #1f2937 !important;
+          margin: 20px 0 10px 0 !important;
+          line-height: 1.4 !important;
+          font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+        }
+
+        .google-docs-html h5 {
+          font-size: 14px !important;
+          font-weight: 600 !important;
+          color: #1f2937 !important;
+          margin: 18px 0 8px 0 !important;
+          line-height: 1.4 !important;
+          font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+        }
+
+        .google-docs-html h6 {
+          font-size: 13px !important;
+          font-weight: 600 !important;
+          color: #6b7280 !important;
+          margin: 16px 0 6px 0 !important;
+          line-height: 1.4 !important;
+          font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+        }
+
+        /* 4. PROPER PARAGRAPH SPACING */
+        .google-docs-html p {
+          margin: 0 0 16px 0 !important;
+          line-height: 1.6 !important;
+          font-size: 14px !important;
+          font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+          color: #374151 !important;
+        }
+
+        .google-docs-html p:last-child {
+          margin-bottom: 0 !important;
+        }
+
+        /* 5. SECTION SPACING */
+        .google-docs-html div + h1,
+        .google-docs-html div + h2,
+        .google-docs-html div + h3,
+        .google-docs-html div + h4,
+        .google-docs-html div + h5,
+        .google-docs-html div + h6 {
+          margin-top: 40px !important;
+        }
+
+        .google-docs-html p + h1,
+        .google-docs-html p + h2,
+        .google-docs-html p + h3,
+        .google-docs-html p + h4,
+        .google-docs-html p + h5,
+        .google-docs-html p + h6 {
+          margin-top: 40px !important;
+        }
+
+        /* 6. PRESERVE BOLD TEXT */
+        .google-docs-html strong,
+        .google-docs-html b,
+        .google-docs-html span[style*="font-weight:700"],
+        .google-docs-html span[style*="font-weight: 700"],
+        .google-docs-html span[style*="font-weight:bold"],
+        .google-docs-html span[style*="font-weight: bold"] {
+          font-weight: 700 !important;
+        }
+
+        /* 7. PRESERVE ITALIC TEXT */
+        .google-docs-html em,
+        .google-docs-html i,
+        .google-docs-html span[style*="font-style:italic"],
+        .google-docs-html span[style*="font-style: italic"] {
+          font-style: italic !important;
+        }
+
+        /* 8. PRESERVE UNDERLINED TEXT */
+        .google-docs-html u,
+        .google-docs-html span[style*="text-decoration:underline"],
+        .google-docs-html span[style*="text-decoration: underline"] {
+          text-decoration: underline !important;
+        }
+
+        /* 9. IMPROVED TABLE STYLES */
+        .google-docs-html table {
+          border-collapse: collapse !important;
+          border-spacing: 0 !important;
+          width: 100% !important;
+          margin: 24px 0 24px 0 !important;
+          border: 1px solid #d1d5db !important;
+          background: white !important;
+        }
+
+        .google-docs-html td,
+        .google-docs-html th {
+          border: 1px solid #d1d5db !important;
+          padding: 12px 16px !important;
+          text-align: left !important;
+          vertical-align: top !important;
+          line-height: 1.5 !important;
+          font-size: 14px !important;
+          font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+        }
+
+        .google-docs-html th {
+          background-color: #f9fafb !important;
+          font-weight: 600 !important;
+          color: #374151 !important;
+        }
+
+        /* 10. LIST STYLES WITH PROPER SPACING */
+        .google-docs-html ul,
         .google-docs-html ol {
-          margin: 0pt 0pt 0pt 0pt !important;
-          padding: 0pt 0pt 0pt 48pt !important;
-          list-style-type: decimal !important;
+          margin: 16px 0 16px 0 !important;
+          padding: 0 0 0 24px !important;
         }
 
         .google-docs-html li {
-          margin: 0pt 0pt 8pt 0pt !important;
-          line-height: 1.15 !important;
-          font-size: 11pt !important;
-          font-family: 'Times New Roman', Times, serif !important;
+          margin: 8px 0 !important;
+          line-height: 1.6 !important;
+          font-size: 14px !important;
+          font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+        }
+
+        /* 11. IMAGE SUPPORT */
+        .google-docs-html img {
+          max-width: 100% !important;
+          height: auto !important;
+          margin: 16px 0 !important;
+          border-radius: 4px !important;
+        }
+
+        /* 12. CLEAN UP GOOGLE DOCS ARTIFACTS */
+        .google-docs-html div {
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+
+        .google-docs-html span {
+          font-family: inherit !important;
+          font-size: inherit !important;
+          color: inherit !important;
+          line-height: inherit !important;
+        }
+
+        /* 13. SIGNATURE AND FOOTER SPACING */
+        .google-docs-html .signature,
+        .google-docs-html .footer {
+          margin-top: 48px !important;
+          padding-top: 24px !important;
+          border-top: 1px solid #e5e7eb !important;
         }
       `}</style>
       

@@ -88,17 +88,15 @@ export function HTMLPreviewPanel({
         
         <style jsx>{`
           .google-docs-content {
-            font-family: 'Times New Roman', Times, serif;
-            line-height: 1.15;
-            color: #000;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            color: #374151;
             background: white;
-            padding: 1in;
-            max-width: 8.5in;
+            padding: 24px;
             margin: 0 auto;
-            min-height: 11in;
           }
 
-          /* Remove unwanted horizontal lines and borders */
+          /* 1. REMOVE UNWANTED TOP LINE/BORDER */
           .google-docs-content hr {
             display: none !important;
           }
@@ -108,202 +106,200 @@ export function HTMLPreviewPanel({
             display: none !important;
           }
 
-          /* Clean initial borders */
           .google-docs-content > *:first-child {
+            border-top: none !important;
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+          }
+
+          .google-docs-content *[style*="border-top"],
+          .google-docs-content *[style*="border: 1pt solid transparent"] {
             border-top: none !important;
           }
 
-          /* Header styles with proper hierarchy matching Google Docs */
+          /* 2. PROPER SPACING BETWEEN ELEMENTS */
           .google-docs-content h1 {
-            font-size: 20pt;
-            font-weight: 400;
-            color: #000;
-            margin: 20pt 0 6pt 0;
-            line-height: 1.15;
-            page-break-after: avoid;
-            font-family: 'Times New Roman', Times, serif;
+            font-size: 24px !important;
+            font-weight: 600 !important;
+            color: #1f2937 !important;
+            margin: 32px 0 16px 0 !important;
+            line-height: 1.2 !important;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
           }
 
           .google-docs-content h2 {
-            font-size: 16pt;
-            font-weight: 400;
-            color: #000;
-            margin: 18pt 0 6pt 0;
-            line-height: 1.15;
-            page-break-after: avoid;
-            font-family: 'Times New Roman', Times, serif;
+            font-size: 20px !important;
+            font-weight: 600 !important;
+            color: #1f2937 !important;
+            margin: 28px 0 14px 0 !important;
+            line-height: 1.3 !important;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
           }
 
           .google-docs-content h3 {
-            font-size: 14pt;
-            font-weight: 400;
-            color: #000;
-            margin: 16pt 0 4pt 0;
-            line-height: 1.15;
-            page-break-after: avoid;
-            font-family: 'Times New Roman', Times, serif;
+            font-size: 18px !important;
+            font-weight: 600 !important;
+            color: #1f2937 !important;
+            margin: 24px 0 12px 0 !important;
+            line-height: 1.4 !important;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
           }
 
           .google-docs-content h4 {
-            font-size: 12pt;
-            font-weight: 400;
-            color: #000;
-            margin: 14pt 0 4pt 0;
-            line-height: 1.15;
-            page-break-after: avoid;
-            font-family: 'Times New Roman', Times, serif;
+            font-size: 16px !important;
+            font-weight: 600 !important;
+            color: #1f2937 !important;
+            margin: 20px 0 10px 0 !important;
+            line-height: 1.4 !important;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
           }
 
           .google-docs-content h5 {
-            font-size: 11pt;
-            font-weight: 400;
-            color: #000;
-            margin: 12pt 0 4pt 0;
-            line-height: 1.15;
-            font-family: 'Times New Roman', Times, serif;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            color: #1f2937 !important;
+            margin: 18px 0 8px 0 !important;
+            line-height: 1.4 !important;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
           }
 
           .google-docs-content h6 {
-            font-size: 11pt;
-            font-weight: 400;
-            color: #666666;
-            margin: 12pt 0 4pt 0;
-            line-height: 1.15;
-            font-style: italic;
-            font-family: 'Times New Roman', Times, serif;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            color: #6b7280 !important;
+            margin: 16px 0 6px 0 !important;
+            line-height: 1.4 !important;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
           }
 
-          /* Paragraph styles matching Google Docs default */
+          /* 3. PROPER PARAGRAPH SPACING */
           .google-docs-content p {
-            margin: 0pt 0pt 8pt 0pt;
-            line-height: 1.15;
-            font-size: 11pt;
-            font-family: 'Times New Roman', Times, serif;
-            color: #000;
+            margin: 0 0 16px 0 !important;
+            line-height: 1.6 !important;
+            font-size: 14px !important;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+            color: #374151 !important;
           }
 
-          /* Preserve original Google Docs spacing classes */
-          .google-docs-content .c0 { margin: 0pt 0pt 0pt 0pt; line-height: 1.15; }
-          .google-docs-content .c1 { margin: 0pt 0pt 8pt 0pt; line-height: 1.15; }
-          .google-docs-content .c2 { margin: 0pt 0pt 12pt 0pt; line-height: 1.15; }
-          .google-docs-content .c3 { margin: 0pt 0pt 16pt 0pt; line-height: 1.15; }
-          .google-docs-content .c4 { margin: 0pt 0pt 20pt 0pt; line-height: 1.15; }
+          .google-docs-content p:last-child {
+            margin-bottom: 0 !important;
+          }
 
-          /* Bold text preservation */
+          /* 4. SECTION SPACING */
+          .google-docs-content div + h1,
+          .google-docs-content div + h2,
+          .google-docs-content div + h3,
+          .google-docs-content div + h4,
+          .google-docs-content div + h5,
+          .google-docs-content div + h6 {
+            margin-top: 40px !important;
+          }
+
+          .google-docs-content p + h1,
+          .google-docs-content p + h2,
+          .google-docs-content p + h3,
+          .google-docs-content p + h4,
+          .google-docs-content p + h5,
+          .google-docs-content p + h6 {
+            margin-top: 40px !important;
+          }
+
+          /* 5. PRESERVE BOLD TEXT */
           .google-docs-content strong,
           .google-docs-content b,
-          .google-docs-content .c5,
-          .google-docs-content .c6 {
-            font-weight: 700;
+          .google-docs-content span[style*="font-weight:700"],
+          .google-docs-content span[style*="font-weight: 700"],
+          .google-docs-content span[style*="font-weight:bold"],
+          .google-docs-content span[style*="font-weight: bold"] {
+            font-weight: 700 !important;
           }
 
-          /* Italic text preservation */
+          /* 6. PRESERVE ITALIC TEXT */
           .google-docs-content em,
           .google-docs-content i,
-          .google-docs-content .c7 {
-            font-style: italic;
+          .google-docs-content span[style*="font-style:italic"],
+          .google-docs-content span[style*="font-style: italic"] {
+            font-style: italic !important;
           }
 
-          /* Underlined text */
+          /* 7. PRESERVE UNDERLINED TEXT */
           .google-docs-content u,
-          .google-docs-content .c8 {
-            text-decoration: underline;
+          .google-docs-content span[style*="text-decoration:underline"],
+          .google-docs-content span[style*="text-decoration: underline"] {
+            text-decoration: underline !important;
           }
 
-          /* Table styles matching Google Docs exactly */
+          /* 8. IMPROVED TABLE STYLES */
           .google-docs-content table {
-            border-collapse: collapse;
-            border-spacing: 0;
-            width: 100%;
-            margin: 9pt 0pt 9pt 0pt;
-            border: 1px solid #000;
-            table-layout: fixed;
+            border-collapse: collapse !important;
+            border-spacing: 0 !important;
+            width: 100% !important;
+            margin: 24px 0 24px 0 !important;
+            border: 1px solid #d1d5db !important;
+            background: white !important;
           }
 
           .google-docs-content td,
           .google-docs-content th {
-            border: 1px solid #000;
-            padding: 5pt 5pt 5pt 5pt;
-            text-align: left;
-            vertical-align: top;
-            line-height: 1.15;
-            font-size: 11pt;
-            font-family: 'Times New Roman', Times, serif;
+            border: 1px solid #d1d5db !important;
+            padding: 12px 16px !important;
+            text-align: left !important;
+            vertical-align: top !important;
+            line-height: 1.5 !important;
+            font-size: 14px !important;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
           }
 
           .google-docs-content th {
-            background-color: transparent;
-            font-weight: 400;
+            background-color: #f9fafb !important;
+            font-weight: 600 !important;
+            color: #374151 !important;
           }
 
-          /* Handle Google Docs specific table classes */
-          .google-docs-content .c9 td,
-          .google-docs-content .c10 td {
-            padding: 7pt 7pt 7pt 7pt;
-          }
-
-          .google-docs-content .c11 {
-            border: 1px solid #000;
-          }
-
-          /* List styles matching Google Docs */
-          .google-docs-content ul {
-            margin: 0pt 0pt 0pt 0pt;
-            padding: 0pt 0pt 0pt 48pt;
-            list-style-type: disc;
-          }
-
+          /* 9. LIST STYLES WITH PROPER SPACING */
+          .google-docs-content ul,
           .google-docs-content ol {
-            margin: 0pt 0pt 0pt 0pt;
-            padding: 0pt 0pt 0pt 48pt;
-            list-style-type: decimal;
+            margin: 16px 0 16px 0 !important;
+            padding: 0 0 0 24px !important;
           }
 
           .google-docs-content li {
-            margin: 0pt 0pt 8pt 0pt;
-            line-height: 1.15;
-            font-size: 11pt;
-            font-family: 'Times New Roman', Times, serif;
+            margin: 8px 0 !important;
+            line-height: 1.6 !important;
+            font-size: 14px !important;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
           }
 
-          /* Text alignment classes from Google Docs */
-          .google-docs-content .c12 { text-align: left; }
-          .google-docs-content .c13 { text-align: center; }
-          .google-docs-content .c14 { text-align: right; }
-          .google-docs-content .c15 { text-align: justify; }
+          /* 10. IMAGE SUPPORT */
+          .google-docs-content img {
+            max-width: 100% !important;
+            height: auto !important;
+            margin: 16px 0 !important;
+            border-radius: 4px !important;
+          }
 
-          /* Font size classes from Google Docs */
-          .google-docs-content .c16 { font-size: 8pt; }
-          .google-docs-content .c17 { font-size: 9pt; }
-          .google-docs-content .c18 { font-size: 10pt; }
-          .google-docs-content .c19 { font-size: 11pt; }
-          .google-docs-content .c20 { font-size: 12pt; }
-          .google-docs-content .c21 { font-size: 14pt; }
-          .google-docs-content .c22 { font-size: 16pt; }
-          .google-docs-content .c23 { font-size: 18pt; }
-          .google-docs-content .c24 { font-size: 20pt; }
-          .google-docs-content .c25 { font-size: 24pt; }
+          /* 11. CLEAN UP GOOGLE DOCS ARTIFACTS */
+          .google-docs-content div {
+            margin: 0 !important;
+            padding: 0 !important;
+          }
 
-          /* Font family classes */
-          .google-docs-content .c26 { font-family: Arial; }
-          .google-docs-content .c27 { font-family: 'Times New Roman'; }
-          .google-docs-content .c28 { font-family: 'Calibri'; }
-          .google-docs-content .c29 { font-family: 'Georgia'; }
+          .google-docs-content span {
+            font-family: inherit !important;
+            font-size: inherit !important;
+            color: inherit !important;
+            line-height: inherit !important;
+          }
 
-          /* Signature and footer sections */
+          /* 12. SIGNATURE AND FOOTER SPACING */
           .google-docs-content .signature,
           .google-docs-content .footer {
-            margin-top: 36pt;
-            padding-top: 18pt;
-            border-top: none;
+            margin-top: 48px !important;
+            padding-top: 24px !important;
+            border-top: 1px solid #e5e7eb !important;
           }
 
-          /* Indentation classes */
-          .google-docs-content .c30 { margin-left: 36pt; }
-          .google-docs-content .c31 { margin-left: 72pt; }
-          .google-docs-content .c32 { margin-left: 108pt; }
-
-          /* Placeholder highlighting - keep existing styles */
+          /* Placeholder highlighting */
           .placeholder-highlight {
             background-color: #fef3c7;
             border: 1px solid #f59e0b;
@@ -321,48 +317,6 @@ export function HTMLPreviewPanel({
           .confidence-3 { border-color: #ef4444; background-color: #fee2e2; }
           .confidence-2 { border-color: #6b7280; background-color: #f3f4f6; }
           .confidence-1 { border-color: #6b7280; background-color: #f9fafb; }
-
-          /* Page break handling */
-          .google-docs-content .page-break {
-            page-break-before: always;
-            margin-top: 0;
-            padding-top: 0;
-          }
-
-          /* Remove unwanted breaks and clean artifacts */
-          .google-docs-content br:first-child,
-          .google-docs-content p:first-child br:first-child {
-            display: none;
-          }
-
-          /* Clean document structure */
-          .google-docs-content > p:first-child {
-            margin-top: 0pt;
-          }
-
-          .google-docs-content > *:last-child {
-            margin-bottom: 0pt;
-          }
-
-          /* Handle Google Docs span elements */
-          .google-docs-content span {
-            font-family: inherit;
-            font-size: inherit;
-            color: inherit;
-            line-height: inherit;
-          }
-
-          /* Remove any default styling from divs */
-          .google-docs-content div {
-            margin: 0;
-            padding: 0;
-          }
-
-          /* Clean up any leftover HTML artifacts */
-          .google-docs-content *[style*="border-top"],
-          .google-docs-content *[style*="border: 1pt solid transparent"] {
-            border-top: none !important;
-          }
         `}</style>
       </Card>
 
