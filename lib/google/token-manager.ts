@@ -210,9 +210,12 @@ export async function getValidGoogleTokens(userId: string): Promise<GoogleAuthTo
         
         return refreshedTokens;
       } catch (error) {
-        console.error('Failed to refresh Google tokens:', error);
-        // Remove invalid tokens
-        await removeGoogleTokens(userId);
+        log.warn('Failed to refresh Google tokens - clearing invalid tokens:', {
+          userId: userId.substring(0, 8) + '...',
+          error: error instanceof Error ? error.message : 'Unknown refresh error'
+        });
+        // Remove invalid tokens and force re-authentication
+        await clearGoogleTokens(userId);
         return null;
       }
     }
@@ -274,6 +277,16 @@ export async function getGoogleConnectionStatus(userId: string): Promise<{
     const now = Date.now();
     const expiresAt = new Date(tokens.expiry_date);
     const needsReauth = !tokens.refresh_token || tokens.expiry_date <= now;
+    
+    // If tokens are expired and no refresh token, clear them automatically
+    if (needsReauth && !tokens.refresh_token) {
+      log.warn('Google tokens expired without refresh token - clearing:', {
+        userId: userId.substring(0, 8) + '...',
+        expiryDate: new Date(tokens.expiry_date).toISOString()
+      });
+      await clearGoogleTokens(userId);
+      return { connected: false, needsReauth: true };
+    }
 
     // Get user profile to get email
     const { data } = await getSupabaseClient()

@@ -27,6 +27,7 @@ export function getGoogleAuthUrl(customState?: string): string {
     scope: GOOGLE_SCOPES.join(' '),
     include_granted_scopes: true,
     prompt: 'consent', // Force consent to get refresh token
+    approval_prompt: 'force', // Legacy parameter for extra safety
     state: customState || generateState(), // Use custom state or generate one
   });
 
