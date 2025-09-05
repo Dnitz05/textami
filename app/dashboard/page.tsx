@@ -16,19 +16,19 @@ export default function Dashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showTemplateSourceModal, setShowTemplateSourceModal] = useState(false);
 
-  // Simple auth guard - redirect unauthenticated users to landing page
+  // Simple auth guard - DISABLED to fix flickering
   useEffect(() => {
     console.log('🔍 Dashboard auth debug:', { isAuthenticated, user: user ? 'exists' : 'null' });
     
+    // TEMPORARILY DISABLED - manual navigation only
     // Only redirect if we're sure user is not authenticated (not during loading)
     // This prevents infinite redirect loops with landing page
-    if (!isAuthenticated && user === null) {
-      console.log('🔄 Redirecting to landing page - not authenticated');
-      // Small delay to prevent rapid redirects causing flickering
-      setTimeout(() => {
-        router.push('/');
-      }, 100);
-    }
+    // if (!isAuthenticated && user === null) {
+    //   console.log('🔄 Redirecting to landing page - not authenticated');
+    //   setTimeout(() => {
+    //     router.push('/');
+    //   }, 100);
+    // }
   }, [isAuthenticated, user, router]);
 
   const handleNovaPlantillaClick = () => {

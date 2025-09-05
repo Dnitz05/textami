@@ -54,16 +54,16 @@ export default function LandingPage() {
     handleMagicLinkAuth();
   }, []);
   
-  // Redirect authenticated users to dashboard with delay to prevent flickering
+  // Redirect authenticated users to dashboard - DISABLED to fix flickering
   useEffect(() => {
     console.log('🔍 Landing auth debug:', { isAuthenticated, loading });
-    if (!loading && isAuthenticated) {
-      console.log('🔄 Redirecting to dashboard - authenticated');
-      // Small delay to prevent rapid state changes causing flickering
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 100);
-    }
+    // TEMPORARILY DISABLED - manual navigation only
+    // if (!loading && isAuthenticated) {
+    //   console.log('🔄 Redirecting to dashboard - authenticated');
+    //   setTimeout(() => {
+    //     router.push('/dashboard');
+    //   }, 100);
+    // }
   }, [isAuthenticated, loading, router]);
 
   return (
@@ -102,18 +102,29 @@ export default function LandingPage() {
 
             {/* Auth Buttons */}
             <div className="flex items-center space-x-3">
-              <button
-                onClick={() => setShowAuthForm(true)}
-                className="px-6 py-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
-              >
-                Log In
-              </button>
-              <button
-                onClick={() => setShowAuthForm(true)}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors shadow-md hover:shadow-lg"
-              >
-                Get Started Free
-              </button>
+              {isAuthenticated ? (
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors shadow-md hover:shadow-lg"
+                >
+                  Go to Dashboard
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setShowAuthForm(true)}
+                    className="px-6 py-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                  >
+                    Log In
+                  </button>
+                  <button
+                    onClick={() => setShowAuthForm(true)}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors shadow-md hover:shadow-lg"
+                  >
+                    Get Started Free
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
