@@ -112,8 +112,7 @@ export async function POST(request: NextRequest) {
       const tokens = await getValidGoogleTokens(user.id);
       
       status = { 
-        connected: !!tokens,
-        needsReauth: !tokens
+        connected: !!tokens
       };
 
       log.debug('Google connection status checked with auto-refresh:', {
