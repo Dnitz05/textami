@@ -115,18 +115,43 @@ class GoogleDocsService {
    */
   async getDocumentStructure(documentId: string): Promise<DocumentStructure> {
     try {
+      console.log('🔍 Getting document structure for:', { documentId });
+      
       const response = await this.docsClient.documents.get({
         documentId,
         includeTabsContent: true,
       });
 
-      if (!response.data || !response.data.body) {
-        throw new Error('No document body received');
+      console.log('📊 Document structure API response:', {
+        hasResponse: !!response,
+        hasData: !!response.data,
+        status: response.status,
+        statusText: response.statusText,
+        dataKeys: response.data ? Object.keys(response.data) : [],
+        title: response.data?.title,
+        hasBody: !!response.data?.body,
+        bodyKeys: response.data?.body ? Object.keys(response.data.body) : [],
+        hasBodyContent: !!response.data?.body?.content,
+        bodyContentLength: response.data?.body?.content?.length || 0
+      });
+
+      if (!response.data) {
+        console.error('❌ No response data from Google Docs API');
+        throw new Error('No document data received from Google Docs API');
+      }
+
+      if (!response.data.body) {
+        console.error('❌ Document response has no body property:', {
+          availableKeys: Object.keys(response.data),
+          fullResponse: JSON.stringify(response.data, null, 2).substring(0, 500) + '...'
+        });
+        throw new Error('No document body received - document may be empty or access restricted');
       }
 
       const structure = this.parseDocumentStructure(response.data);
       return structure;
     } catch (error) {
+      console.error('❌ Document structure fetch failed:', error);
       throw handleGoogleApiError(error);
     }
   }
@@ -145,21 +170,47 @@ class GoogleDocsService {
         hasContext: !!this.docsClient.context
       });
       
-      // Log authentication status (simplified to avoid TypeScript issues)
+      // Validate OAuth2 client credentials before making the request
       try {
-        console.log('🔑 Authentication Check:', {
-          docsClientReady: !!this.docsClient,
-          contextExists: !!this.docsClient.context,
-          requestAboutToStart: true
+        const credentials = this.oauth2Client.credentials;
+        console.log('🔑 OAuth2 Credentials Check:', {
+          hasAccessToken: !!credentials.access_token,
+          hasRefreshToken: !!credentials.refresh_token,
+          tokenExpiry: credentials.expiry_date,
+          isExpired: credentials.expiry_date ? credentials.expiry_date < Date.now() : 'Unknown',
+          scope: credentials.scope
         });
+        
+        // Check if token is expired and attempt refresh if needed
+        if (credentials.expiry_date && credentials.expiry_date < Date.now()) {
+          console.warn('⚠️ Access token appears expired, Google SDK should auto-refresh');
+        }
       } catch (authError) {
-        console.error('❌ Authentication check failed:', authError);
+        console.error('❌ Authentication validation failed:', authError);
+        throw new Error(`Authentication validation failed: ${authError instanceof Error ? authError.message : 'Unknown auth error'}`);
       }
       
-      const response = await this.docsClient.documents.get({
-        documentId,
-        includeTabsContent: true,
-      });
+      // Primary request with full content
+      let response;
+      try {
+        response = await this.docsClient.documents.get({
+          documentId,
+          includeTabsContent: true,
+        });
+      } catch (primaryError) {
+        console.warn('⚠️ Primary document fetch failed, trying fallback without tabs:', primaryError);
+        
+        // Fallback: try without includeTabsContent
+        try {
+          response = await this.docsClient.documents.get({
+            documentId,
+          });
+          console.log('✅ Fallback request succeeded without includeTabsContent');
+        } catch (fallbackError) {
+          console.error('❌ Both primary and fallback requests failed');
+          throw primaryError; // Throw the original error for better debugging
+        }
+      }
 
       console.log('📊 Google Docs API Response:', {
         hasResponse: !!response,
@@ -169,11 +220,33 @@ class GoogleDocsService {
         dataKeys: response.data ? Object.keys(response.data) : [],
         title: response.data?.title,
         documentId: response.data?.documentId,
-        revisionId: response.data?.revisionId
+        revisionId: response.data?.revisionId,
+        hasBody: !!response.data?.body,
+        bodyKeys: response.data?.body ? Object.keys(response.data.body) : [],
+        hasBodyContent: !!response.data?.body?.content,
+        bodyContentLength: response.data?.body?.content?.length || 0,
+        fullDataStructure: response.data ? JSON.stringify(response.data, null, 2).substring(0, 1000) + '...' : 'No data'
       });
 
       if (!response.data) {
+        console.error('❌ CRITICAL: No response.data from Google Docs API');
         throw new Error('No document data received from Google Docs API');
+      }
+
+      if (!response.data.body) {
+        console.error('❌ CRITICAL: response.data exists but has no body property:', {
+          availableDataKeys: Object.keys(response.data),
+          dataTitle: response.data.title,
+          dataDocId: response.data.documentId,
+          fullDataStructure: JSON.stringify(response.data, null, 2)
+        });
+        
+        // Provide specific guidance based on what we have
+        if (response.data.title && response.data.documentId) {
+          throw new Error(`Document "${response.data.title}" (ID: ${response.data.documentId}) has no body content. This usually indicates: 1) The document is completely empty, 2) Permission issues preventing content access, or 3) The document contains only unsupported content types. Please check the document exists and has readable content.`);
+        } else {
+          throw new Error('No document body received - this indicates either an empty document, access restrictions, or API response format issue');
+        }
       }
 
       // Convert to HTML
@@ -561,5 +634,122 @@ export async function validateDocumentAccess(
     return true;
   } catch (error) {
     return false;
+  }
+}
+
+/**
+ * Comprehensive diagnostic function for Google Docs API issues
+ */
+export async function diagnoseGoogleDocsIssue(
+  documentId: string,
+  tokens: GoogleAuthTokens
+): Promise<{
+  success: boolean;
+  diagnostics: {
+    tokenValid: boolean;
+    documentExists: boolean;
+    hasPermissions: boolean;
+    documentStructure?: any;
+    error?: string;
+    recommendations: string[];
+  };
+}> {
+  const diagnostics = {
+    tokenValid: false,
+    documentExists: false,
+    hasPermissions: false,
+    documentStructure: undefined as any,
+    error: undefined as string | undefined,
+    recommendations: [] as string[]
+  };
+
+  try {
+    console.log('🔍 Starting comprehensive Google Docs diagnostics...');
+    
+    // Step 1: Validate tokens
+    try {
+      const oauth2Client = createGoogleOAuth2Client();
+      oauth2Client.setCredentials({
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        expiry_date: tokens.expiry_date,
+      });
+      
+      await oauth2Client.getTokenInfo(tokens.access_token);
+      diagnostics.tokenValid = true;
+      console.log('✅ OAuth tokens are valid');
+    } catch (tokenError) {
+      console.log('❌ Token validation failed:', tokenError);
+      diagnostics.recommendations.push('Re-authorize your Google account - tokens appear invalid or expired');
+    }
+
+    // Step 2: Test document access
+    if (diagnostics.tokenValid) {
+      try {
+        const service = await createGoogleDocsService(tokens);
+        const structure = await service.getDocumentStructure(documentId);
+        
+        diagnostics.documentExists = true;
+        diagnostics.hasPermissions = true;
+        diagnostics.documentStructure = {
+          headings: structure.headings.length,
+          paragraphs: structure.paragraphs.length,
+          tables: structure.tables.length,
+          images: structure.images.length
+        };
+        
+        console.log('✅ Document access successful');
+        
+        if (structure.paragraphs.length === 0 && structure.headings.length === 0) {
+          diagnostics.recommendations.push('Document appears to be empty - add some content to the Google Doc');
+        }
+        
+      } catch (accessError) {
+        console.log('❌ Document access failed:', accessError);
+        diagnostics.error = accessError instanceof Error ? accessError.message : String(accessError);
+        
+        if (accessError instanceof Error) {
+          if (accessError.message.includes('403') || accessError.message.includes('Permission')) {
+            diagnostics.recommendations.push('Check document sharing settings - you may not have read access');
+            diagnostics.recommendations.push('Ensure the document is shared with your Google account');
+          } else if (accessError.message.includes('404') || accessError.message.includes('Not Found')) {
+            diagnostics.documentExists = false;
+            diagnostics.recommendations.push('Document ID may be incorrect or document has been deleted');
+          } else if (accessError.message.includes('401') || accessError.message.includes('Authentication')) {
+            diagnostics.recommendations.push('Re-authorize your Google account - authentication has expired');
+          } else if (accessError.message.includes('body')) {
+            diagnostics.documentExists = true;
+            diagnostics.hasPermissions = true;
+            diagnostics.recommendations.push('Document exists but appears to have no readable content');
+            diagnostics.recommendations.push('Try adding some text content to the Google Doc');
+          }
+        }
+      }
+    }
+
+    // Step 3: Provide general recommendations
+    if (!diagnostics.tokenValid) {
+      diagnostics.recommendations.push('Start by re-authorizing your Google account');
+    } else if (!diagnostics.documentExists) {
+      diagnostics.recommendations.push('Verify the document ID is correct');
+      diagnostics.recommendations.push('Check if the document exists in Google Drive');
+    } else if (!diagnostics.hasPermissions) {
+      diagnostics.recommendations.push('Request edit or view access to the document');
+      diagnostics.recommendations.push('Check if the document is in a restricted folder');
+    }
+
+    return {
+      success: diagnostics.tokenValid && diagnostics.documentExists && diagnostics.hasPermissions,
+      diagnostics
+    };
+    
+  } catch (error) {
+    diagnostics.error = error instanceof Error ? error.message : String(error);
+    diagnostics.recommendations.push('Unexpected error occurred - check console logs for details');
+    
+    return {
+      success: false,
+      diagnostics
+    };
   }
 }

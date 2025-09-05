@@ -183,6 +183,12 @@ export function handleGoogleApiError(error: any): Error {
     errorData: error?.response?.data,
     errorMessage: error?.message,
     errorCode: error?.code,
+    errorName: error?.name,
+    errorConfig: error?.config ? {
+      method: error.config.method,
+      url: error.config.url,
+      headers: error.config.headers ? Object.keys(error.config.headers) : [],
+    } : undefined,
     fullError: JSON.stringify(error, null, 2).substring(0, 1000)
   });
 
@@ -191,15 +197,23 @@ export function handleGoogleApiError(error: any): Error {
     
     // Specific handling for common Google API errors
     if (googleError.code === 403) {
-      return new Error(`Google API Permission Error: ${googleError.message}. This usually means insufficient permissions, expired token, or document access restrictions. Please re-authorize your Google account.`);
+      return new Error(`Google API Permission Error: ${googleError.message}. This usually means: 1) Insufficient OAuth scopes, 2) Expired token, 3) Document access restrictions, or 4) API quotas exceeded. Please re-authorize your Google account with proper permissions.`);
     }
     
     if (googleError.code === 404) {
-      return new Error(`Google API Not Found Error: ${googleError.message}. The document may have been deleted, moved, or you don't have access to it.`);
+      return new Error(`Google API Not Found Error: ${googleError.message}. The document may have been: 1) Deleted or moved, 2) Made private/restricted, or 3) The document ID is incorrect. Please verify the document exists and is accessible.`);
     }
     
     if (googleError.code === 401) {
-      return new Error(`Google API Authentication Error: ${googleError.message}. Your Google authentication has expired. Please re-authorize your account.`);
+      return new Error(`Google API Authentication Error: ${googleError.message}. Your Google authentication has expired or is invalid. Please re-authorize your account.`);
+    }
+    
+    if (googleError.code === 429) {
+      return new Error(`Google API Rate Limit Error: ${googleError.message}. Too many requests. Please wait a moment and try again.`);
+    }
+    
+    if (googleError.code === 400) {
+      return new Error(`Google API Bad Request Error: ${googleError.message}. This usually indicates an invalid document ID or malformed request parameters.`);
     }
     
     return new Error(`Google API Error: ${googleError.message} (Code: ${googleError.code})`);
