@@ -1,6 +1,6 @@
 import { docs_v1, google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
-import { createAuthenticatedClient, handleGoogleApiError } from './auth';
+import { createAuthenticatedClient, handleGoogleApiError, createGoogleOAuth2Client } from './auth';
 import { GoogleAuthTokens, GoogleDocMetadata } from './types';
 import { cleanGoogleDocsHTML, CleaningOptions } from './html-cleaner';
 
