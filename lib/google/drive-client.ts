@@ -213,6 +213,149 @@ export class GoogleDriveClient {
     });
   }
 
+  // Export Google Doc to HTML using Drive API (superior to Docs API conversion)
+  async exportFileToHTML(fileId: string): Promise<{
+    html: string;
+    images?: { [filename: string]: Buffer };
+    isZipped: boolean;
+  }> {
+    try {
+      console.log('🚀 Starting Google Drive export to HTML:', { fileId });
+
+      // Check file size first (10MB limit for export)
+      const metadata = await this.getFileMetadata(fileId);
+      const fileSizeInMB = metadata.size ? parseInt(metadata.size) / (1024 * 1024) : 0;
+      
+      if (fileSizeInMB > 10) {
+        console.warn('⚠️ File size exceeds 10MB limit for Drive export:', { 
+          fileSizeInMB: fileSizeInMB.toFixed(2),
+          limit: 10 
+        });
+        throw new Error(`File too large for export (${fileSizeInMB.toFixed(2)}MB). Maximum size is 10MB. Please use the fallback API.`);
+      }
+
+      // Export document as HTML
+      const response = await this.drive.files.export({
+        fileId,
+        mimeType: 'text/html',
+      }, {
+        responseType: 'stream' // Important for handling binary data
+      });
+
+      console.log('📥 Drive export response received:', { 
+        status: response.status,
+        contentType: response.headers['content-type'],
+        contentLength: response.headers['content-length']
+      });
+
+      // Collect response data
+      const chunks: Buffer[] = [];
+      const stream = response.data as NodeJS.ReadableStream;
+      
+      await new Promise<void>((resolve, reject) => {
+        stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+        stream.on('end', resolve);
+        stream.on('error', reject);
+      });
+
+      const buffer = Buffer.concat(chunks);
+      
+      // Check if response is a ZIP file (contains images)
+      const isZipped = this.isZipBuffer(buffer);
+      
+      if (isZipped) {
+        console.log('📦 Response is ZIP file - extracting HTML and images');
+        return await this.extractZipContent(buffer);
+      } else {
+        console.log('📄 Response is plain HTML - no images');
+        const html = buffer.toString('utf-8');
+        return {
+          html,
+          isZipped: false
+        };
+      }
+
+    } catch (error) {
+      console.error('❌ Drive export failed:', error);
+      
+      if (error instanceof Error) {
+        if (error.message.includes('File too large')) {
+          throw error; // Re-throw size limit errors
+        }
+        if (error.message.includes('403') || error.message.includes('Permission')) {
+          throw new Error('Permission denied. Check document sharing settings and ensure you have read access.');
+        }
+        if (error.message.includes('404') || error.message.includes('Not Found')) {
+          throw new Error('Document not found. Check that the file ID is correct and the document exists.');
+        }
+      }
+      
+      throw handleGoogleApiError(error);
+    }
+  }
+
+  // Check if buffer is ZIP format
+  private isZipBuffer(buffer: Buffer): boolean {
+    // ZIP files start with PK (0x504B)
+    return buffer.length >= 4 && buffer[0] === 0x50 && buffer[1] === 0x4B;
+  }
+
+  // Extract HTML and images from ZIP buffer
+  private async extractZipContent(buffer: Buffer): Promise<{
+    html: string;
+    images: { [filename: string]: Buffer };
+    isZipped: boolean;
+  }> {
+    try {
+      // Use adm-zip to extract ZIP content
+      const AdmZip = require('adm-zip');
+      const zip = new AdmZip(buffer);
+      const entries = zip.getEntries();
+      
+      let html = '';
+      const images: { [filename: string]: Buffer } = {};
+      
+      console.log('📁 ZIP contains files:', entries.map((e: any) => e.entryName));
+      
+      for (const entry of entries) {
+        const filename = entry.entryName;
+        const content = entry.getData();
+        
+        if (filename === 'index.html' || filename.endsWith('.html')) {
+          // Main HTML file
+          html = content.toString('utf-8');
+          console.log('📄 Extracted HTML file:', { filename, size: html.length });
+        } else if (filename.startsWith('images/') && this.isImageFile(filename)) {
+          // Image file
+          const imageFilename = filename.replace('images/', '');
+          images[imageFilename] = content;
+          console.log('🖼️ Extracted image:', { filename: imageFilename, size: content.length });
+        }
+      }
+      
+      if (!html) {
+        throw new Error('No HTML file found in ZIP archive');
+      }
+      
+      return {
+        html,
+        images,
+        isZipped: true
+      };
+      
+    } catch (error) {
+      console.error('❌ ZIP extraction failed:', error);
+      throw new Error(`Failed to extract ZIP content: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  // Check if file is an image based on extension
+  private isImageFile(filename: string): boolean {
+    const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg', '.webp'];
+    const ext = filename.toLowerCase().substring(filename.lastIndexOf('.'));
+    return imageExtensions.includes(ext);
+  }
+
   // Check if file exists and is accessible
   async isFileAccessible(fileId: string): Promise<boolean> {
     try {

@@ -3,6 +3,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { createAuthenticatedClient, handleGoogleApiError, createGoogleOAuth2Client } from './auth';
 import { GoogleAuthTokens, GoogleDocMetadata } from './types';
 import { cleanGoogleDocsHTML, CleaningOptions } from './html-cleaner';
+import { GoogleDriveClient } from './drive-client';
 
 // Document structure interfaces
 export interface HeadingElement {
@@ -79,33 +80,84 @@ export interface GoogleDocsExportResult {
 
 class GoogleDocsService {
   private docsClient: docs_v1.Docs;
+  private driveClient: GoogleDriveClient;
   private oauth2Client: OAuth2Client;
 
   constructor(oauth2Client: OAuth2Client) {
     this.oauth2Client = oauth2Client;
     this.docsClient = google.docs({ version: 'v1', auth: oauth2Client });
+    this.driveClient = new GoogleDriveClient(oauth2Client);
   }
 
   /**
-   * Export Google Doc to HTML format
+   * Export Google Doc to HTML format using Drive API (preferred) with Docs API fallback
    */
-  async exportToHTML(documentId: string): Promise<string> {
+  async exportToHTML(documentId: string, cleaningOptions?: CleaningOptions): Promise<string> {
+    console.log('🚀 Starting HTML export with Drive API first approach:', { documentId });
+    
     try {
-      // Get document content using Google Docs API
-      const response = await this.docsClient.documents.get({
-        documentId,
-        includeTabsContent: true,
-      });
+      // Method 1: Try Drive API export (superior format preservation)
+      try {
+        console.log('📥 Attempting Drive API export...');
+        const driveExport = await this.driveClient.exportFileToHTML(documentId);
+        
+        console.log('✅ Drive API export successful:', {
+          htmlLength: driveExport.html.length,
+          hasImages: !!driveExport.images,
+          imageCount: driveExport.images ? Object.keys(driveExport.images).length : 0,
+          isZipped: driveExport.isZipped
+        });
 
-      if (!response.data) {
-        throw new Error('No document data received');
+        // Clean the HTML from Drive export
+        const cleaningResult = cleanGoogleDocsHTML(driveExport.html, cleaningOptions);
+        
+        // TODO: Handle images - for now we'll include them as data URIs or store references
+        // This could be enhanced to save images to storage and update HTML references
+        
+        console.log('✅ HTML cleaned successfully:', {
+          originalLength: driveExport.html.length,
+          cleanedLength: cleaningResult.cleanedHtml.length,
+          removedElements: cleaningResult.removedElements?.length || 0
+        });
+        
+        return cleaningResult.cleanedHtml;
+        
+      } catch (driveError) {
+        console.warn('⚠️ Drive API export failed, falling back to Docs API:', driveError);
+        
+        // If it's a file size error, re-throw immediately
+        if (driveError instanceof Error && driveError.message.includes('File too large')) {
+          throw driveError;
+        }
+        
+        // Method 2: Fallback to Docs API conversion (original method)
+        console.log('🔄 Using fallback Docs API conversion...');
+        
+        const response = await this.docsClient.documents.get({
+          documentId,
+          includeTabsContent: true,
+        });
+
+        if (!response.data) {
+          throw new Error('No document data received from fallback Docs API');
+        }
+
+        // Convert Google Docs content to HTML using manual conversion
+        const html = await this.convertDocumentToHTML(response.data);
+        
+        // Clean the manually converted HTML
+        const cleaningResult = cleanGoogleDocsHTML(html, cleaningOptions);
+        
+        console.log('✅ Fallback conversion completed:', {
+          htmlLength: html.length,
+          cleanedLength: cleaningResult.cleanedHtml.length
+        });
+        
+        return cleaningResult.cleanedHtml;
       }
-
-      // Convert Google Docs content to HTML
-      const html = await this.convertDocumentToHTML(response.data);
       
-      return html;
     } catch (error) {
+      console.error('❌ Both Drive and Docs API methods failed:', error);
       throw handleGoogleApiError(error);
     }
   }
@@ -177,18 +229,40 @@ class GoogleDocsService {
   }
 
   /**
-   * Parse document content and extract structured elements
+   * Parse document content and extract structured elements using Drive API first
    */
   async parseDocumentContent(
     documentId: string,
     cleaningOptions?: CleaningOptions
   ): Promise<GoogleDocsExportResult> {
     try {
-      console.log('🔍 Making Google Docs API request:', { 
+      console.log('🔍 Starting document parsing with Drive API first approach:', { 
         documentId,
         hasDocsClient: !!this.docsClient,
-        hasContext: !!this.docsClient.context
+        hasDriveClient: !!this.driveClient
       });
+      
+      // Try to get HTML using the new exportToHTML method (Drive API first)
+      let html: string;
+      let cleanedHtml: string;
+      
+      try {
+        console.log('📥 Getting HTML using Drive API export...');
+        html = await this.exportToHTML(documentId, cleaningOptions);
+        cleanedHtml = html; // Already cleaned by exportToHTML
+        
+        console.log('✅ HTML export successful:', {
+          htmlLength: html.length
+        });
+        
+      } catch (exportError) {
+        console.warn('⚠️ HTML export failed, falling back to manual parsing:', exportError);
+        throw exportError; // Re-throw to use the original parsing logic below
+      }
+
+      // For structure analysis, we still need to use Docs API 
+      // (Drive API only gives us HTML, not structured document data)
+      console.log('📊 Getting document structure using Docs API...');
       
       // Validate OAuth2 client credentials before making the request
       try {
@@ -210,7 +284,7 @@ class GoogleDocsService {
         throw new Error(`Authentication validation failed: ${authError instanceof Error ? authError.message : 'Unknown auth error'}`);
       }
       
-      // Primary request with full content
+      // Get document structure using Docs API (still needed for structured data)
       let response;
       try {
         response = await this.docsClient.documents.get({
@@ -218,16 +292,16 @@ class GoogleDocsService {
           includeTabsContent: true,
         });
       } catch (primaryError) {
-        console.warn('⚠️ Primary document fetch failed, trying fallback without tabs:', primaryError);
+        console.warn('⚠️ Primary document structure fetch failed, trying fallback without tabs:', primaryError);
         
         // Fallback: try without includeTabsContent
         try {
           response = await this.docsClient.documents.get({
             documentId,
           });
-          console.log('✅ Fallback request succeeded without includeTabsContent');
+          console.log('✅ Fallback structure request succeeded without includeTabsContent');
         } catch (fallbackError) {
-          console.error('❌ Both primary and fallback requests failed');
+          console.error('❌ Both primary and fallback structure requests failed');
           throw primaryError; // Throw the original error for better debugging
         }
       }
@@ -289,13 +363,7 @@ class GoogleDocsService {
         body: documentBody
       };
 
-      // Convert to HTML
-      const html = await this.convertDocumentToHTML(documentForProcessing);
-      
-      // Clean HTML using the advanced cleaning pipeline
-      const cleaningResult = cleanGoogleDocsHTML(html, cleaningOptions);
-      
-      // Parse structure
+      // Parse structure from Docs API (we already have HTML from Drive API)
       const structure = this.parseDocumentStructure(documentForProcessing);
       
       // Get metadata
@@ -311,7 +379,7 @@ class GoogleDocsService {
 
       return {
         html,
-        cleanedHtml: cleaningResult.cleanedHtml,
+        cleanedHtml,
         structure,
         metadata,
       };

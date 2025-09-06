@@ -77,11 +77,14 @@ export function GoogleDocsRenderer({
         /* GOOGLE DOCS RENDERER - ESTILS GLOBALS */
         
         .google-docs-renderer {
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          line-height: 1.6;
-          color: #374151;
+          font-family: 'Arial', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          font-size: 12pt; /* Professional document base size */
+          line-height: 1.5; /* Professional document spacing */
+          color: #333333; /* Professional dark color */
           background: white;
           word-wrap: break-word;
+          max-width: 21cm; /* A4 paper width simulation */
+          margin: 0 auto;
         }
         
         /* NETEJA INICIAL */
@@ -99,71 +102,68 @@ export function GoogleDocsRenderer({
           display: none !important;
         }
 
-        /* HEADERS - JERARQUIA CLARA I VISIBLE */
+        /* HEADERS - PROFESSIONAL DOCUMENT HIERARCHY */
         .google-docs-renderer__content h1 {
-          font-size: 32px !important;
-          font-weight: 700 !important;
-          color: #111827 !important;
-          margin: 48px 0 24px 0 !important;
-          line-height: 1.1 !important;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-          border-bottom: 3px solid #3b82f6 !important;
-          padding-bottom: 12px !important;
+          font-size: 24pt !important; /* Professional title size */
+          font-weight: bold !important;
+          color: #000000 !important;
+          margin: 2cm 0 1.5cm 0 !important; /* Professional document spacing */
+          line-height: 1.2 !important;
+          text-align: center !important; /* Professional report format */
+          border-bottom: 2px solid #cccccc !important;
+          padding-bottom: 0.5cm !important;
         }
 
         .google-docs-renderer__content h2 {
-          font-size: 26px !important;
-          font-weight: 600 !important;
-          color: #1f2937 !important;
-          margin: 40px 0 20px 0 !important;
+          font-size: 18pt !important; /* Professional section size */
+          font-weight: bold !important;
+          color: #444444 !important;
+          margin: 1.5cm 0 0.75cm 0 !important; /* Professional document spacing */
           line-height: 1.2 !important;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+          border-bottom: 1px solid #dddddd !important;
+          padding-bottom: 0.25cm !important;
         }
 
         .google-docs-renderer__content h3 {
-          font-size: 22px !important;
-          font-weight: 600 !important;
-          color: #374151 !important;
-          margin: 32px 0 16px 0 !important;
+          font-size: 14pt !important; /* Professional subsection size */
+          font-weight: bold !important;
+          color: #555555 !important;
+          margin: 1cm 0 0.5cm 0 !important; /* Professional document spacing */
           line-height: 1.3 !important;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
         }
 
         .google-docs-renderer__content h4 {
-          font-size: 20px !important;
-          font-weight: 600 !important;
-          color: #374151 !important;
-          margin: 28px 0 14px 0 !important;
+          font-size: 13pt !important;
+          font-weight: bold !important;
+          color: #555555 !important;
+          margin: 0.8cm 0 0.4cm 0 !important;
           line-height: 1.3 !important;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
         }
 
         .google-docs-renderer__content h5 {
-          font-size: 18px !important;
-          font-weight: 600 !important;
-          color: #6b7280 !important;
-          margin: 24px 0 12px 0 !important;
+          font-size: 12pt !important;
+          font-weight: bold !important;
+          color: #666666 !important;
+          margin: 0.6cm 0 0.3cm 0 !important;
           line-height: 1.4 !important;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
         }
 
         .google-docs-renderer__content h6 {
-          font-size: 16px !important;
-          font-weight: 600 !important;
-          color: #6b7280 !important;
-          margin: 20px 0 10px 0 !important;
+          font-size: 11pt !important;
+          font-weight: bold !important;
+          color: #666666 !important;
+          margin: 0.5cm 0 0.25cm 0 !important;
           line-height: 1.4 !important;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
           font-style: italic !important;
         }
 
-        /* PARÀGRAFS */
+        /* PARÀGRAFS - PROFESSIONAL DOCUMENT FORMAT */
         .google-docs-renderer__content p {
-          margin: 0 0 20px 0 !important;
-          line-height: 1.7 !important;
-          font-size: 16px !important;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-          color: #374151 !important;
+          margin: 0 0 0.75cm 0 !important; /* Professional paragraph spacing */
+          line-height: 1.5 !important; /* Professional line height */
+          font-size: 12pt !important; /* Professional body text size */
+          color: #333333 !important; /* Professional text color */
+          text-align: justify !important; /* Professional document justification */
         }
 
         /* NEGRETES, CURSIVES, SUBRATLLATS */
@@ -181,85 +181,152 @@ export function GoogleDocsRenderer({
           text-decoration: underline !important;
         }
 
-        /* TAULES */
+        /* TAULES - PROFESSIONAL DOCUMENT FORMAT */
         .google-docs-renderer__content table {
           border-collapse: collapse !important;
           width: 100% !important;
-          margin: 32px 0 !important;
-          border: 2px solid #d1d5db !important;
+          margin: 1cm 0 !important; /* Professional table spacing */
+          border: 1px solid #cccccc !important; /* Professional border color */
           background: white !important;
-          border-radius: 8px !important;
-          overflow: hidden !important;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+          font-size: 11pt !important; /* Slightly smaller for tables */
         }
 
         .google-docs-renderer__content td,
         .google-docs-renderer__content th {
-          border: 1px solid #e5e7eb !important;
-          padding: 16px 20px !important;
+          border: 1px solid #cccccc !important; /* Professional border color */
+          padding: 0.5cm 0.75cm !important; /* Professional cell padding */
           text-align: left !important;
           vertical-align: top !important;
           line-height: 1.5 !important;
-          font-size: 15px !important;
         }
 
         .google-docs-renderer__content th {
-          background-color: #f8fafc !important;
-          font-weight: 600 !important;
-          color: #374151 !important;
-          border-bottom: 2px solid #d1d5db !important;
+          background-color: #f2f2f2 !important; /* Professional header background */
+          font-weight: bold !important;
+          color: #333333 !important;
         }
 
-        /* LLISTES */
+        .google-docs-renderer__content caption {
+          caption-side: bottom !important;
+          font-style: italic !important;
+          margin-top: 0.5cm !important;
+          text-align: center !important;
+          font-size: 10pt !important;
+        }
+
+        /* LLISTES - PROFESSIONAL DOCUMENT FORMAT */
         .google-docs-renderer__content ul,
         .google-docs-renderer__content ol {
-          margin: 24px 0 !important;
-          padding-left: 32px !important;
+          margin: 0.5cm 0 0.75cm 0 !important; /* Professional list spacing */
+          padding-left: 1.5cm !important; /* Professional indentation */
+          list-style-position: outside !important;
         }
 
         .google-docs-renderer__content li {
-          margin: 8px 0 !important;
-          line-height: 1.6 !important;
-          font-size: 16px !important;
+          margin: 0.25cm 0 !important; /* Professional list item spacing */
+          line-height: 1.5 !important;
+          font-size: 12pt !important; /* Match body text size */
         }
 
-        /* IMATGES */
+        /* IMATGES I FIGURES - PROFESSIONAL DOCUMENT FORMAT */
+        .google-docs-renderer__content figure {
+          margin: 1cm 0 !important; /* Professional figure spacing */
+          text-align: center !important; /* Center figures in professional documents */
+        }
+
         .google-docs-renderer__content img {
           max-width: 100% !important;
           height: auto !important;
-          margin: 32px 0 !important;
-          border-radius: 8px !important;
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+          border: 1px solid #dddddd !important; /* Professional image border */
+          padding: 0.25cm !important; /* Professional image padding */
+        }
+
+        .google-docs-renderer__content figcaption {
+          font-style: italic !important;
+          font-size: 10pt !important; /* Smaller caption size */
+          margin-top: 0.25cm !important;
+          text-align: center !important;
+          color: #666666 !important;
+        }
+
+        /* ELEMENTS PROFESSIONALS ESPECÍFICS */
+        .google-docs-renderer__content .signature {
+          margin-top: 2cm !important; /* Professional signature spacing */
+          text-align: right !important; /* Right-aligned signature */
+          font-size: 11pt !important; /* Smaller signature text */
+          border-top: 1px solid #dddddd !important; /* Professional separator line */
+          padding-top: 0.5cm !important;
+        }
+
+        .google-docs-renderer__content .signature p {
+          margin-bottom: 0.25cm !important; /* Reduced signature line spacing */
+        }
+
+        .google-docs-renderer__content header {
+          text-align: center !important;
+          font-size: 10pt !important; /* Small header text */
+          color: #666666 !important; /* Lighter header color */
+          margin-bottom: 1cm !important;
+          border-bottom: 1px solid #eeeeee !important;
+          padding-bottom: 0.5cm !important;
+        }
+
+        .google-docs-renderer__content footer {
+          text-align: center !important;
+          font-size: 10pt !important; /* Small footer text */
+          color: #666666 !important; /* Lighter footer color */
+          margin-top: 1cm !important;
+          border-top: 1px solid #eeeeee !important;
+          padding-top: 0.5cm !important;
+        }
+
+        /* CODE BLOCKS PER DOCUMENTS TÈCNICS */
+        .google-docs-renderer__content code,
+        .google-docs-renderer__content pre {
+          font-family: 'Courier New', monospace !important;
+          background-color: #f9f9f9 !important;
+          padding: 0.25cm !important;
+          border: 1px solid #eeeeee !important;
+          border-radius: 4px !important;
+          font-size: 11pt !important;
         }
 
         /* CONTEXTS */
         .google-docs-renderer--preview {
-          padding: 40px !important;
-          max-width: 800px !important;
+          padding: 2cm 2.5cm !important; /* Professional document margins */
+          max-width: 21cm !important; /* A4 paper width */
           margin: 0 auto !important;
           background: white !important;
+          box-shadow: 0 0 10px rgba(0,0,0,0.1) !important; /* Professional document shadow */
         }
         
         .google-docs-renderer--analysis {
-          padding: 24px !important;
+          padding: 1cm 1.5cm !important; /* Professional but compact spacing */
+          max-width: 18cm !important; /* Slightly narrower for analysis */
         }
         
-        /* ANALYSIS CONTEXT - Font més petita */
+        /* ANALYSIS CONTEXT - Professional but compact */
         .google-docs-renderer--analysis .google-docs-renderer__content h1 { 
-          font-size: 24px !important; 
-          margin: 32px 0 16px 0 !important;
+          font-size: 18pt !important; /* Smaller but still professional */
+          margin: 1cm 0 0.75cm 0 !important;
+          border-bottom: 1px solid #cccccc !important; /* Thinner border */
         }
         .google-docs-renderer--analysis .google-docs-renderer__content h2 { 
-          font-size: 20px !important; 
-          margin: 28px 0 12px 0 !important;
+          font-size: 14pt !important; /* Smaller but still professional */
+          margin: 0.75cm 0 0.5cm 0 !important;
+          border-bottom: 1px solid #eeeeee !important; /* Lighter border */
         }
         .google-docs-renderer--analysis .google-docs-renderer__content h3 { 
-          font-size: 18px !important; 
-          margin: 24px 0 10px 0 !important;
+          font-size: 12pt !important; /* Smaller but still professional */
+          margin: 0.5cm 0 0.25cm 0 !important;
         }
         .google-docs-renderer--analysis .google-docs-renderer__content p { 
-          font-size: 14px !important; 
-          margin: 0 0 16px 0 !important;
+          font-size: 11pt !important; /* Smaller but still professional */
+          margin: 0 0 0.5cm 0 !important;
+        }
+        .google-docs-renderer--analysis .google-docs-renderer__content table {
+          margin: 0.5cm 0 !important; /* Tighter table spacing in analysis */
+          font-size: 10pt !important; /* Even smaller for analysis tables */
         }
 
         /* PLACEHOLDERS */

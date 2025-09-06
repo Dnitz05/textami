@@ -7,6 +7,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   
+  
   // Imatges optimitzades
   images: {
     domains: ['ypunjalpaecspihjeces.supabase.co'],
