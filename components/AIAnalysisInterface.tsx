@@ -363,7 +363,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
               {/* Left Sidebar - positioned to align right edge with left edge of template */}
               {showLeftSidebar && (
                 <div className="fixed w-80 bg-gray-50/80 backdrop-blur-sm shadow-2xl border border-white/30 flex flex-col z-10 ml-4 mr-4 mb-4" 
-                     style={{right: 'calc(50% + 105mm)', top: '11rem', bottom: '1rem'}}>
+                     style={{right: 'calc(50% + 105mm)', top: '6rem', bottom: '1rem'}}>
                   {/* Sidebar Header */}
                   <div className="px-6 py-5 border-b border-gray-200/50 bg-gray-50/40 backdrop-blur-sm flex-none">
                     <h3 className="text-sm font-semibold text-gray-800 flex items-center">
@@ -393,7 +393,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
               {/* Right Sidebar - positioned to align left edge with right edge of template */}
               {showRightSidebar && (
                 <div className="fixed w-80 bg-gray-50/80 backdrop-blur-sm shadow-2xl border border-white/30 flex flex-col z-10 ml-4 mr-4 mb-4" 
-                     style={{left: 'calc(50% + 105mm)', top: '11rem', bottom: '1rem'}}>
+                     style={{left: 'calc(50% + 105mm)', top: '6rem', bottom: '1rem'}}>
                   {/* Sidebar Header */}
                   <div className="px-6 py-5 border-b border-gray-200/50 bg-gray-50/40 backdrop-blur-sm flex-none">
                     <h3 className="text-sm font-semibold text-gray-800 flex items-center">
@@ -420,7 +420,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
                 </div>
               )}
 
-              <div style={{paddingTop: '5rem'}}>
+              <div style={{paddingTop: '0rem'}}>
                 <DocumentPreviewPanel 
                   title={analysisData.title}
                   markdown={currentMarkdown}
