@@ -64,11 +64,12 @@ export function GoogleDocsRenderer({
   };
 
   return (
-    <div 
-      className={`google-docs-renderer google-docs-renderer--${context} ${className}`}
-      onClick={handleClick}
-      dangerouslySetInnerHTML={{ __html: processedHTML }}
-    />
+    <>
+      <div 
+        className={`google-docs-renderer google-docs-renderer--${context} ${className}`}
+        onClick={handleClick}
+        dangerouslySetInnerHTML={{ __html: processedHTML }}
+      />
       
       <style jsx global>{`
         /* GOOGLE DOCS RENDERER - ESTILS GLOBALS */
@@ -340,7 +341,7 @@ export function GoogleDocsRenderer({
           padding: 2px 4px !important;
         }
       `}</style>
-    </div>
+    </>
   );
 }
 
