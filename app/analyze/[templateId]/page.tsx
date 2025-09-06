@@ -618,43 +618,6 @@ export default function DynamicAnalyzePage({ params }: PageProps) {
     <div className="min-h-screen bg-white">
       <TopNavBar />
       
-      {/* Template Info Header */}
-      <div className="bg-blue-50 border-b mt-8">
-        <div className="mx-auto px-6 py-4" style={{width: '920px'}}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                {templateType === 'google-docs' ? (
-                  <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-                  </svg>
-                ) : (
-                  <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-                  </svg>
-                )}
-                <span className="text-sm font-medium text-gray-700">
-                  {templateType === 'google-docs' ? 'Google Docs' : templateType === 'docx' ? 'DOCX' : 'Loading...'}
-                </span>
-              </div>
-              <span className="text-sm text-gray-500">•</span>
-              <span className="text-sm font-mono text-gray-600">{resolvedParams.templateId}</span>
-              {originalFileName && (
-                <>
-                  <span className="text-sm text-gray-500">•</span>
-                  <span className="text-sm text-gray-700">{originalFileName}</span>
-                </>
-              )}
-            </div>
-            <button 
-              onClick={() => router.push('/dashboard')}
-              className="text-sm text-gray-500 hover:text-gray-700"
-            >
-              ← Dashboard
-            </button>
-          </div>
-        </div>
-      </div>
       
       {/* Main content */}
       <div>
