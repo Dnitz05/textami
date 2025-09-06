@@ -37,7 +37,9 @@
       "Bash(npm test:*)",
       "Bash(npm run test:*)",
       "Bash(rg:*)",
-      "Bash(vercel link:*)"
+      "Bash(vercel link:*)",
+      "Bash(powershell:*)",
+      "Bash(node:*)"
     ],
     "additionalDirectories": [
       "C:\\mnt\\c\\projects",

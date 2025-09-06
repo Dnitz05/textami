@@ -8,7 +8,6 @@ import { useRouter } from 'next/navigation';
 import TopNavBar from '@/components/TopNavBar';
 import { useAuth } from '@/contexts/AuthContext';
 import TemplateSourceSelector from '@/components/TemplateSourceSelector';
-import GoogleAuthButton from '@/components/google/GoogleAuthButton';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -175,31 +174,6 @@ export default function Dashboard() {
           className="hidden"
         />
 
-        {/* Stats Section */}
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-2xl mx-auto">
-          <div className="bg-white rounded-lg p-6 shadow-md">
-            <div className="text-2xl font-bold text-blue-600">0</div>
-            <div className="text-sm text-gray-600">Plantilles creades</div>
-          </div>
-          <div className="bg-white rounded-lg p-6 shadow-md">
-            <div className="text-2xl font-bold text-green-600">0</div>
-            <div className="text-sm text-gray-600">Documents generats</div>
-          </div>
-          <div className="bg-white rounded-lg p-6 shadow-md">
-            <div className="text-2xl font-bold text-purple-600">0</div>
-            <div className="text-sm text-gray-600">Documents knowledge</div>
-          </div>
-        </div>
-
-        {/* Google Account Integration */}
-        <div className="mt-16 max-w-md mx-auto">
-          <div className="bg-white rounded-lg p-6 shadow-md">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Google Integration</h3>
-            <GoogleAuthButton onConnectionChange={(connected) => {
-              console.log('🔍 Google connection status changed:', { connected, userId: user?.id });
-            }} />
-          </div>
-        </div>
 
         {/* Footer */}
         <footer className="mt-16 text-center text-gray-500">
