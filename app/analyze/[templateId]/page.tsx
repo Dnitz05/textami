@@ -619,7 +619,7 @@ export default function DynamicAnalyzePage({ params }: PageProps) {
       <TopNavBar />
       
       {/* Template Info Header */}
-      <div className="bg-blue-50 border-b">
+      <div className="bg-blue-50 border-b mt-8">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
