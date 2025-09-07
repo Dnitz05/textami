@@ -186,10 +186,13 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           font-family: 'Inter', 'Segoe UI', 'Arial', sans-serif;
           line-height: 1.6;
           color: #1a1a1a;
-          background: white;
+          background: transparent;
           min-height: 100vh;
           width: 100%;
           max-width: 100%;
+          padding: 16pt 0;
+          margin: 0;
+          border: none;
         }
         
         .document-page {
@@ -618,7 +621,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
             {onSave && (
               <button
                 onClick={onSave}
-                className="flex items-center px-2 py-1 text-xs font-medium text-gray-800 bg-white hover:bg-blue-50  border border-gray-300 hover:border-blue-400 transition-all duration-200 shadow-sm hover:shadow"
+                className="flex items-center px-1.5 py-0.5 text-xs font-medium text-gray-800 bg-white hover:bg-blue-50  border border-gray-300 hover:border-blue-400 transition-all duration-200 shadow-sm hover:shadow"
               >
                 <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
@@ -627,28 +630,17 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
               </button>
             )}
             <button
-              className="flex items-center px-2 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700  border border-green-600 hover:border-green-700 transition-all duration-200 shadow-sm hover:shadow"
+              className="flex items-center px-1.5 py-0.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700  border border-green-600 hover:border-green-700 transition-all duration-200 shadow-sm hover:shadow"
             >
               <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               Generar
             </button>
-            {onSaveAs && (
-              <button
-                onClick={onSaveAs}
-                className="flex items-center px-2 py-1 text-xs font-medium text-gray-800 bg-white hover:bg-blue-50  border border-gray-300 hover:border-blue-400 transition-all duration-200 shadow-sm hover:shadow"
-              >
-                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Desar com...
-              </button>
-            )}
             {onClose && (
               <button
                 onClick={onClose}
-                className="flex items-center px-2 py-1 text-xs font-medium text-gray-800 bg-white hover:bg-blue-50  border border-gray-300 hover:border-blue-400 transition-all duration-200 shadow-sm hover:shadow"
+                className="flex items-center px-1.5 py-0.5 text-xs font-medium text-gray-800 bg-white hover:bg-blue-50  border border-gray-300 hover:border-blue-400 transition-all duration-200 shadow-sm hover:shadow"
               >
                 <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
