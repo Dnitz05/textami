@@ -545,6 +545,22 @@ export function GoogleDocsRenderer({
           margin-bottom: 0.25cm !important;
         }
 
+        /* ELIMINA TEXT-INDENT DE TOTS ELS TÍTOLS */
+        .google-docs-renderer *[style*="text-indent"] h1,
+        .google-docs-renderer *[style*="text-indent"] h2,
+        .google-docs-renderer *[style*="text-indent"] h3,
+        .google-docs-renderer *[style*="text-indent"] h4,
+        .google-docs-renderer *[style*="text-indent"] h5,
+        .google-docs-renderer *[style*="text-indent"] h6,
+        .google-docs-renderer h1[style*="text-indent"],
+        .google-docs-renderer h2[style*="text-indent"],
+        .google-docs-renderer h3[style*="text-indent"],
+        .google-docs-renderer h4[style*="text-indent"],
+        .google-docs-renderer h5[style*="text-indent"],
+        .google-docs-renderer h6[style*="text-indent"] {
+          text-indent: 0 !important;
+        }
+
         /* Forçar mides de font consistents */
         .google-docs-renderer *[style*="font-size: 18pt"],
         .google-docs-renderer *[style*="font-size:18pt"] { font-size: 18pt !important; }
@@ -578,11 +594,13 @@ export function GoogleDocsRenderer({
         .google-docs-renderer h1[style*="text-align:right"],
         .google-docs-renderer h1[style*="text-align: justify"],
         .google-docs-renderer h1[style*="text-align:justify"],
+        .google-docs-renderer h1[style*="text-indent"],
         .google-docs-renderer div[style*="text-align"] h1,
         .google-docs-renderer p[style*="text-align"] h1,
         .google-docs-renderer span[style*="text-align"] h1,
         .google-docs-renderer *[style*="text-align"] h1,
         .google-docs-renderer *[style*="display"] h1,
+        .google-docs-renderer *[style*="text-indent"] h1,
         
         .google-docs-renderer h2,
         .google-docs-renderer h2[style],
@@ -593,11 +611,13 @@ export function GoogleDocsRenderer({
         .google-docs-renderer h2[style*="text-align:right"],
         .google-docs-renderer h2[style*="text-align: justify"],
         .google-docs-renderer h2[style*="text-align:justify"],
+        .google-docs-renderer h2[style*="text-indent"],
         .google-docs-renderer div[style*="text-align"] h2,
         .google-docs-renderer p[style*="text-align"] h2,
         .google-docs-renderer span[style*="text-align"] h2,
         .google-docs-renderer *[style*="text-align"] h2,
         .google-docs-renderer *[style*="display"] h2,
+        .google-docs-renderer *[style*="text-indent"] h2,
         
         .google-docs-renderer h3,
         .google-docs-renderer h3[style],
@@ -608,11 +628,13 @@ export function GoogleDocsRenderer({
         .google-docs-renderer h3[style*="text-align:right"],
         .google-docs-renderer h3[style*="text-align: justify"],
         .google-docs-renderer h3[style*="text-align:justify"],
+        .google-docs-renderer h3[style*="text-indent"],
         .google-docs-renderer div[style*="text-align"] h3,
         .google-docs-renderer p[style*="text-align"] h3,
         .google-docs-renderer span[style*="text-align"] h3,
         .google-docs-renderer *[style*="text-align"] h3,
         .google-docs-renderer *[style*="display"] h3,
+        .google-docs-renderer *[style*="text-indent"] h3,
         
         .google-docs-renderer h4,
         .google-docs-renderer h4[style],
@@ -623,11 +645,13 @@ export function GoogleDocsRenderer({
         .google-docs-renderer h4[style*="text-align:right"],
         .google-docs-renderer h4[style*="text-align: justify"],
         .google-docs-renderer h4[style*="text-align:justify"],
+        .google-docs-renderer h4[style*="text-indent"],
         .google-docs-renderer div[style*="text-align"] h4,
         .google-docs-renderer p[style*="text-align"] h4,
         .google-docs-renderer span[style*="text-align"] h4,
         .google-docs-renderer *[style*="text-align"] h4,
         .google-docs-renderer *[style*="display"] h4,
+        .google-docs-renderer *[style*="text-indent"] h4,
         
         .google-docs-renderer h5,
         .google-docs-renderer h5[style],
@@ -638,11 +662,13 @@ export function GoogleDocsRenderer({
         .google-docs-renderer h5[style*="text-align:right"],
         .google-docs-renderer h5[style*="text-align: justify"],
         .google-docs-renderer h5[style*="text-align:justify"],
+        .google-docs-renderer h5[style*="text-indent"],
         .google-docs-renderer div[style*="text-align"] h5,
         .google-docs-renderer p[style*="text-align"] h5,
         .google-docs-renderer span[style*="text-align"] h5,
         .google-docs-renderer *[style*="text-align"] h5,
         .google-docs-renderer *[style*="display"] h5,
+        .google-docs-renderer *[style*="text-indent"] h5,
         
         .google-docs-renderer h6,
         .google-docs-renderer h6[style],
@@ -653,13 +679,16 @@ export function GoogleDocsRenderer({
         .google-docs-renderer h6[style*="text-align:right"],
         .google-docs-renderer h6[style*="text-align: justify"],
         .google-docs-renderer h6[style*="text-align:justify"],
+        .google-docs-renderer h6[style*="text-indent"],
         .google-docs-renderer div[style*="text-align"] h6,
         .google-docs-renderer p[style*="text-align"] h6,
         .google-docs-renderer span[style*="text-align"] h6,
         .google-docs-renderer *[style*="text-align"] h6,
-        .google-docs-renderer *[style*="display"] h6 {
+        .google-docs-renderer *[style*="display"] h6,
+        .google-docs-renderer *[style*="text-indent"] h6 {
           display: block !important;          /* FORÇA DISPLAY BLOCK */
           text-align: left !important;        /* ALINEACIÓ ESQUERRA */
+          text-indent: 0 !important;          /* ELIMINA TEXT-INDENT */
         }
 
         /* SELECTOR UNIVERSAL ANTI-INLINE PER TÍTOLS */
