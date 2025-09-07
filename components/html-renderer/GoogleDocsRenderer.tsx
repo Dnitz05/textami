@@ -268,17 +268,26 @@ export function GoogleDocsRenderer({
           text-align: left !important;
         }
 
-        /* PARÀGRAFS - PROFESSIONAL DOCUMENT FORMAT */
+        /* PARÀGRAFS - INTEGRACIÓ PERFECTA AMB IMATGES */
         .google-docs-renderer p,
         .google-docs-renderer p[style],
         .google-docs-renderer p[style*="text-align"],
         .google-docs-renderer [style*="text-align"] p,
         .google-docs-renderer div[style*="text-align"] p {
-          margin: 0 0 0.25cm 0 !important; /* Minimal spacing for better image integration */
+          margin: 0 0 0.1cm 0 !important; /* Espai mínim per integració imatges */
           line-height: 1.5 !important; /* Professional line height */
           font-size: 11pt !important; /* Reduced body text size */
           color: #333333 !important; /* Professional text color */
           text-align: justify !important; /* Professional document justification */
+        }
+
+        /* PARÀGRAFS AMB IMATGES - ZERO MARGIN PER INTEGRACIÓ PERFECTA */
+        .google-docs-renderer p:has(img),
+        .google-docs-renderer p[style]:has(img),
+        .google-docs-renderer p:has(figure),
+        .google-docs-renderer p[style]:has(figure) {
+          margin: 0 !important; /* Zero margin si conté imatges */
+          line-height: 1.2 !important; /* Línies més compactes amb imatges */
         }
 
         /* NEGRETES, CURSIVES, SUBRATLLATS - CONTROL TOTAL */
@@ -407,7 +416,7 @@ export function GoogleDocsRenderer({
           text-align: left !important;
         }
 
-        /* IMATGES I FIGURES - CONTROL TOTAL ULTRA-ESPECÍFIC */
+        /* IMATGES I FIGURES - INTEGRACIÓ PERFECTA AMB TEXT */
         /* Sobreescriu TOTS els estils inline de Google Docs per imatges */
         .google-docs-renderer figure,
         .google-docs-renderer figure[style],
@@ -416,10 +425,11 @@ export function GoogleDocsRenderer({
         .google-docs-renderer div[style] figure,
         .google-docs-renderer p[style] figure,
         .google-docs-renderer [style*="text-align"] figure {
-          margin: 0.25cm 0 !important; /* Minimal spacing to integrate with text */
+          margin: 0 !important; /* Zero spacing per integrar amb text */
           text-align: left !important; /* Align with document flow */
           border: none !important;
           padding: 0 !important;
+          display: inline-block !important; /* Integració amb flux de text */
         }
 
         .google-docs-renderer img,
@@ -429,6 +439,7 @@ export function GoogleDocsRenderer({
         .google-docs-renderer img[style*="height"],
         .google-docs-renderer img[style*="border"],
         .google-docs-renderer img[style*="padding"],
+        .google-docs-renderer img[style*="display"],
         .google-docs-renderer figure[style] img,
         .google-docs-renderer div[style] img,
         .google-docs-renderer p[style] img,
@@ -437,8 +448,9 @@ export function GoogleDocsRenderer({
           height: auto !important;
           border: none !important;
           padding: 0 !important;
-          margin: 0.25cm 0 !important; /* Minimal spacing to integrate with text */
-          display: block !important;
+          margin: 0 !important; /* Zero margins per integració perfecta */
+          display: inline-block !important; /* Permet flow amb text */
+          vertical-align: top !important; /* Alineació amb línia de text */
         }
 
         .google-docs-renderer figcaption,
@@ -450,9 +462,10 @@ export function GoogleDocsRenderer({
         .google-docs-renderer [style] figcaption {
           font-style: italic !important;
           font-size: 10pt !important; /* Smaller caption size */
-          margin-top: 0.25cm !important;
+          margin-top: 0.1cm !important; /* Mínim espai amb imatge */
           text-align: left !important;
           color: #666666 !important;
+          display: block !important; /* Caption sempre en nova línia */
         }
 
         /* ELEMENTS PROFESSIONALS - CONTROL TOTAL ULTRA-ESPECÍFIC */
