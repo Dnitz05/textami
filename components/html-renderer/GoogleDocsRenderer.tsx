@@ -432,6 +432,10 @@ export function GoogleDocsRenderer({
           display: inline-block !important; /* Integració amb flux de text */
         }
 
+        /* IMATGES - ESPECIFICITAT ULTRA-ALTA PER VENCER TAILWIND */
+        .google-docs-renderer .google-docs-renderer img,
+        .google-docs-renderer img.img,
+        .google-docs-renderer img[src],
         .google-docs-renderer img,
         .google-docs-renderer img[style],
         .google-docs-renderer img[style*="margin"],
@@ -449,8 +453,15 @@ export function GoogleDocsRenderer({
           border: none !important;
           padding: 0 !important;
           margin: 0 !important; /* Zero margins per integració perfecta */
-          display: inline-block !important; /* Permet flow amb text */
-          vertical-align: top !important; /* Alineació amb línia de text */
+          display: inline-block !important; /* Permet flow amb text - VENCE TAILWIND */
+          vertical-align: top !important; /* Alineació amb línia de text - VENCE TAILWIND */
+        }
+
+        /* SELECTOR ANTI-TAILWIND ULTRA-ESPECÍFIC PER IMATGES */
+        .google-docs-renderer img[src]:not(.hidden):not(.invisible) {
+          display: inline-block !important;
+          vertical-align: top !important;
+          margin: 0 !important;
         }
 
         .google-docs-renderer figcaption,
