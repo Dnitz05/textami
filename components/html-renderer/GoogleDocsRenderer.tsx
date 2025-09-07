@@ -108,9 +108,9 @@ export function GoogleDocsRenderer({
           color: #000000 !important;
           margin: 1.5cm 0 1cm 0 !important; /* Reduced spacing */
           line-height: 1.2 !important;
-          text-align: inherit !important; /* Respect original Google Docs alignment */
-          border-bottom: 2px solid #cccccc !important;
-          padding-bottom: 0.5cm !important;
+          text-align: left !important; /* Force left alignment */
+          border-bottom: none !important; /* Remove separation line */
+          padding-bottom: 0 !important; /* Remove padding */
         }
 
         .google-docs-renderer h2 {
@@ -119,9 +119,9 @@ export function GoogleDocsRenderer({
           color: #444444 !important;
           margin: 1cm 0 0.5cm 0 !important; /* Reduced spacing */
           line-height: 1.2 !important;
-          text-align: inherit !important; /* Respect original Google Docs alignment */
-          border-bottom: 1px solid #dddddd !important;
-          padding-bottom: 0.25cm !important;
+          text-align: left !important; /* Force left alignment */
+          border-bottom: none !important; /* Remove separation line */
+          padding-bottom: 0 !important; /* Remove padding */
         }
 
         .google-docs-renderer h3 {
@@ -130,7 +130,7 @@ export function GoogleDocsRenderer({
           color: #555555 !important;
           margin: 0.75cm 0 0.4cm 0 !important; /* Reduced spacing */
           line-height: 1.3 !important;
-          text-align: inherit !important; /* Respect original Google Docs alignment */
+          text-align: left !important; /* Force left alignment */
         }
 
         .google-docs-renderer h4 {
@@ -163,7 +163,7 @@ export function GoogleDocsRenderer({
 
         /* PARÀGRAFS - PROFESSIONAL DOCUMENT FORMAT */
         .google-docs-renderer p {
-          margin: 0 0 0.75cm 0 !important; /* Professional paragraph spacing */
+          margin: 0 0 0.25cm 0 !important; /* Minimal spacing for better image integration */
           line-height: 1.5 !important; /* Professional line height */
           font-size: 11pt !important; /* Reduced body text size */
           color: #333333 !important; /* Professional text color */
@@ -189,7 +189,7 @@ export function GoogleDocsRenderer({
         .google-docs-renderer table {
           border-collapse: collapse !important;
           width: 100% !important;
-          margin: 1cm 0 !important; /* Professional table spacing */
+          margin: 0.25cm 0 !important; /* Minimal spacing for better image integration */
           border: 1px solid #cccccc !important; /* Professional border color */
           background: white !important;
           font-size: 11pt !important; /* Slightly smaller for tables */

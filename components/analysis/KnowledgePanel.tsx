@@ -147,7 +147,7 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({
 
   return (
     <div className="bg-white rounded-lg shadow border">
-      <div className="p-4 border-b bg-gradient-to-r from-amber-50 to-orange-50">
+      <div className="p-4 border-b bg-gradient-to-r from-amber-50 to-orange-50 h-20">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
