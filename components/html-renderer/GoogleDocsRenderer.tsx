@@ -350,7 +350,7 @@ function optimizeImages($: cheerio.Root) {
     // 🚀 INTEGRACIÓ PERFECTA: Eliminar paràgrafs que només contenen imatges
     const $parent = $el.parent();
     
-    if ($parent.length && ['p', 'div'].includes($parent[0].tagName?.toLowerCase() || '')) {
+    if ($parent.length && $parent[0] && 'tagName' in $parent[0] && ['p', 'div'].includes($parent[0].tagName?.toLowerCase() || '')) {
       const siblings = $parent.children();
       
       // Comptar només elements significatius (no imatges)
@@ -361,7 +361,7 @@ function optimizeImages($: cheerio.Root) {
       
       // Si el paràgraf només conté la imatge (sense text real), eliminar-lo
       if (significantSiblings.length === 0) {
-        console.log('🖼️ Eliminant paràgraf que només conté imatge:', $parent[0].tagName, $parent.attr('class'));
+        console.log('🖼️ Eliminant paràgraf que només conté imatge:', 'tagName' in $parent[0] ? $parent[0].tagName : 'unknown', $parent.attr('class'));
         $parent.replaceWith($el);
       }
       // Si no, eliminar almenys els estils problemàtics del contenidor
