@@ -132,12 +132,24 @@ export function GoogleDocsRenderer({
           padding: 0;
         }
         
-        /* CONTENIDORS D'IMATGES - ZERO MARGINS */
+        /* CONTENIDORS D'IMATGES - ZERO MARGINS ULTRA AGRESSIU */
         .google-docs-renderer p:has(.doc-image),
-        .google-docs-renderer div:has(.doc-image) {
-          margin: 0;
-          padding: 0;
-          line-height: 1;
+        .google-docs-renderer div:has(.doc-image),
+        .google-docs-renderer span:has(.doc-image),
+        .google-docs-renderer .doc-image + *,
+        .google-docs-renderer * + .doc-image {
+          margin: 0 !important;
+          padding: 0 !important;
+          line-height: 0 !important;
+          border: none !important;
+        }
+        
+        /* ELIMINAR SEPARACIONS ABANS I DESPRÉS DE IMATGES */
+        .google-docs-renderer .doc-image {
+          margin: 0 !important;
+          padding: 0 !important;
+          display: block !important;
+          vertical-align: top !important;
         }
         
         .doc-figure {
@@ -277,6 +289,9 @@ function postProcessGoogleDocsHTML(html: string): string {
     // 6️⃣ ELIMINAR ESTILS INLINE PROBLEMÀTICS
     removeProblematicInlineStyles($);
     
+    // 7️⃣ ULTRA ELIMINACIÓ DE SEPARACIONS VERTICALS
+    eliminateVerticalSpacing($);
+    
     return $.html();
     
   } catch (error) {
@@ -364,14 +379,27 @@ function optimizeImages($: cheerio.Root) {
         console.log('🖼️ Eliminant paràgraf que només conté imatge:', 'tagName' in $parent[0] ? $parent[0].tagName : 'unknown', $parent.attr('class'));
         $parent.replaceWith($el);
       }
-      // Si no, eliminar almenys els estils problemàtics del contenidor
+      // Si no, eliminar TOTS els estils que creen separació vertical
       else {
         $parent.removeClass('text-justify');
         $parent.css({
-          'margin': '0.5rem 0',
-          'padding': '0',
-          'text-align': 'left'
+          'margin': '0',
+          'padding': '0', 
+          'text-align': 'left',
+          'line-height': '1',
+          'border': 'none'
         });
+        
+        // 🚀 ULTRA FIX: Eliminar també marges dels elements veïns
+        const $prevElement = $parent.prev();
+        const $nextElement = $parent.next();
+        
+        if ($prevElement.length) {
+          $prevElement.css('margin-bottom', '0');
+        }
+        if ($nextElement.length) {
+          $nextElement.css('margin-top', '0');
+        }
       }
     }
   });
@@ -495,6 +523,68 @@ function removeProblematicInlineStyles($: cheerio.Root) {
   });
 }
 
+// 7️⃣ ULTRA ELIMINACIÓ DE SEPARACIONS VERTICALS
+function eliminateVerticalSpacing($: cheerio.Root) {
+  console.log('🚀 ULTRA ELIMINACIÓ: Processant separacions verticals...');
+  
+  // Passar 1: Eliminar tots els marges/paddings de qualsevol element que conté imatges
+  $('img').each((_, img) => {
+    const $img = $(img);
+    
+    // Recórrer cap amunt per eliminar marges de tots els ancestres
+    let $current = $img.parent();
+    let levels = 0;
+    
+    while ($current.length && levels < 5) {
+      console.log(`🔧 Nivell ${levels}: Netejant ${$current[0] && 'tagName' in $current[0] ? $current[0].tagName : 'unknown'}`);
+      
+      // Eliminar tots els marges i paddings
+      $current.css({
+        'margin': '0',
+        'padding': '0',
+        'line-height': '1',
+        'border': 'none'
+      });
+      
+      // Eliminar classes que poden afegir espais
+      $current.removeClass('text-justify');
+      
+      $current = $current.parent();
+      levels++;
+    }
+    
+    // Passar 2: Eliminar marges dels elements germans (abans i després)
+    const $imgContainer = $img.closest('p, div');
+    if ($imgContainer.length) {
+      $imgContainer.prev().css('margin-bottom', '0');
+      $imgContainer.next().css('margin-top', '0');
+      
+      // Si el contenidor és completament dedicat a la imatge, eliminar-lo
+      const textContent = $imgContainer.text().replace(/\s/g, '');
+      if (textContent.length === 0) {
+        console.log('🗑️ Eliminant contenidor buit:', $imgContainer[0] && 'tagName' in $imgContainer[0] ? $imgContainer[0].tagName : 'unknown');
+        $imgContainer.replaceWith($img);
+      }
+    }
+  });
+  
+  // Passar 3: Neteja global d'elements amb marges excessius al voltant d'imatges
+  $('p, div').each((_, el) => {
+    const $el = $(el);
+    const hasImage = $el.find('img').length > 0;
+    
+    if (hasImage) {
+      $el.css({
+        'margin': '0',
+        'padding': '0',
+        'line-height': '1'
+      });
+    }
+  });
+  
+  console.log('✅ ULTRA ELIMINACIÓ: Completada!');
+}
+
 // UTILITATS
 function extractFontSize(style: string): number | null {
   const match = style.match(/font-size:\s*(\d+)pt/);
@@ -502,12 +592,12 @@ function extractFontSize(style: string): number | null {
 }
 
 function getHeadingLevel(fontSize: number): number | null {
-  if (fontSize >= 24) return 1;
-  if (fontSize >= 20) return 2; 
-  if (fontSize >= 16) return 3;
-  if (fontSize >= 14) return 4;
-  if (fontSize >= 12) return 5;
-  if (fontSize >= 10) return 6;
+  if (fontSize >= 18) return 1;  // H1: 18pt+ (matches CSS .doc-h1: 18pt)
+  if (fontSize >= 14) return 2;  // H2: 14pt+ (matches CSS .doc-h2: 14pt)
+  if (fontSize >= 12) return 3;  // H3: 12pt+ (matches CSS .doc-h3: 12pt)
+  if (fontSize >= 11) return 4;  // H4: 11pt+ 
+  if (fontSize >= 10) return 5;  // H5: 10pt+
+  if (fontSize >= 9) return 6;   // H6: 9pt+
   return null;
 }
 
