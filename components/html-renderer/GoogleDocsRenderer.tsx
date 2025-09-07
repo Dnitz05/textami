@@ -278,7 +278,7 @@ function postProcessGoogleDocsHTML(html: string): string {
 }
 
 // 1️⃣ NORMALITZAR TÍTOLS I ALINEACIONS
-function normalizeHeadingsAndAlignment($: cheerio.CheerioAPI) {
+function normalizeHeadingsAndAlignment($: cheerio.Root) {
   // Convertir elements amb estils de títol a títols semàntics
   $('p, div').each((_, el) => {
     const $el = $(el);
@@ -324,7 +324,7 @@ function normalizeHeadingsAndAlignment($: cheerio.CheerioAPI) {
 }
 
 // 2️⃣ OPTIMITZAR IMATGES
-function optimizeImages($: cheerio.CheerioAPI) {
+function optimizeImages($: cheerio.Root) {
   $('img').each((_, el) => {
     const $el = $(el);
     
@@ -346,7 +346,7 @@ function optimizeImages($: cheerio.CheerioAPI) {
 }
 
 // 3️⃣ ESTANDARDITZAR TAULES
-function standardizeTables($: cheerio.CheerioAPI) {
+function standardizeTables($: cheerio.Root) {
   $('table').each((_, el) => {
     const $table = $(el);
     $table.removeAttr('style').addClass('doc-table');
@@ -365,7 +365,9 @@ function standardizeTables($: cheerio.CheerioAPI) {
         $td.replaceWith(`<th class="doc-th">${content}</th>`);
       });
       $firstRow.wrap('<thead></thead>');
-      $table.find('tr').not($firstRow).wrapAll('<tbody></tbody>');
+      const tbody = $('<tbody></tbody>');
+      $table.find('tr').not($firstRow).appendTo(tbody);
+      $table.append(tbody);
     }
     
     // Netejar totes les cel·les
@@ -379,7 +381,7 @@ function standardizeTables($: cheerio.CheerioAPI) {
 }
 
 // 4️⃣ NETEJAR SPANS REDUNDANTS
-function cleanRedundantSpans($: cheerio.CheerioAPI) {
+function cleanRedundantSpans($: cheerio.Root) {
   // Eliminar spans buits
   $('span:empty').remove();
   
@@ -402,7 +404,7 @@ function cleanRedundantSpans($: cheerio.CheerioAPI) {
 }
 
 // 5️⃣ NORMALITZAR PARÀGRAFS
-function normalizeParagraphs($: cheerio.CheerioAPI) {
+function normalizeParagraphs($: cheerio.Root) {
   $('p').each((_, el) => {
     const $p = $(el);
     
@@ -423,7 +425,7 @@ function normalizeParagraphs($: cheerio.CheerioAPI) {
 }
 
 // 6️⃣ ELIMINAR ESTILS INLINE PROBLEMÀTICS
-function removeProblematicInlineStyles($: cheerio.CheerioAPI) {
+function removeProblematicInlineStyles($: cheerio.Root) {
   $('[style]').each((_, el) => {
     const $el = $(el);
     let style = $el.attr('style') || '';
