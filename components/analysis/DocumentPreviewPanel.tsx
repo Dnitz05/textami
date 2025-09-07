@@ -193,7 +193,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
         .document-page {
           background: white;
           margin: 0;
-          padding: 2.54cm 2.54cm 2.54cm 2.54cm; /* Marges Word estàndard: 1 inch */
+          padding: 0; /* Removed padding for A4 exact width */
           min-height: calc(100vh - 80px);
           width: 100%;
           box-sizing: border-box;

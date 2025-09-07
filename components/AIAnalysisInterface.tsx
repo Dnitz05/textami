@@ -359,11 +359,11 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
         {/* Center - Document Preview with enhanced spacing */}
         <div className="flex-1 bg-gray-50 overflow-y-auto relative">
           <div className="flex justify-center">
-            <div className="bg-gray-50 relative" style={{width: '920px'}}>
+            <div className="bg-gray-50 relative" style={{width: '794px'}}>
               {/* Left Sidebar - positioned to align right edge with left edge of template */}
               {showLeftSidebar && (
                 <div className="fixed w-80 bg-gray-50/80 backdrop-blur-sm shadow-2xl border border-white/30 flex flex-col z-10 ml-4 mr-4 mb-4" 
-                     style={{right: 'calc(50% + 460px)', top: '3rem', bottom: '1rem'}}>
+                     style={{right: 'calc(50% + 397px)', top: '3rem', bottom: '1rem'}}>
                   {/* Sidebar Header */}
                   <div className="px-6 py-4 border-b border-gray-200/50 bg-gray-50/40 backdrop-blur-sm flex-none">
                     <h3 className="text-sm font-semibold text-gray-800 flex items-center">
@@ -393,7 +393,7 @@ const AIAnalysisInterface: React.FC<AIAnalysisInterfaceProps> = ({
               {/* Right Sidebar - positioned to align left edge with right edge of template */}
               {showRightSidebar && (
                 <div className="fixed w-80 bg-gray-50/80 backdrop-blur-sm shadow-2xl border border-white/30 flex flex-col z-10 ml-4 mr-4 mb-4" 
-                     style={{left: 'calc(50% + 460px)', top: '3rem', bottom: '1rem'}}>
+                     style={{left: 'calc(50% + 397px)', top: '3rem', bottom: '1rem'}}>
                   {/* Sidebar Header */}
                   <div className="px-6 py-4 border-b border-gray-200/50 bg-gray-50/40 backdrop-blur-sm flex-none">
                     <h3 className="text-sm font-semibold text-gray-800 flex items-center">

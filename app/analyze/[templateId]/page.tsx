@@ -619,7 +619,7 @@ export default function DynamicAnalyzePage({ params }: PageProps) {
       <TopNavBar />
       
       {/* Document Header */}
-      <div className="mx-auto px-6 py-4" style={{width: '920px'}}>
+      <div className="mx-auto px-6 py-4" style={{width: '794px'}}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
