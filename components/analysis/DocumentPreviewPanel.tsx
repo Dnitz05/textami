@@ -561,7 +561,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
       `}</style>
       
       {/* Document Header - Matching sidebar style */}
-      <div className="py-4 border-b border-gray-200/50 bg-gray-50/40 backdrop-blur-sm flex-none">
+      <div className="px-6 py-4 border-b border-gray-200/50 bg-gray-50/40 backdrop-blur-sm flex-none">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-gray-800 flex items-center">
             <svg className="w-4 h-4 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -659,7 +659,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
       </div>
 
       {/* Document Container - Technical Clean */}
-      <div className="bg-white min-h-screen relative">
+      <div className="bg-white min-h-screen relative w-full">
         {/* Processing overlay */}
         {isProcessing && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
