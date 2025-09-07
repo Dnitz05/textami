@@ -132,6 +132,14 @@ export function GoogleDocsRenderer({
           padding: 0;
         }
         
+        /* CONTENIDORS D'IMATGES - ZERO MARGINS */
+        .google-docs-renderer p:has(.doc-image),
+        .google-docs-renderer div:has(.doc-image) {
+          margin: 0;
+          padding: 0;
+          line-height: 1;
+        }
+        
         .doc-figure {
           margin: 0;
           display: inline-block;
@@ -337,6 +345,34 @@ function optimizeImages($: cheerio.Root) {
     // Assegurar atributs bàsics
     if (!$el.attr('alt')) {
       $el.attr('alt', 'Document image');
+    }
+    
+    // 🚀 INTEGRACIÓ PERFECTA: Eliminar paràgrafs que només contenen imatges
+    const $parent = $el.parent();
+    
+    if ($parent.length && ['p', 'div'].includes($parent[0].tagName?.toLowerCase() || '')) {
+      const siblings = $parent.children();
+      
+      // Comptar només elements significatius (no imatges)
+      const significantSiblings = siblings.filter((_, sibling) => {
+        const $sibling = $(sibling);
+        return !$sibling.is('img') && $sibling.text().trim().length > 0;
+      });
+      
+      // Si el paràgraf només conté la imatge (sense text real), eliminar-lo
+      if (significantSiblings.length === 0) {
+        console.log('🖼️ Eliminant paràgraf que només conté imatge:', $parent[0].tagName, $parent.attr('class'));
+        $parent.replaceWith($el);
+      }
+      // Si no, eliminar almenys els estils problemàtics del contenidor
+      else {
+        $parent.removeClass('text-justify');
+        $parent.css({
+          'margin': '0.5rem 0',
+          'padding': '0',
+          'text-align': 'left'
+        });
+      }
     }
   });
   
