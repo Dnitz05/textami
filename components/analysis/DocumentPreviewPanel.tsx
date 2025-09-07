@@ -210,7 +210,7 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           font-size: 18pt;
           font-weight: 600;
           color: #1a1a1a;
-          text-align: center;
+          text-align: left;
           text-transform: none;
           margin: 0 0 32pt 0;
           padding: 20pt 24pt 24pt 24pt;
@@ -297,7 +297,6 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           background: none;
           text-transform: none;
           text-align: left;
-          border-bottom: 1px solid rgba(226, 232, 240, 0.4);
           letter-spacing: -0.1pt;
         }
         
@@ -379,7 +378,6 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           background: rgba(248, 250, 252, 0.6);
           color: #0f172a;
           border: none;
-          border-bottom: 1px solid rgba(226, 232, 240, 0.4);
           padding: 12pt 16pt;
           text-align: left;
           font-weight: 600;

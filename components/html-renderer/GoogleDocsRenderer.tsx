@@ -234,23 +234,24 @@ export function GoogleDocsRenderer({
 
         /* IMATGES I FIGURES - PROFESSIONAL DOCUMENT FORMAT */
         .google-docs-renderer figure {
-          margin: 1cm 0 !important; /* Professional figure spacing */
-          text-align: center !important; /* Center figures in professional documents */
+          margin: 0.25cm 0 !important; /* Minimal spacing to integrate with text */
+          text-align: left !important; /* Align with document flow */
         }
 
         .google-docs-renderer img {
           max-width: 100% !important;
           height: auto !important;
-          border: 1px solid #dddddd !important; /* Professional image border */
-          padding: 0.25cm !important; /* Professional image padding */
-          margin: 0.75cm 0 !important; /* Same spacing as paragraphs */
+          border: none !important;
+          padding: 0 !important;
+          margin: 0.25cm 0 !important; /* Minimal spacing to integrate with text */
+          display: block !important;
         }
 
         .google-docs-renderer figcaption {
           font-style: italic !important;
           font-size: 10pt !important; /* Smaller caption size */
           margin-top: 0.25cm !important;
-          text-align: center !important;
+          text-align: left !important;
           color: #666666 !important;
         }
 
