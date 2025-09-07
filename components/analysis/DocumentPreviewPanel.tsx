@@ -188,6 +188,8 @@ const DocumentPreviewPanel: React.FC<DocumentPreviewPanelProps> = ({
           color: #1a1a1a;
           background: white;
           min-height: 100vh;
+          width: 100%;
+          max-width: 100%;
         }
         
         .document-page {
