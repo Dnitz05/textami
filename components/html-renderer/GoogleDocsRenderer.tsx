@@ -567,8 +567,11 @@ export function GoogleDocsRenderer({
         /* ========== SELECTORS TÍTOLS - MÀXIMA PRIORITAT (AL FINAL) ========== */
         /* AQUESTS SELECTORS VAN AL FINAL PER TENIR MÀS PRIORITAT CSS */
         
-        /* FORÇA ALINEACIÓ ESQUERRA PER TOTS ELS TÍTOLS - ULTRA-ESPECÍFIC FINAL */
+        /* FORÇA DISPLAY BLOCK I ALINEACIÓ ESQUERRA PER TOTS ELS TÍTOLS */
+        /* Google Docs pot posar display:inline que ignora text-align */
         .google-docs-renderer h1,
+        .google-docs-renderer h1[style],
+        .google-docs-renderer h1[style*="display"],
         .google-docs-renderer h1[style*="text-align: center"],
         .google-docs-renderer h1[style*="text-align:center"],
         .google-docs-renderer h1[style*="text-align: right"],
@@ -579,8 +582,11 @@ export function GoogleDocsRenderer({
         .google-docs-renderer p[style*="text-align"] h1,
         .google-docs-renderer span[style*="text-align"] h1,
         .google-docs-renderer *[style*="text-align"] h1,
+        .google-docs-renderer *[style*="display"] h1,
         
         .google-docs-renderer h2,
+        .google-docs-renderer h2[style],
+        .google-docs-renderer h2[style*="display"],
         .google-docs-renderer h2[style*="text-align: center"],
         .google-docs-renderer h2[style*="text-align:center"],
         .google-docs-renderer h2[style*="text-align: right"],
@@ -591,8 +597,11 @@ export function GoogleDocsRenderer({
         .google-docs-renderer p[style*="text-align"] h2,
         .google-docs-renderer span[style*="text-align"] h2,
         .google-docs-renderer *[style*="text-align"] h2,
+        .google-docs-renderer *[style*="display"] h2,
         
         .google-docs-renderer h3,
+        .google-docs-renderer h3[style],
+        .google-docs-renderer h3[style*="display"],
         .google-docs-renderer h3[style*="text-align: center"],
         .google-docs-renderer h3[style*="text-align:center"],
         .google-docs-renderer h3[style*="text-align: right"],
@@ -603,8 +612,11 @@ export function GoogleDocsRenderer({
         .google-docs-renderer p[style*="text-align"] h3,
         .google-docs-renderer span[style*="text-align"] h3,
         .google-docs-renderer *[style*="text-align"] h3,
+        .google-docs-renderer *[style*="display"] h3,
         
         .google-docs-renderer h4,
+        .google-docs-renderer h4[style],
+        .google-docs-renderer h4[style*="display"],
         .google-docs-renderer h4[style*="text-align: center"],
         .google-docs-renderer h4[style*="text-align:center"],
         .google-docs-renderer h4[style*="text-align: right"],
@@ -615,8 +627,11 @@ export function GoogleDocsRenderer({
         .google-docs-renderer p[style*="text-align"] h4,
         .google-docs-renderer span[style*="text-align"] h4,
         .google-docs-renderer *[style*="text-align"] h4,
+        .google-docs-renderer *[style*="display"] h4,
         
         .google-docs-renderer h5,
+        .google-docs-renderer h5[style],
+        .google-docs-renderer h5[style*="display"],
         .google-docs-renderer h5[style*="text-align: center"],
         .google-docs-renderer h5[style*="text-align:center"],
         .google-docs-renderer h5[style*="text-align: right"],
@@ -627,8 +642,11 @@ export function GoogleDocsRenderer({
         .google-docs-renderer p[style*="text-align"] h5,
         .google-docs-renderer span[style*="text-align"] h5,
         .google-docs-renderer *[style*="text-align"] h5,
+        .google-docs-renderer *[style*="display"] h5,
         
         .google-docs-renderer h6,
+        .google-docs-renderer h6[style],
+        .google-docs-renderer h6[style*="display"],
         .google-docs-renderer h6[style*="text-align: center"],
         .google-docs-renderer h6[style*="text-align:center"],
         .google-docs-renderer h6[style*="text-align: right"],
@@ -638,8 +656,40 @@ export function GoogleDocsRenderer({
         .google-docs-renderer div[style*="text-align"] h6,
         .google-docs-renderer p[style*="text-align"] h6,
         .google-docs-renderer span[style*="text-align"] h6,
-        .google-docs-renderer *[style*="text-align"] h6 {
-          text-align: left !important;
+        .google-docs-renderer *[style*="text-align"] h6,
+        .google-docs-renderer *[style*="display"] h6 {
+          display: block !important;          /* FORÇA DISPLAY BLOCK */
+          text-align: left !important;        /* ALINEACIÓ ESQUERRA */
+        }
+
+        /* SELECTOR UNIVERSAL ANTI-INLINE PER TÍTOLS */
+        /* Força display:block per qualsevol títol amb display:inline */
+        .google-docs-renderer *[style*="display: inline"] h1,
+        .google-docs-renderer *[style*="display:inline"] h1,
+        .google-docs-renderer *[style*="display: inline"] h2,
+        .google-docs-renderer *[style*="display:inline"] h2,
+        .google-docs-renderer *[style*="display: inline"] h3,
+        .google-docs-renderer *[style*="display:inline"] h3,
+        .google-docs-renderer *[style*="display: inline"] h4,
+        .google-docs-renderer *[style*="display:inline"] h4,
+        .google-docs-renderer *[style*="display: inline"] h5,
+        .google-docs-renderer *[style*="display:inline"] h5,
+        .google-docs-renderer *[style*="display: inline"] h6,
+        .google-docs-renderer *[style*="display:inline"] h6,
+        .google-docs-renderer h1[style*="display: inline"],
+        .google-docs-renderer h1[style*="display:inline"],
+        .google-docs-renderer h2[style*="display: inline"],
+        .google-docs-renderer h2[style*="display:inline"],
+        .google-docs-renderer h3[style*="display: inline"],
+        .google-docs-renderer h3[style*="display:inline"],
+        .google-docs-renderer h4[style*="display: inline"],
+        .google-docs-renderer h4[style*="display:inline"],
+        .google-docs-renderer h5[style*="display: inline"],
+        .google-docs-renderer h5[style*="display:inline"],
+        .google-docs-renderer h6[style*="display: inline"],
+        .google-docs-renderer h6[style*="display:inline"] {
+          display: block !important;          /* SOBREESCRIU DISPLAY INLINE */
+          text-align: left !important;        /* ALINEACIÓ ESQUERRA */
         }
 
         /* CONTEXTS */
