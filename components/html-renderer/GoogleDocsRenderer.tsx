@@ -289,7 +289,7 @@ function normalizeHeadingsAndAlignment($: cheerio.Root) {
     if (fontSize && isBold) {
       let headingLevel = getHeadingLevel(fontSize);
       if (headingLevel) {
-        const content = $el.html();
+        const content = $el.html() || '';
         $el.replaceWith(`<h${headingLevel} class="doc-heading doc-h${headingLevel}">${content}</h${headingLevel}>`);
       }
     }
@@ -361,7 +361,7 @@ function standardizeTables($: cheerio.Root) {
     if (hasHeaders) {
       $firstRow.find('td').each((_, td) => {
         const $td = $(td);
-        const content = $td.html();
+        const content = $td.html() || '';
         $td.replaceWith(`<th class="doc-th">${content}</th>`);
       });
       $firstRow.wrap('<thead></thead>');
@@ -391,7 +391,9 @@ function cleanRedundantSpans($: cheerio.Root) {
     const $next = $span.next('span');
     
     if ($next.length && $span.attr('style') === $next.attr('style')) {
-      $span.html($span.html() + $next.html());
+      const spanHtml = $span.html() || '';
+      const nextHtml = $next.html() || '';
+      $span.html(spanHtml + nextHtml);
       $next.remove();
     }
   });
@@ -399,7 +401,8 @@ function cleanRedundantSpans($: cheerio.Root) {
   // Eliminar spans innecessaris (sense estils ni classes)
   $('span:not([style]):not([class])').each((_, el) => {
     const $span = $(el);
-    $span.replaceWith($span.html());
+    const content = $span.html() || '';
+    $span.replaceWith(content);
   });
 }
 
