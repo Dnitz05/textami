@@ -526,27 +526,8 @@ export function GoogleDocsRenderer({
         }
 
         /* SELECTORS UNIVERSALS ULTRA-ESPECÍFICS - CONTROL TOTAL ABSOLUT */
-        /* Aquests selectors capturen QUALSEVOL element amb estils inline que se'ns pugui escapar */
+        /* Aquests selectors capturen elements generals ABANS dels específics */
         
-        /* Força alineació esquerra per TOTS els elements de text */
-        .google-docs-renderer *[style*="text-align: center"],
-        .google-docs-renderer *[style*="text-align:center"],
-        .google-docs-renderer *[style*="text-align: right"], 
-        .google-docs-renderer *[style*="text-align:right"],
-        .google-docs-renderer *[style*="text-align: justify"],
-        .google-docs-renderer *[style*="text-align:justify"],
-        .google-docs-renderer div[style*="text-align"],
-        .google-docs-renderer p[style*="text-align"],
-        .google-docs-renderer span[style*="text-align"],
-        .google-docs-renderer h1[style*="text-align"],
-        .google-docs-renderer h2[style*="text-align"],
-        .google-docs-renderer h3[style*="text-align"],
-        .google-docs-renderer h4[style*="text-align"],
-        .google-docs-renderer h5[style*="text-align"],
-        .google-docs-renderer h6[style*="text-align"] {
-          text-align: left !important;
-        }
-
         /* Força text-align: justify per paràgrafs normals (excepte títols) */
         .google-docs-renderer p:not(h1):not(h2):not(h3):not(h4):not(h5):not(h6),
         .google-docs-renderer p[style]:not(h1):not(h2):not(h3):not(h4):not(h5):not(h6),
@@ -581,6 +562,84 @@ export function GoogleDocsRenderer({
         .google-docs-renderer *[style*="text-decoration"] {
           border: none !important;
           text-decoration: none !important;
+        }
+
+        /* ========== SELECTORS TÍTOLS - MÀXIMA PRIORITAT (AL FINAL) ========== */
+        /* AQUESTS SELECTORS VAN AL FINAL PER TENIR MÀS PRIORITAT CSS */
+        
+        /* FORÇA ALINEACIÓ ESQUERRA PER TOTS ELS TÍTOLS - ULTRA-ESPECÍFIC FINAL */
+        .google-docs-renderer h1,
+        .google-docs-renderer h1[style*="text-align: center"],
+        .google-docs-renderer h1[style*="text-align:center"],
+        .google-docs-renderer h1[style*="text-align: right"],
+        .google-docs-renderer h1[style*="text-align:right"],
+        .google-docs-renderer h1[style*="text-align: justify"],
+        .google-docs-renderer h1[style*="text-align:justify"],
+        .google-docs-renderer div[style*="text-align"] h1,
+        .google-docs-renderer p[style*="text-align"] h1,
+        .google-docs-renderer span[style*="text-align"] h1,
+        .google-docs-renderer *[style*="text-align"] h1,
+        
+        .google-docs-renderer h2,
+        .google-docs-renderer h2[style*="text-align: center"],
+        .google-docs-renderer h2[style*="text-align:center"],
+        .google-docs-renderer h2[style*="text-align: right"],
+        .google-docs-renderer h2[style*="text-align:right"],
+        .google-docs-renderer h2[style*="text-align: justify"],
+        .google-docs-renderer h2[style*="text-align:justify"],
+        .google-docs-renderer div[style*="text-align"] h2,
+        .google-docs-renderer p[style*="text-align"] h2,
+        .google-docs-renderer span[style*="text-align"] h2,
+        .google-docs-renderer *[style*="text-align"] h2,
+        
+        .google-docs-renderer h3,
+        .google-docs-renderer h3[style*="text-align: center"],
+        .google-docs-renderer h3[style*="text-align:center"],
+        .google-docs-renderer h3[style*="text-align: right"],
+        .google-docs-renderer h3[style*="text-align:right"],
+        .google-docs-renderer h3[style*="text-align: justify"],
+        .google-docs-renderer h3[style*="text-align:justify"],
+        .google-docs-renderer div[style*="text-align"] h3,
+        .google-docs-renderer p[style*="text-align"] h3,
+        .google-docs-renderer span[style*="text-align"] h3,
+        .google-docs-renderer *[style*="text-align"] h3,
+        
+        .google-docs-renderer h4,
+        .google-docs-renderer h4[style*="text-align: center"],
+        .google-docs-renderer h4[style*="text-align:center"],
+        .google-docs-renderer h4[style*="text-align: right"],
+        .google-docs-renderer h4[style*="text-align:right"],
+        .google-docs-renderer h4[style*="text-align: justify"],
+        .google-docs-renderer h4[style*="text-align:justify"],
+        .google-docs-renderer div[style*="text-align"] h4,
+        .google-docs-renderer p[style*="text-align"] h4,
+        .google-docs-renderer span[style*="text-align"] h4,
+        .google-docs-renderer *[style*="text-align"] h4,
+        
+        .google-docs-renderer h5,
+        .google-docs-renderer h5[style*="text-align: center"],
+        .google-docs-renderer h5[style*="text-align:center"],
+        .google-docs-renderer h5[style*="text-align: right"],
+        .google-docs-renderer h5[style*="text-align:right"],
+        .google-docs-renderer h5[style*="text-align: justify"],
+        .google-docs-renderer h5[style*="text-align:justify"],
+        .google-docs-renderer div[style*="text-align"] h5,
+        .google-docs-renderer p[style*="text-align"] h5,
+        .google-docs-renderer span[style*="text-align"] h5,
+        .google-docs-renderer *[style*="text-align"] h5,
+        
+        .google-docs-renderer h6,
+        .google-docs-renderer h6[style*="text-align: center"],
+        .google-docs-renderer h6[style*="text-align:center"],
+        .google-docs-renderer h6[style*="text-align: right"],
+        .google-docs-renderer h6[style*="text-align:right"],
+        .google-docs-renderer h6[style*="text-align: justify"],
+        .google-docs-renderer h6[style*="text-align:justify"],
+        .google-docs-renderer div[style*="text-align"] h6,
+        .google-docs-renderer p[style*="text-align"] h6,
+        .google-docs-renderer span[style*="text-align"] h6,
+        .google-docs-renderer *[style*="text-align"] h6 {
+          text-align: left !important;
         }
 
         /* CONTEXTS */
