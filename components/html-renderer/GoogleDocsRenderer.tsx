@@ -646,6 +646,32 @@ function removeProblematicInlineStyles($: cheerio.Root) {
 function eliminateVerticalSpacing($: cheerio.Root) {
   console.log('🚀 ULTRA ELIMINACIÓ: Processant separacions verticals...');
   
+  // PASSAR 0: DEBUG ULTRA DETALLAT - Examinar estructura HTML
+  $('img').each((imgIndex, img) => {
+    const $img = $(img);
+    console.log(`\n🖼️ ===== IMATGE ${imgIndex + 1} DEBUG =====`);
+    
+    // Mostrar 4 nivells de contenidors pare
+    let $current = $img;
+    for (let level = 0; level < 4; level++) {
+      const $parent = $current.parent();
+      if (!$parent.length) break;
+      
+      const tagName = $parent[0] && 'tagName' in $parent[0] ? $parent[0].tagName?.toLowerCase() : 'unknown';
+      const styles = $parent.attr('style') || 'no-style';
+      const classes = $parent.attr('class') || 'no-class';
+      
+      console.log(`📦 Nivell ${level + 1} (${tagName}):`, {
+        styles: styles.substring(0, 100) + (styles.length > 100 ? '...' : ''),
+        classes,
+        html: ($parent.prop('outerHTML') || '').substring(0, 200) + '...'
+      });
+      
+      $current = $parent;
+    }
+    console.log(`🖼️ ===== FI IMATGE ${imgIndex + 1} =====\n`);
+  });
+  
   // Passar 1: Eliminar tots els marges/paddings de qualsevol element que conté imatges
   $('img').each((_, img) => {
     const $img = $(img);
