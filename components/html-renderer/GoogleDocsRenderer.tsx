@@ -261,6 +261,125 @@ export function GoogleDocsRenderer({
           cursor: pointer;
           padding: 2px 4px;
         }
+
+        /* 🎨 EDITOR HOVER EFFECTS - ELEGANT & EFFICIENT */
+        .google-docs-renderer--editor .doc-h1:hover,
+        .google-docs-renderer--editor .doc-heading:hover {
+          background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+          border-left: 4px solid #3b82f6;
+          padding: 0.75cm 1cm;
+          margin: 1.5cm -1cm 1cm -1cm;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+          transform: translateY(-2px);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          cursor: pointer;
+        }
+
+        .google-docs-renderer--editor .doc-h2:hover {
+          background: linear-gradient(135deg, #fafafa 0%, #f1f5f9 100%);
+          border-left: 3px solid #10b981;
+          padding: 0.5cm 0.75cm;
+          margin: 1cm -0.75cm 0.5cm -0.75cm;
+          border-radius: 6px;
+          box-shadow: 0 3px 8px rgba(16, 185, 129, 0.12);
+          transform: translateY(-1px);
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          cursor: pointer;
+        }
+
+        .google-docs-renderer--editor .doc-h3:hover {
+          background: linear-gradient(135deg, #fefefe 0%, #f8fafc 100%);
+          border-left: 2px solid #8b5cf6;
+          padding: 0.35cm 0.5cm;
+          margin: 0.75cm -0.5cm 0.4cm -0.5cm;
+          border-radius: 4px;
+          box-shadow: 0 2px 6px rgba(139, 92, 246, 0.1);
+          transform: translateY(-1px);
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          cursor: pointer;
+        }
+
+        .google-docs-renderer--editor .doc-table:hover {
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+          transform: translateY(-2px);
+          border: 2px solid #3b82f6;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .google-docs-renderer--editor .doc-td:hover,
+        .google-docs-renderer--editor .doc-th:hover {
+          background: linear-gradient(135deg, #fef9e7 0%, #fef3c7 100%);
+          border: 2px solid #f59e0b;
+          cursor: pointer;
+          transform: scale(1.02);
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
+        }
+
+        .google-docs-renderer--editor p:hover {
+          background: linear-gradient(135deg, #fdfdfd 0%, #f9fafb 100%);
+          border-radius: 4px;
+          padding: 0.2cm 0.3cm;
+          margin: 0.1cm -0.3cm;
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+          cursor: pointer;
+          transition: all 0.15s ease-in-out;
+        }
+
+        .google-docs-renderer--editor .signature-area:hover,
+        .google-docs-renderer--editor [data-signature]:hover,
+        .google-docs-renderer--editor p:contains("Signatura"):hover,
+        .google-docs-renderer--editor p:contains("Firma"):hover {
+          background: linear-gradient(135deg, #fef7ff 0%, #f3e8ff 100%);
+          border: 2px dashed #a855f7;
+          border-radius: 8px;
+          padding: 1cm;
+          margin: 0.5cm -1cm;
+          box-shadow: 0 4px 16px rgba(168, 85, 247, 0.15);
+          transform: translateY(-1px);
+          cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .google-docs-renderer--editor .doc-h1:hover::before {
+          content: "📋 Títol Principal";
+          position: absolute;
+          top: -10px;
+          left: 0;
+          font-size: 9pt;
+          color: #3b82f6;
+          font-weight: 500;
+          opacity: 0.8;
+        }
+
+        .google-docs-renderer--editor .doc-h2:hover::before {
+          content: "📂 Secció";
+          position: absolute;
+          top: -8px;
+          left: 0;
+          font-size: 8pt;
+          color: #10b981;
+          font-weight: 500;
+          opacity: 0.8;
+        }
+
+        .google-docs-renderer--editor .doc-h3:hover::before {
+          content: "📄 Subsecció";
+          position: absolute;
+          top: -7px;
+          left: 0;
+          font-size: 7pt;
+          color: #8b5cf6;
+          font-weight: 500;
+          opacity: 0.8;
+        }
+
+        .google-docs-renderer--editor .doc-h1:hover,
+        .google-docs-renderer--editor .doc-h2:hover,
+        .google-docs-renderer--editor .doc-h3:hover {
+          position: relative;
+        }
       `}</style>
     </>
   );
