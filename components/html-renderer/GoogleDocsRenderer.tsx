@@ -677,34 +677,45 @@ function absoluteImageCleanup($: cheerio.Root) {
     
     const cleanImg = $(`<img ${cleanImgAttrs}>`);
     
-    // 3️⃣ REEMPLAÇAR: Eliminar tot el contenidor problemàtic
-    let $problemContainer = $img.closest('p, div');
+    // 3️⃣ SOLUCIÓ DEFINITIVA: Moure imatges fora del HEAD/CSS al BODY
+    const currentContainer = $img.parent();
+    const isInHead = $img.closest('head').length > 0;
+    const isInStyle = $img.closest('style').length > 0;
     
-    // Si el contenidor té només la imatge (sense text significatiu), eliminar-lo
-    if ($problemContainer.length) {
-      // ✨ NETEJA ULTRA AGRESSIVA: Eliminar tot tipus de text invisible
-      const rawText = $problemContainer.text() || '';
-      const cleanText = rawText
-        .replace(/\s/g, '')           // Espais normals
-        .replace(/\u00A0/g, '')       // Non-breaking spaces
-        .replace(/\u2000-\u200F/g, '') // Unicode spaces
-        .replace(/\u2028-\u2029/g, '') // Line/paragraph separators
-        .trim();
-        
-      console.log(`🔍 Text del contenidor: "${rawText.substring(0, 50)}" → net: "${cleanText}" (${cleanText.length} chars)`);
+    console.log(`🔍 Imatge ubicació: head=${isInHead}, style=${isInStyle}, parent=${currentContainer[0] && 'tagName' in currentContainer[0] ? currentContainer[0].tagName : 'unknown'}`);
+    
+    if (isInHead || isInStyle) {
+      // 🚀 IMATGE MALLOCADA: Moure-la al final del body
+      console.log('⚠️ IMATGE AL HEAD/STYLE: Movent al body');
+      $('body').append(cleanImg);
+      $img.remove();
+    } else {
+      // Si està al body, aplicar neteja normal
+      let $problemContainer = $img.closest('p, div');
       
-      // SEMPRE ELIMINAR contenidors amb menys de 20 caràcters reals
-      if (cleanText.length < 20) {
-        console.log('🗑️ ELIMINANT contenidor (text insuficient) i insertant imatge neta');
-        $problemContainer.replaceWith(cleanImg);
+      if ($problemContainer.length) {
+        const rawText = $problemContainer.text() || '';
+        const hasCSS = rawText.includes('@import') || rawText.includes('list-style-type') || rawText.length > 500;
+        
+        console.log(`🔍 Contenidor: CSS=${hasCSS}, chars=${rawText.length}`);
+        
+        if (hasCSS) {
+          // Contenidor és CSS, moure imatge al body
+          console.log('🚀 CONTENIDOR AMB CSS: Movent imatge al body');
+          $('body').append(cleanImg);
+          $img.remove();
+        } else if (rawText.trim().length < 20) {
+          // Contenidor normal sense text
+          console.log('🗑️ ELIMINANT contenidor buit');
+          $problemContainer.replaceWith(cleanImg);
+        } else {
+          // Contenidor amb text real
+          console.log('📝 Mantenint imatge en contenidor amb text');
+          $img.replaceWith(cleanImg);
+        }
       } else {
-        // Si té text real, només reemplaçar la imatge
-        console.log('📝 Contenidor amb text real, només reemplaçant imatge');
         $img.replaceWith(cleanImg);
       }
-    } else {
-      // Si no hi ha contenidor problemàtic, només reemplaçar la imatge
-      $img.replaceWith(cleanImg);
     }
   });
   
