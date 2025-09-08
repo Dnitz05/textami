@@ -262,9 +262,13 @@ export function GoogleDocsRenderer({
           padding: 2px 4px;
         }
 
-        /* 🎨 EDITOR HOVER EFFECTS - ELEGANT & EFFICIENT */
+        /* 🎨 HOVER EFFECTS - ELEGANT & EFFICIENT (ALL CONTEXTS) */
         .google-docs-renderer--editor .doc-h1:hover,
-        .google-docs-renderer--editor .doc-heading:hover {
+        .google-docs-renderer--editor .doc-heading:hover,
+        .google-docs-renderer--preview .doc-h1:hover,
+        .google-docs-renderer--preview .doc-heading:hover,
+        .google-docs-renderer--analysis .doc-h1:hover,
+        .google-docs-renderer--analysis .doc-heading:hover {
           background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
           border-left: 4px solid #3b82f6;
           padding: 0.75cm 1cm;
@@ -276,7 +280,9 @@ export function GoogleDocsRenderer({
           cursor: pointer;
         }
 
-        .google-docs-renderer--editor .doc-h2:hover {
+        .google-docs-renderer--editor .doc-h2:hover,
+        .google-docs-renderer--preview .doc-h2:hover,
+        .google-docs-renderer--analysis .doc-h2:hover {
           background: linear-gradient(135deg, #fafafa 0%, #f1f5f9 100%);
           border-left: 3px solid #10b981;
           padding: 0.5cm 0.75cm;
@@ -288,7 +294,9 @@ export function GoogleDocsRenderer({
           cursor: pointer;
         }
 
-        .google-docs-renderer--editor .doc-h3:hover {
+        .google-docs-renderer--editor .doc-h3:hover,
+        .google-docs-renderer--preview .doc-h3:hover,
+        .google-docs-renderer--analysis .doc-h3:hover {
           background: linear-gradient(135deg, #fefefe 0%, #f8fafc 100%);
           border-left: 2px solid #8b5cf6;
           padding: 0.35cm 0.5cm;
@@ -300,7 +308,9 @@ export function GoogleDocsRenderer({
           cursor: pointer;
         }
 
-        .google-docs-renderer--editor .doc-table:hover {
+        .google-docs-renderer--editor .doc-table:hover,
+        .google-docs-renderer--preview .doc-table:hover,
+        .google-docs-renderer--analysis .doc-table:hover {
           box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
           transform: translateY(-2px);
           border: 2px solid #3b82f6;
@@ -408,8 +418,8 @@ function postProcessGoogleDocsHTML(html: string): string {
     // 6️⃣ ELIMINAR ESTILS INLINE PROBLEMÀTICS
     removeProblematicInlineStyles($);
     
-    // 7️⃣ ULTRA ELIMINACIÓ DE SEPARACIONS VERTICALS
-    eliminateVerticalSpacing($);
+    // 7️⃣ NETEJA ABSOLUTA D'IMATGES - CLEAN SLATE
+    absoluteImageCleanup($);
     
     return $.html();
     
@@ -642,92 +652,52 @@ function removeProblematicInlineStyles($: cheerio.Root) {
   });
 }
 
-// 7️⃣ ULTRA ELIMINACIÓ DE SEPARACIONS VERTICALS
-function eliminateVerticalSpacing($: cheerio.Root) {
-  console.log('🚀 ULTRA ELIMINACIÓ: Processant separacions verticals...');
+// 7️⃣ NETEJA ABSOLUTA D'IMATGES - CLEAN SLATE STRATEGY
+function absoluteImageCleanup($: cheerio.Root) {
+  console.log('🚀 NETEJA ABSOLUTA: Extraient i recreant imatges...');
   
-  // PASSAR 0: DEBUG ULTRA DETALLAT - Examinar estructura HTML
-  $('img').each((imgIndex, img) => {
-    const $img = $(img);
-    console.log(`\n🖼️ ===== IMATGE ${imgIndex + 1} DEBUG =====`);
-    
-    // Mostrar 4 nivells de contenidors pare
-    let $current = $img;
-    for (let level = 0; level < 4; level++) {
-      const $parent = $current.parent();
-      if (!$parent.length) break;
-      
-      const tagName = $parent[0] && 'tagName' in $parent[0] ? $parent[0].tagName?.toLowerCase() : 'unknown';
-      const styles = $parent.attr('style') || 'no-style';
-      const classes = $parent.attr('class') || 'no-class';
-      
-      console.log(`📦 Nivell ${level + 1} (${tagName}):`, {
-        styles: styles.substring(0, 100) + (styles.length > 100 ? '...' : ''),
-        classes,
-        html: ($parent.prop('outerHTML') || '').substring(0, 200) + '...'
-      });
-      
-      $current = $parent;
-    }
-    console.log(`🖼️ ===== FI IMATGE ${imgIndex + 1} =====\n`);
-  });
-  
-  // Passar 1: Eliminar tots els marges/paddings de qualsevol element que conté imatges
   $('img').each((_, img) => {
     const $img = $(img);
     
-    // Recórrer cap amunt per eliminar marges de tots els ancestres
-    let $current = $img.parent();
-    let levels = 0;
+    // 1️⃣ EXTREURE: Guardar només dades essencials
+    const src = $img.attr('src');
+    const alt = $img.attr('alt') || 'Document image';
+    const width = $img.attr('width');
+    const height = $img.attr('height');
     
-    while ($current.length && levels < 5) {
-      console.log(`🔧 Nivell ${levels}: Netejant ${$current[0] && 'tagName' in $current[0] ? $current[0].tagName : 'unknown'}`);
-      
-      // Eliminar tots els marges i paddings
-      $current.css({
-        'margin': '0',
-        'padding': '0',
-        'line-height': '1',
-        'border': 'none'
-      });
-      
-      // Eliminar classes que poden afegir espais
-      $current.removeClass('text-justify');
-      
-      $current = $current.parent();
-      levels++;
+    if (!src) {
+      console.warn('⚠️ Imatge sense src, saltant...');
+      return;
     }
     
-    // Passar 2: Eliminar marges dels elements germans (abans i després)
-    const $imgContainer = $img.closest('p, div');
-    if ($imgContainer.length) {
-      $imgContainer.prev().css('margin-bottom', '0');
-      $imgContainer.next().css('margin-top', '0');
-      
-      // Si el contenidor és completament dedicat a la imatge, eliminar-lo
-      const textContent = $imgContainer.text().replace(/\s/g, '');
-      if (textContent.length === 0) {
-        console.log('🗑️ Eliminant contenidor buit:', $imgContainer[0] && 'tagName' in $imgContainer[0] ? $imgContainer[0].tagName : 'unknown');
-        $imgContainer.replaceWith($img);
+    // 2️⃣ CREAR: Nova imatge completament neta
+    let cleanImgAttrs = `src="${src}" alt="${alt}" class="doc-image"`;
+    if (width) cleanImgAttrs += ` width="${width}"`;
+    if (height) cleanImgAttrs += ` height="${height}"`;
+    
+    const cleanImg = $(`<img ${cleanImgAttrs}>`);
+    
+    // 3️⃣ REEMPLAÇAR: Eliminar tot el contenidor problemàtic
+    let $problemContainer = $img.closest('p, div');
+    
+    // Si el contenidor té només la imatge (sense text significatiu), eliminar-lo
+    if ($problemContainer.length) {
+      const textContent = $problemContainer.text().replace(/\s/g, '');
+      if (textContent.length === 0 || textContent.length < 10) {
+        console.log('🗑️ Eliminant contenidor problemàtic i insertant imatge neta');
+        $problemContainer.replaceWith(cleanImg);
+      } else {
+        // Si té text, només reemplaçar la imatge
+        console.log('📝 Contenidor amb text, només reemplaçant imatge');
+        $img.replaceWith(cleanImg);
       }
+    } else {
+      // Si no hi ha contenidor problemàtic, només reemplaçar la imatge
+      $img.replaceWith(cleanImg);
     }
   });
   
-  // Passar 3: Neteja global d'elements amb marges excessius al voltant d'imatges
-  $('p, div').each((_, el) => {
-    const $el = $(el);
-    const hasImage = $el.find('img').length > 0;
-    
-    if (hasImage) {
-      $el.css({
-        'margin': '0',
-        'padding': '0',
-        'line-height': '1'
-      });
-    }
-  });
-  
-  console.log('✅ ULTRA ELIMINACIÓ: Completada!');
+  console.log('✅ NETEJA ABSOLUTA: Completada!');
 }
 
 // UTILITATS
