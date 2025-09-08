@@ -709,9 +709,22 @@ function absoluteImageCleanup($: cheerio.Root) {
         console.log(`🔍 Contenidor: CSS=${hasCSS}, chars=${rawText.length}`);
         
         if (hasCSS) {
-          // Contenidor és CSS: reemplaçar-lo per la imatge
-          console.log('🚀 CONTENIDOR AMB CSS: Reemplaçant per imatge neta');
-          $problemContainer.replaceWith(cleanImg);
+          // Contenidor té CSS + contingut: extreure contingut real i afegir imatge
+          console.log('🚀 CONTENIDOR AMB CSS: Extraient contingut i afegint imatge');
+          
+          // 1️⃣ Extreure tots els elements que NO són CSS (p, h1, h2, h3, table, etc.)
+          const $contentElements = $problemContainer.find('p, h1, h2, h3, h4, h5, h6, table, ul, ol, div').not('[style*="@import"]').not('[style*="list-style-type"]');
+          console.log(`📄 Elements de contingut trobats: ${$contentElements.length}`);
+          
+          // 2️⃣ Insertar imatge + contingut abans del contenidor problemàtic
+          $problemContainer.before(cleanImg);
+          $contentElements.each((_, el) => {
+            const $el = $(el);
+            $problemContainer.before($el.clone());
+          });
+          
+          // 3️⃣ Eliminar el contenidor CSS problemàtic
+          $problemContainer.remove();
         } else if (rawText.trim().length < 20) {
           // Contenidor normal sense text
           console.log('🗑️ ELIMINANT contenidor buit');
