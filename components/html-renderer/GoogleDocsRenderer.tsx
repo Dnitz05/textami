@@ -685,9 +685,18 @@ function absoluteImageCleanup($: cheerio.Root) {
     console.log(`🔍 Imatge ubicació: head=${isInHead}, style=${isInStyle}, parent=${currentContainer[0] && 'tagName' in currentContainer[0] ? currentContainer[0].tagName : 'unknown'}`);
     
     if (isInHead || isInStyle) {
-      // 🚀 IMATGE MALLOCADA: Moure-la al final del body
-      console.log('⚠️ IMATGE AL HEAD/STYLE: Movent al body');
-      $('body').append(cleanImg);
+      // 🚀 IMATGE MALLOCADA AL HEAD: Trobar lloc adequat al body
+      console.log('⚠️ IMATGE AL HEAD/STYLE: Buscant lloc adequat al body');
+      
+      // Buscar el primer paràgraf del body per insertar la imatge després
+      const $firstBodyParagraph = $('body').find('p, div, h1, h2, h3').first();
+      if ($firstBodyParagraph.length) {
+        console.log('📍 INSERTANT imatge després del primer element del body');
+        $firstBodyParagraph.after(cleanImg);
+      } else {
+        console.log('📍 INSERTANT imatge al començament del body');
+        $('body').prepend(cleanImg);
+      }
       $img.remove();
     } else {
       // Si està al body, aplicar neteja normal
@@ -700,10 +709,9 @@ function absoluteImageCleanup($: cheerio.Root) {
         console.log(`🔍 Contenidor: CSS=${hasCSS}, chars=${rawText.length}`);
         
         if (hasCSS) {
-          // Contenidor és CSS, moure imatge al body
-          console.log('🚀 CONTENIDOR AMB CSS: Movent imatge al body');
-          $('body').append(cleanImg);
-          $img.remove();
+          // Contenidor és CSS: reemplaçar-lo per la imatge
+          console.log('🚀 CONTENIDOR AMB CSS: Reemplaçant per imatge neta');
+          $problemContainer.replaceWith(cleanImg);
         } else if (rawText.trim().length < 20) {
           // Contenidor normal sense text
           console.log('🗑️ ELIMINANT contenidor buit');
