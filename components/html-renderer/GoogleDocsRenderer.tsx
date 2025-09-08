@@ -682,13 +682,24 @@ function absoluteImageCleanup($: cheerio.Root) {
     
     // Si el contenidor té només la imatge (sense text significatiu), eliminar-lo
     if ($problemContainer.length) {
-      const textContent = $problemContainer.text().replace(/\s/g, '');
-      if (textContent.length === 0 || textContent.length < 10) {
-        console.log('🗑️ Eliminant contenidor problemàtic i insertant imatge neta');
+      // ✨ NETEJA ULTRA AGRESSIVA: Eliminar tot tipus de text invisible
+      const rawText = $problemContainer.text() || '';
+      const cleanText = rawText
+        .replace(/\s/g, '')           // Espais normals
+        .replace(/\u00A0/g, '')       // Non-breaking spaces
+        .replace(/\u2000-\u200F/g, '') // Unicode spaces
+        .replace(/\u2028-\u2029/g, '') // Line/paragraph separators
+        .trim();
+        
+      console.log(`🔍 Text del contenidor: "${rawText.substring(0, 50)}" → net: "${cleanText}" (${cleanText.length} chars)`);
+      
+      // SEMPRE ELIMINAR contenidors amb menys de 20 caràcters reals
+      if (cleanText.length < 20) {
+        console.log('🗑️ ELIMINANT contenidor (text insuficient) i insertant imatge neta');
         $problemContainer.replaceWith(cleanImg);
       } else {
-        // Si té text, només reemplaçar la imatge
-        console.log('📝 Contenidor amb text, només reemplaçant imatge');
+        // Si té text real, només reemplaçar la imatge
+        console.log('📝 Contenidor amb text real, només reemplaçant imatge');
         $img.replaceWith(cleanImg);
       }
     } else {
