@@ -494,6 +494,41 @@ function intelligentPreprocessing($: cheerio.Root) {
   const initialImages = $('img').length;
   console.log(`🔍 IMATGES INICIALS ABANS PREPROCESSAMENT: ${initialImages}`);
   
+  // 🔍 DEBUG GOOGLE DOCS HEADERS REALS
+  console.log('🔍 GOOGLE DOCS DEBUG: Buscant títols reals de Google Docs...');
+  
+  // Buscar elements que poden ser títols reals de Google Docs
+  const potentialGoogleHeadings = $('*').filter((_, el) => {
+    const $el = $(el);
+    const tagName = $el.prop('tagName')?.toLowerCase();
+    const className = $el.attr('class') || '';
+    const style = $el.attr('style') || '';
+    const text = $el.text().trim();
+    
+    // Només elements amb text i estils
+    if (!text || text.length === 0) return false;
+    
+    // Buscar indicadors de títol de Google Docs
+    const hasGoogleHeadingClass = /heading|title|header/i.test(className);
+    const hasHeadingStyle = style.includes('font-weight') && (style.includes('bold') || /font-weight:\s*[7-9]00/.test(style));
+    const hasHeadingSize = /font-size:\s*(\d{2,})/i.test(style);
+    
+    return hasGoogleHeadingClass || (hasHeadingStyle && hasHeadingSize) || (tagName && ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName));
+  });
+  
+  console.log(`🔍 TÍTOLS POTENCIALS DE GOOGLE DOCS TROBATS: ${potentialGoogleHeadings.length}`);
+  
+  potentialGoogleHeadings.each((i, el) => {
+    const $el = $(el);
+    const tagName = $el.prop('tagName')?.toLowerCase();
+    const className = $el.attr('class') || '';
+    const style = $el.attr('style') || '';
+    const text = $el.text().trim().substring(0, 50);
+    const fontSize = style.match(/font-size:\s*(\d+)/)?.[1];
+    
+    console.log(`🏷️ Títol ${i + 1}: <${tagName}> "${text}..." class="${className}" font=${fontSize}pt`);
+  });
+  
   console.log('🧹 FASE 1: Movent imatges mal ubicades...');
   
   // 1️⃣ MOURE TOTES les imatges del HEAD/STYLE al body ABANS del processat
@@ -1043,35 +1078,39 @@ function detectBoldText($el: cheerio.Cheerio, style: string): boolean {
 }
 
 function detectSemanticHeadingLevel(text: string, currentH1Count: number): number | null {
-  // REGLES SEMÀNTIQUES PER TÍTOLS (independents de mida font)
+  // REGLES SEMÀNTIQUES MILLORADES PER TÍTOLS GOOGLE DOCS
   
   // H1: Títol principal del document (només un per document)
   if (currentH1Count === 0 && (
     text.length < 100 &&
-    (text === text.toUpperCase() && text.length > 10) || // Títol llarg en majúscules
-    /^(TÍTOL|TITLE|DOCUMENT|INFORME|REPORT)/i.test(text) || // Paraules clau de títol principal
-    (text.split(' ').length <= 8 && text.length > 20 && !text.includes('.') && !text.includes(':'))
+    (
+      (text === text.toUpperCase() && text.length > 15) || // Títol llarg en majúscules
+      /^(TÍTOL|TITLE|DOCUMENT|INFORME|REPORT|PROPOSTA|PROJECTE)/i.test(text) || // Paraules clau
+      (text.split(' ').length <= 10 && text.length > 25 && !text.includes('.') && !text.includes(':') && /^[A-Z]/.test(text))
+    )
   )) {
     return 1;
   }
   
-  // H2: Títols de seccions principals
-  if (text.length < 80 && (
-    /^\d+\.\s*[A-Z]/.test(text) ||           // "1. Secció", "2. Altra secció"
-    /^[A-Z][A-Z\s]{2,}:?\s*$/i.test(text) || // "SECCIÓ A:", "INTRODUCCIÓ"
-    /^[A-Z][a-z]+\s*:/.test(text) ||         // "Introducció:", "Conclusions:"
-    /^[A-Z][a-z\s]{5,30}$/.test(text) ||     // Títols normals capitalitzats
-    text === text.toUpperCase() && text.length <= 40 && text.split(' ').length <= 6
+  // H2: Títols de seccions principals (més permissiu)
+  if (text.length < 120 && (
+    /^\d+[\.\)]\s*[A-ZÀ-Ÿ]/.test(text) ||     // "1. Secció", "2) Secció" amb accents
+    /^[A-ZÀ-Ÿ][A-ZÀ-Ÿ\s]{3,}:?\s*$/i.test(text) || // "INTRODUCCIÓ", "OBJECTIUS:" amb accents
+    /^[A-ZÀ-Ÿ][a-zà-ÿ]+\s*[:.]/.test(text) ||  // "Introducció:", "Metodologia." amb accents
+    /^[A-ZÀ-Ÿ][a-zà-ÿ\s]{8,50}$/.test(text) ||  // Títols normals capitalitzats llargs
+    (text === text.toUpperCase() && text.length >= 8 && text.length <= 50 && text.split(' ').length <= 8) ||
+    /^(Introducció|Objectius|Metodologia|Resultats|Conclusions|Antecedents|Context|Proposta)/i.test(text)
   )) {
     return 2;
   }
   
   // H3: Subseccions
-  if (text.length < 60 && (
+  if (text.length < 80 && (
     /^\d+\.\d+\.?\s/.test(text) ||           // "1.1 Subsecció", "2.1. Altra"
-    /^[a-z]\)\s/.test(text) ||               // "a) Punt", "b) Altre punt"
-    /^-\s*[A-Z]/.test(text) ||               // "- Subpunt"
-    (text.split(' ').length <= 6 && text.length <= 50 && /^[A-Z]/.test(text))
+    /^[a-zà-ÿ]\)\s/.test(text) ||            // "a) Punt", "b) Altre punt"
+    /^-\s*[A-ZÀ-Ÿ]/.test(text) ||            // "- Subpunt"
+    /^\*\s*[A-ZÀ-Ÿ]/.test(text) ||           // "* Subpunt"
+    (text.split(' ').length <= 8 && text.length <= 60 && /^[A-ZÀ-Ÿ]/.test(text) && text.length > 10)
   )) {
     return 3;
   }
