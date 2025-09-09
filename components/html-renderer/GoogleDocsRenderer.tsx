@@ -95,37 +95,53 @@ export function GoogleDocsRenderer({
         /* TÍTOLS NETS - JERARQUIA CORRECTA */
         .doc-heading,
         .doc-h1, .doc-h2, .doc-h3, .doc-h4, .doc-h5, .doc-h6 {
-          font-weight: bold;
+          font-weight: bold !important;
           line-height: 1.3;
           margin: 1cm 0 0.5cm 0;
+          /* REGLA DE SEGURETAT: TOTS els títols SEMPRE > 11pt (text normal) */
+          min-font-size: 12pt !important;
+        }
+        
+        /* PROTECCIÓ ULTRA AGRESSIVA: Mai títols més petits que text normal */
+        .google-docs-renderer h1,
+        .google-docs-renderer h2, 
+        .google-docs-renderer h3,
+        .google-docs-renderer h4,
+        .google-docs-renderer h5,
+        .google-docs-renderer h6,
+        .google-docs-renderer .doc-heading {
+          font-size: max(12pt, 1.1em) !important;
+          font-weight: bold !important;
         }
         
         /* H1: Títol principal del document (únic) */
         .doc-h1 { 
-          font-size: 20pt; 
+          font-size: 22pt !important; 
           color: #000000; 
           margin: 2cm 0 1.5cm 0; 
           text-align: center;
           border-bottom: 2px solid #333333;
           padding-bottom: 0.5cm;
+          font-weight: bold !important;
         }
         
         /* H2: Títols de secció (PRIORITARIS) */
         .doc-h2 { 
-          font-size: 16pt; 
+          font-size: 18pt !important; 
           color: #222222; 
           margin: 1.5cm 0 0.8cm 0;
           border-left: 4px solid #0066cc;
           padding-left: 0.5cm;
           background-color: #f8f9fa;
           padding: 0.4cm 0.5cm;
+          font-weight: bold !important;
         }
         
-        /* H3: Subseccions */
-        .doc-h3 { font-size: 13pt; color: #444444; margin: 1cm 0 0.5cm 0; }
-        .doc-h4 { font-size: 12pt; color: #555555; margin: 0.8cm 0 0.4cm 0; }
-        .doc-h5 { font-size: 11pt; color: #666666; margin: 0.6cm 0 0.3cm 0; }
-        .doc-h6 { font-size: 10pt; color: #777777; margin: 0.5cm 0 0.25cm 0; font-style: italic; }
+        /* H3+: Subseccions (SEMPRE > 11pt text normal) */
+        .doc-h3 { font-size: 15pt !important; color: #444444; margin: 1cm 0 0.5cm 0; font-weight: bold !important; }
+        .doc-h4 { font-size: 14pt !important; color: #555555; margin: 0.8cm 0 0.4cm 0; font-weight: bold !important; }
+        .doc-h5 { font-size: 13pt !important; color: #666666; margin: 0.6cm 0 0.3cm 0; font-weight: bold !important; }
+        .doc-h6 { font-size: 12pt !important; color: #777777; margin: 0.5cm 0 0.25cm 0; font-style: italic; font-weight: bold !important; }
 
         /* ALINEACIONS NETES */
         .text-left { text-align: left; }
@@ -1065,13 +1081,20 @@ function detectSemanticHeadingLevel(text: string, currentH1Count: number): numbe
 }
 
 function getHeadingLevel(fontSize: number): number | null {
-  if (fontSize >= 18) return 1;  // H1: 18pt+ (matches CSS .doc-h1: 18pt)
-  if (fontSize >= 14) return 2;  // H2: 14pt+ (matches CSS .doc-h2: 14pt)
-  if (fontSize >= 12) return 3;  // H3: 12pt+ (matches CSS .doc-h3: 12pt)
-  if (fontSize >= 11) return 4;  // H4: 11pt+ 
-  if (fontSize >= 10) return 5;  // H5: 10pt+
-  if (fontSize >= 9) return 6;   // H6: 9pt+
-  return null;
+  // JERARQUIA SEGURA: mai assignar títols que serien més petits que text normal (11pt)
+  if (fontSize >= 20) return 1;  // H1: 20pt+ (matches CSS .doc-h1: 22pt)
+  if (fontSize >= 16) return 2;  // H2: 16pt+ (matches CSS .doc-h2: 18pt)
+  if (fontSize >= 14) return 3;  // H3: 14pt+ (matches CSS .doc-h3: 15pt)
+  if (fontSize >= 12) return 4;  // H4: 12pt+ (matches CSS .doc-h4: 14pt)
+  
+  // SI la font és ≤ 11pt (igual o menor que text normal), NO és títol vàlid
+  if (fontSize <= 11) {
+    console.log(`⚠️ Font ${fontSize}pt massa petita per ser títol (text normal = 11pt)`);
+    return null;
+  }
+  
+  // Fonts entre 11-12pt: dubte → H6 mínim per seguretat
+  return 6; // H6: 12pt mínim (matches CSS .doc-h6: 12pt)
 }
 
 function applyPlaceholders(html: string, placeholders: any[]): string {
