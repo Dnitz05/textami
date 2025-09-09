@@ -649,12 +649,14 @@ function optimizeImagesSimple($: cheerio.Root) {
 
 // 1️⃣ NORMALITZAR TÍTOLS I ALINEACIONS
 function normalizeHeadingsAndAlignment($: cheerio.Root) {
-  // Convertir elements amb estils de títol a títols semàntics - ESTRUCTURA CORRECTA
-  console.log('🏷️ INICIANT DETECCIÓ DE TÍTOLS - Estructura: H1 únic, H2 seccions, H3+ subseccions');
+  // Convertir elements amb estils de títol a títols semàntics - DETECCIÓ SEMÀNTICA
+  console.log('🏷️ INICIANT DETECCIÓ DE TÍTOLS - Prioritat: semàntica > mida font');
   
   let h1Count = 0;
   let h2Count = 0;
+  let potentialHeadings: Array<{element: cheerio.Cheerio, text: string, fontSize: number | null, isBold: boolean, semanticLevel: number | null}> = [];
   
+  // FASE 1: Recopilar tots els candidats a títol
   $('p, div, span').each((_, el) => {
     const $el = $(el);
     const style = $el.attr('style') || '';
@@ -666,39 +668,47 @@ function normalizeHeadingsAndAlignment($: cheerio.Root) {
     const fontSize = extractFontSize(style);
     const isBold = detectBoldText($el, style);
     
-    // Detecció més flexible de títols amb JERARQUIA CORRECTA
-    let headingLevel = null;
+    // Només considerar elements negreta com a títols potencials
+    if (isBold) {
+      const semanticLevel = detectSemanticHeadingLevel(text, h1Count);
+      potentialHeadings.push({
+        element: $el,
+        text,
+        fontSize,
+        isBold,
+        semanticLevel
+      });
+    }
+  });
+  
+  console.log(`🔍 Candidats a títol trobats: ${potentialHeadings.length}`);
+  
+  // FASE 2: Aplicar jerarquia semàntica
+  potentialHeadings.forEach(({element, text, fontSize, semanticLevel}) => {
+    let headingLevel = semanticLevel;
     
-    // PRIORITAT 1: Títols per mida de font (més precisos)
-    if (fontSize && isBold) {
+    // Si la detecció semàntica no és clara, usar mida de font com a fallback
+    if (!headingLevel && fontSize) {
       headingLevel = getHeadingLevel(fontSize);
     }
     
-    // PRIORITAT 2: Patrons semàntics per títols de secció (H2)
-    if (!headingLevel && isBold) {
-      // Títols principals de secció - SEMPRE H2
-      if (text.length < 100 && !text.includes('.') && (
-          text === text.toUpperCase() || // Majúscules 
-          text.split(' ').length <= 6 ||  // Títols curts
-          /^\d+\./.test(text) ||          // Numerats: "1. Secció"
-          /^[A-Z][a-z]+:/.test(text)      // Format: "Secció:"
-      )) {
-        headingLevel = 2; // SEMPRE H2 per seccions
-      }
-      // Subseccions dins de seccions
-      else if (text.length < 80 && text.split(' ').length <= 10) {
-        headingLevel = 3; // H3 per subseccions
+    // Si encara no hi ha nivell, assignar per defecte basat en característiques
+    if (!headingLevel) {
+      if (text.length < 30 && text.split(' ').length <= 4) {
+        headingLevel = 2; // Títols molt curts → H2
+      } else if (text.length < 60) {
+        headingLevel = 3; // Títols curts → H3
       }
     }
     
-    // Aplicar el títol detectat amb comptadors
+    // Aplicar el títol detectat
     if (headingLevel) {
       if (headingLevel === 1) h1Count++;
       if (headingLevel === 2) h2Count++;
       
-      const content = $el.html() || '';
-      $el.replaceWith(`<h${headingLevel} class="doc-heading doc-h${headingLevel}">${content}</h${headingLevel}>`);
-      console.log(`🏷️ Títol H${headingLevel} detectat: "${text.substring(0, 50)}..."`);
+      const content = element.html() || '';
+      element.replaceWith(`<h${headingLevel} class="doc-heading doc-h${headingLevel}">${content}</h${headingLevel}>`);
+      console.log(`🏷️ Títol H${headingLevel} ${fontSize ? `(${fontSize}pt)` : '(sense font-size)'}: "${text.substring(0, 50)}..."`);
     }
   });
   
@@ -1014,6 +1024,44 @@ function detectBoldText($el: cheerio.Cheerio, style: string): boolean {
   }
   
   return false;
+}
+
+function detectSemanticHeadingLevel(text: string, currentH1Count: number): number | null {
+  // REGLES SEMÀNTIQUES PER TÍTOLS (independents de mida font)
+  
+  // H1: Títol principal del document (només un per document)
+  if (currentH1Count === 0 && (
+    text.length < 100 &&
+    (text === text.toUpperCase() && text.length > 10) || // Títol llarg en majúscules
+    /^(TÍTOL|TITLE|DOCUMENT|INFORME|REPORT)/i.test(text) || // Paraules clau de títol principal
+    (text.split(' ').length <= 8 && text.length > 20 && !text.includes('.') && !text.includes(':'))
+  )) {
+    return 1;
+  }
+  
+  // H2: Títols de seccions principals
+  if (text.length < 80 && (
+    /^\d+\.\s*[A-Z]/.test(text) ||           // "1. Secció", "2. Altra secció"
+    /^[A-Z][A-Z\s]{2,}:?\s*$/i.test(text) || // "SECCIÓ A:", "INTRODUCCIÓ"
+    /^[A-Z][a-z]+\s*:/.test(text) ||         // "Introducció:", "Conclusions:"
+    /^[A-Z][a-z\s]{5,30}$/.test(text) ||     // Títols normals capitalitzats
+    text === text.toUpperCase() && text.length <= 40 && text.split(' ').length <= 6
+  )) {
+    return 2;
+  }
+  
+  // H3: Subseccions
+  if (text.length < 60 && (
+    /^\d+\.\d+\.?\s/.test(text) ||           // "1.1 Subsecció", "2.1. Altra"
+    /^[a-z]\)\s/.test(text) ||               // "a) Punt", "b) Altre punt"
+    /^-\s*[A-Z]/.test(text) ||               // "- Subpunt"
+    (text.split(' ').length <= 6 && text.length <= 50 && /^[A-Z]/.test(text))
+  )) {
+    return 3;
+  }
+  
+  // Si no coincideix amb cap patró semàntic clar
+  return null;
 }
 
 function getHeadingLevel(fontSize: number): number | null {
