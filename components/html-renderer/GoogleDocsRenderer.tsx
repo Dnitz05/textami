@@ -454,12 +454,17 @@ function postProcessGoogleDocsHTML(html: string): string {
 
 // 🚀 ETAPA 0: PREPROCESSAMENT INTEL·LIGENT
 function intelligentPreprocessing($: cheerio.Root) {
+  // 🚨 DEBUGGING ABANS DE TOT
+  const initialImages = $('img').length;
+  console.log(`🔍 IMATGES INICIALS ABANS PREPROCESSAMENT: ${initialImages}`);
+  
   console.log('🧹 FASE 1: Movent imatges mal ubicades...');
   
   // 1️⃣ MOURE TOTES les imatges del HEAD/STYLE al body ABANS del processat
   let movedImages = 0;
   $('head img, style img').each((_, img) => {
     const $img = $(img);
+    console.log(`🚚 Movent imatge del HEAD/STYLE: ${$img.attr('src')?.substring(0, 50) || 'sense src'}...`);
     
     // Trobar el primer element del body per insertar la imatge després
     const $firstBodyElement = $('body').children().first();
@@ -471,6 +476,10 @@ function intelligentPreprocessing($: cheerio.Root) {
     movedImages++;
   });
   console.log(`📍 Imatges mogudes del HEAD/STYLE: ${movedImages}`);
+  
+  // 🚨 CHECK DESPRÉS DE MOURE
+  const afterMoveImages = $('img').length;
+  console.log(`🔍 IMATGES DESPRÉS DE MOURE: ${afterMoveImages}`);
   
   console.log('🧹 FASE 2: Eliminant CSS massiu...');
   
@@ -492,16 +501,26 @@ function intelligentPreprocessing($: cheerio.Root) {
   });
   console.log(`🧽 Atributs style massius netejats: ${cleanedStyles}`);
   
-  // 4️⃣ ELIMINAR elements completament buits i espais massius
+  // 4️⃣ ELIMINAR elements completament buits i espais massius (AMB PROTECCIÓ D'IMATGES)
+  const imagesBeforeCleanup = $('img').length;
+  console.log(`🔍 IMATGES ABANS DE NETEJA ELEMENTS BUITS: ${imagesBeforeCleanup}`);
+  
   let removedEmpty = 0;
   $('p:empty, div:empty, span:empty').each((_, el) => {
     $(el).remove();
     removedEmpty++;
   });
   
-  // ELIMINAR paràgrafs que només contenen espais en blanc o &nbsp;
+  // ELIMINAR paràgrafs que només contenen espais en blanc o &nbsp; (PROTEGINT IMATGES)
   $('p, div').each((_, el) => {
     const $el = $(el);
+    
+    // 🛡️ PROTECCIÓ TOTAL: SI CONTÉ IMATGES, NO TOCAR
+    if ($el.find('img').length > 0) {
+      console.log(`🛡️ Protegint ${$el.prop('tagName')} amb ${$el.find('img').length} imatges`);
+      return;
+    }
+    
     const text = $el.text().trim();
     const html = $el.html() || '';
     
@@ -512,7 +531,9 @@ function intelligentPreprocessing($: cheerio.Root) {
     }
   });
   
+  const imagesAfterCleanup = $('img').length;
   console.log(`🗑️ Elements buits/espais eliminats: ${removedEmpty}`);
+  console.log(`🔍 IMATGES DESPRÉS DE NETEJA ELEMENTS BUITS: ${imagesAfterCleanup}`);
   
   console.log('✅ PREPROCESSAMENT COMPLETAT: HTML net i estructurat!');
 }
@@ -520,6 +541,31 @@ function intelligentPreprocessing($: cheerio.Root) {
 // 2️⃣ OPTIMITZAR IMATGES SIMPLE (després del preprocessament)
 function optimizeImagesSimple($: cheerio.Root) {
   console.log('🖼️ OPTIMITZACIÓ SIMPLE: Processant imatges ja netes...');
+  
+  // 🚨 DEBUG EMERGENCY: Buscar totes les imatges en tot el DOM
+  const allImages = $('img');
+  const allImgTags = $('*').filter((_, el) => $(el).prop('tagName')?.toLowerCase() === 'img');
+  const imgInSrc = $('[src]').filter((_, el) => $(el).prop('tagName')?.toLowerCase() === 'img');
+  
+  console.log(`🚨 EMERGENCY DEBUG - Total imatges trobades:`);
+  console.log(`   - $('img'): ${allImages.length}`);
+  console.log(`   - Elements IMG: ${allImgTags.length}`);
+  console.log(`   - IMG amb src: ${imgInSrc.length}`);
+  console.log(`   - HTML complet length: ${$.html().length}`);
+  console.log(`   - HTML conté '<img': ${$.html().includes('<img') ? 'SÍ' : 'NO'}`);
+  
+  if (allImages.length === 0) {
+    console.log('🚨🚨🚨 ALERTA CRÍTICA: NO S\'HAN TROBAT IMATGES!');
+    console.log('🔍 Buscant traces d\'imatges en l\'HTML...');
+    const htmlContent = $.html();
+    const imgMatches = htmlContent.match(/<img[^>]*>/g);
+    console.log(`🔍 RegEx match per <img: ${imgMatches ? imgMatches.length : 0}`);
+    if (imgMatches) {
+      imgMatches.forEach((match, i) => {
+        console.log(`🖼️ Imatge ${i + 1} trobada per RegEx: ${match.substring(0, 100)}...`);
+      });
+    }
+  }
   
   $('img').each((imgIndex, img) => {
     const $img = $(img);
