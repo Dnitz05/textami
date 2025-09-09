@@ -709,22 +709,22 @@ function absoluteImageCleanup($: cheerio.Root) {
         console.log(`🔍 Contenidor: CSS=${hasCSS}, chars=${rawText.length}`);
         
         if (hasCSS) {
-          // Contenidor té CSS + contingut: extreure contingut real i afegir imatge
-          console.log('🚀 CONTENIDOR AMB CSS: Extraient contingut i afegint imatge');
+          // Contenidor té CSS + contingut: estratègia intel·ligent
+          console.log('🚀 CONTENIDOR AMB CSS: Aplicant estratègia intel·ligent');
           
-          // 1️⃣ Extreure tots els elements que NO són CSS (p, h1, h2, h3, table, etc.)
-          const $contentElements = $problemContainer.find('p, h1, h2, h3, h4, h5, h6, table, ul, ol, div').not('[style*="@import"]').not('[style*="list-style-type"]');
-          console.log(`📄 Elements de contingut trobats: ${$contentElements.length}`);
+          // 1️⃣ NOMÉS afegir la imatge neta al contenidor, eliminant la original
+          $img.replaceWith(cleanImg);
           
-          // 2️⃣ Insertar imatge + contingut abans del contenidor problemàtic
-          $problemContainer.before(cleanImg);
-          $contentElements.each((_, el) => {
-            const $el = $(el);
-            $problemContainer.before($el.clone());
-          });
+          // 2️⃣ Eliminar tots els elements <style> dins del contenidor per netejar CSS
+          $problemContainer.find('style').remove();
           
-          // 3️⃣ Eliminar el contenidor CSS problemàtic
-          $problemContainer.remove();
+          // 3️⃣ Netejar atributs style massivs del contenidor
+          const currentStyle = $problemContainer.attr('style') || '';
+          if (currentStyle.includes('@import') || currentStyle.length > 100) {
+            $problemContainer.removeAttr('style');
+          }
+          
+          console.log('✅ Imatge reemplaçada dins del contenidor, CSS netejat');
         } else if (rawText.trim().length < 20) {
           // Contenidor normal sense text
           console.log('🗑️ ELIMINANT contenidor buit');
