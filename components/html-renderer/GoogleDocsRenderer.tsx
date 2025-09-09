@@ -51,6 +51,235 @@ export function GoogleDocsRenderer({
     return html;
   }, [htmlContent, enablePlaceholders, placeholders]);
 
+  // 🤖 AI INSTRUCTION SYSTEM - State management
+  const [aiInstructionPanel, setAiInstructionPanel] = React.useState({
+    isOpen: false,
+    activeSection: null as number | null,
+    activeSubsection: null as number | null,
+    globalInstructions: '',
+    sectionInstructions: {} as Record<string, string>
+  });
+
+  const handleAiInstructionPanel = (sectionNumber?: number, subsectionNumber?: number) => {
+    setAiInstructionPanel(prev => ({
+      ...prev,
+      isOpen: true,
+      activeSection: sectionNumber || null,
+      activeSubsection: subsectionNumber || null
+    }));
+  };
+
+  const saveAiInstructions = (type: 'global' | 'section', value: string, sectionId?: string) => {
+    setAiInstructionPanel(prev => {
+      if (type === 'global') {
+        return { ...prev, globalInstructions: value };
+      } else if (sectionId) {
+        return { 
+          ...prev, 
+          sectionInstructions: { 
+            ...prev.sectionInstructions, 
+            [sectionId]: value 
+          }
+        };
+      }
+      return prev;
+    });
+  };
+
+  // 🎯 SECTION-WIDE HOVER EFFECTS - Add interactive functionality
+  React.useEffect(() => {
+    if (context !== 'editor') return; // Only enable in editor context
+    
+    const addSectionHoverEffects = () => {
+      // Find all section headers (H2) and subsection headers (H3)
+      const sectionHeaders = document.querySelectorAll('.google-docs-renderer--editor .doc-h2[data-section-number]');
+      const subsectionHeaders = document.querySelectorAll('.google-docs-renderer--editor .doc-h3[data-section-number]');
+      
+      // Add section hover effects for H2 (full sections)
+      sectionHeaders.forEach((header) => {
+        const sectionNumber = header.getAttribute('data-section-number');
+        
+        // Create section badge
+        const sectionBadge = document.createElement('div');
+        sectionBadge.className = 'section-badge';
+        sectionBadge.innerHTML = `🌐 Secció ${sectionNumber}`;
+        sectionBadge.style.cssText = `
+          position: absolute;
+          top: -25px;
+          right: 0;
+          background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+          color: white;
+          padding: 4px 12px;
+          border-radius: 12px;
+          font-size: 8pt;
+          font-weight: 600;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          pointer-events: none;
+          z-index: 10;
+        `;
+        
+        // Add AI instruction indicator
+        const aiIndicator = document.createElement('div');
+        aiIndicator.className = 'ai-instruction-indicator';
+        aiIndicator.innerHTML = `📋 IA Global`;
+        aiIndicator.style.cssText = `
+          position: absolute;
+          top: -25px;
+          left: 0;
+          background: linear-gradient(135deg, #10b981, #047857);
+          color: white;
+          padding: 4px 10px;
+          border-radius: 10px;
+          font-size: 7pt;
+          font-weight: 500;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          cursor: pointer;
+          z-index: 10;
+        `;
+        
+        // Append indicators to header
+        (header as HTMLElement).style.position = 'relative';
+        header.appendChild(sectionBadge);
+        header.appendChild(aiIndicator);
+        
+        // Add hover event listeners for entire section
+        const handleSectionHover = (isHovering: boolean) => {
+          const sectionElements = document.querySelectorAll(`[data-section="${sectionNumber}"]`);
+          
+          sectionElements.forEach((element) => {
+            if (isHovering) {
+              (element as HTMLElement).style.cssText += `
+                background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+                border-left: 4px solid #3b82f6;
+                padding-left: 1cm;
+                margin-left: -1cm;
+                border-radius: 6px;
+                transition: all 0.3s ease;
+              `;
+            } else {
+              (element as HTMLElement).style.background = '';
+              (element as HTMLElement).style.borderLeft = '';
+              (element as HTMLElement).style.paddingLeft = '';
+              (element as HTMLElement).style.marginLeft = '';
+              (element as HTMLElement).style.borderRadius = '';
+            }
+          });
+          
+          // Show/hide indicators
+          sectionBadge.style.opacity = isHovering ? '1' : '0';
+          aiIndicator.style.opacity = isHovering ? '1' : '0';
+        };
+        
+        header.addEventListener('mouseenter', () => handleSectionHover(true));
+        header.addEventListener('mouseleave', () => handleSectionHover(false));
+        
+        // Add click handler for AI instructions
+        aiIndicator.addEventListener('click', (e) => {
+          e.stopPropagation();
+          handleAiInstructionPanel(parseInt(sectionNumber || '0'));
+        });
+      });
+      
+      // Add subsection hover effects for H3  
+      subsectionHeaders.forEach((header) => {
+        const sectionNumber = header.getAttribute('data-section-number');
+        const subsectionNumber = header.getAttribute('data-subsection-number');
+        
+        // Create subsection badge
+        const subsectionBadge = document.createElement('div');
+        subsectionBadge.className = 'subsection-badge';
+        subsectionBadge.innerHTML = `📄 ${sectionNumber}.${subsectionNumber}`;
+        subsectionBadge.style.cssText = `
+          position: absolute;
+          top: -20px;
+          right: 0;
+          background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+          color: white;
+          padding: 3px 10px;
+          border-radius: 10px;
+          font-size: 7pt;
+          font-weight: 600;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          pointer-events: none;
+          z-index: 10;
+        `;
+        
+        // Add subsection AI indicator
+        const subsectionAiIndicator = document.createElement('div');
+        subsectionAiIndicator.className = 'ai-subsection-indicator';
+        subsectionAiIndicator.innerHTML = `📋`;
+        subsectionAiIndicator.style.cssText = `
+          position: absolute;
+          top: -20px;
+          left: 0;
+          background: linear-gradient(135deg, #f59e0b, #d97706);
+          color: white;
+          padding: 3px 8px;
+          border-radius: 8px;
+          font-size: 6pt;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          cursor: pointer;
+          z-index: 10;
+        `;
+        
+        (header as HTMLElement).style.position = 'relative';
+        header.appendChild(subsectionBadge);
+        header.appendChild(subsectionAiIndicator);
+        
+        // Add subsection hover effects
+        const handleSubsectionHover = (isHovering: boolean) => {
+          const subsectionElements = document.querySelectorAll(`[data-section="${sectionNumber}"][data-subsection="${subsectionNumber}"]`);
+          
+          subsectionElements.forEach((element) => {
+            if (isHovering) {
+              (element as HTMLElement).style.cssText += `
+                background: linear-gradient(135deg, #fefefe 0%, #f8fafc 100%);
+                border-left: 2px solid #8b5cf6;
+                padding-left: 0.5cm;
+                margin-left: -0.5cm;
+                border-radius: 4px;
+                transition: all 0.25s ease;
+              `;
+            } else {
+              (element as HTMLElement).style.background = '';
+              (element as HTMLElement).style.borderLeft = '';
+              (element as HTMLElement).style.paddingLeft = '';
+              (element as HTMLElement).style.marginLeft = '';
+              (element as HTMLElement).style.borderRadius = '';
+            }
+          });
+          
+          subsectionBadge.style.opacity = isHovering ? '1' : '0';
+          subsectionAiIndicator.style.opacity = isHovering ? '1' : '0';
+        };
+        
+        header.addEventListener('mouseenter', () => handleSubsectionHover(true));
+        header.addEventListener('mouseleave', () => handleSubsectionHover(false));
+        
+        subsectionAiIndicator.addEventListener('click', (e) => {
+          e.stopPropagation();
+          handleAiInstructionPanel(
+            parseInt(sectionNumber || '0'), 
+            parseInt(subsectionNumber || '0')
+          );
+        });
+      });
+    };
+    
+    // Add effects after DOM is ready
+    const timer = setTimeout(addSectionHoverEffects, 100);
+    
+    return () => {
+      clearTimeout(timer);
+      // Cleanup indicators on unmount
+      document.querySelectorAll('.section-badge, .subsection-badge, .ai-instruction-indicator, .ai-subsection-indicator').forEach(el => el.remove());
+    };
+  }, [processedHTML, context]);
+
   const handleClick = (event: React.MouseEvent) => {
     if (!enablePlaceholders || !onPlaceholderClick) return;
     
@@ -71,6 +300,124 @@ export function GoogleDocsRenderer({
         onClick={handleClick}
         dangerouslySetInnerHTML={{ __html: processedHTML }}
       />
+      
+      {/* 🤖 AI INSTRUCTION PANEL */}
+      {context === 'editor' && (
+        <div className={`ai-instruction-panel ${aiInstructionPanel.isOpen ? 'active' : ''}`}>
+          <div className="ai-instruction-header">
+            <span>🤖 Instruccions IA</span>
+            <button 
+              className="ai-instruction-close"
+              onClick={() => setAiInstructionPanel(prev => ({ ...prev, isOpen: false }))}
+            >
+              ×
+            </button>
+          </div>
+          
+          <div className="ai-instruction-content">
+            {/* Global AI Instructions */}
+            <div className="ai-instruction-section global">
+              <div className="ai-instruction-title">
+                🌐 Instruccions Globals
+                <span style={{ fontSize: '9px', color: '#6b7280' }}>
+                  (Aplicades a tot el document)
+                </span>
+              </div>
+              <textarea
+                className="ai-instruction-textarea"
+                value={aiInstructionPanel.globalInstructions}
+                onChange={(e) => setAiInstructionPanel(prev => ({ 
+                  ...prev, 
+                  globalInstructions: e.target.value 
+                }))}
+                placeholder="Defineix instruccions generals per l'IA que s'aplicaran a tot el document..."
+              />
+              <button 
+                className="ai-instruction-save"
+                onClick={() => saveAiInstructions('global', aiInstructionPanel.globalInstructions)}
+              >
+                💾 Guardar Global
+              </button>
+            </div>
+            
+            {/* Section-Specific AI Instructions */}
+            {aiInstructionPanel.activeSection && (
+              <div className="ai-instruction-section specific">
+                <div className="ai-instruction-title">
+                  📋 Instruccions per Secció {aiInstructionPanel.activeSection}
+                  {aiInstructionPanel.activeSubsection && (
+                    <span className="section-instruction-badge">
+                      .{aiInstructionPanel.activeSubsection}
+                    </span>
+                  )}
+                </div>
+                <textarea
+                  className="ai-instruction-textarea"
+                  value={aiInstructionPanel.sectionInstructions[
+                    `${aiInstructionPanel.activeSection}${
+                      aiInstructionPanel.activeSubsection ? `.${aiInstructionPanel.activeSubsection}` : ''
+                    }`
+                  ] || ''}
+                  onChange={(e) => {
+                    const sectionId = `${aiInstructionPanel.activeSection}${
+                      aiInstructionPanel.activeSubsection ? `.${aiInstructionPanel.activeSubsection}` : ''
+                    }`;
+                    setAiInstructionPanel(prev => ({
+                      ...prev,
+                      sectionInstructions: {
+                        ...prev.sectionInstructions,
+                        [sectionId]: e.target.value
+                      }
+                    }));
+                  }}
+                  placeholder={`Defineix instruccions específiques per ${
+                    aiInstructionPanel.activeSubsection 
+                      ? `la subsecció ${aiInstructionPanel.activeSection}.${aiInstructionPanel.activeSubsection}` 
+                      : `la secció ${aiInstructionPanel.activeSection}`
+                  }...`}
+                />
+                <button 
+                  className="ai-instruction-save"
+                  onClick={() => {
+                    const sectionId = `${aiInstructionPanel.activeSection}${
+                      aiInstructionPanel.activeSubsection ? `.${aiInstructionPanel.activeSubsection}` : ''
+                    }`;
+                    saveAiInstructions(
+                      'section', 
+                      aiInstructionPanel.sectionInstructions[sectionId] || '', 
+                      sectionId
+                    );
+                  }}
+                >
+                  💾 Guardar Secció
+                </button>
+              </div>
+            )}
+            
+            {/* Instructions Summary */}
+            <div className="ai-instruction-section">
+              <div className="ai-instruction-title">
+                📊 Resum d'Instruccions Actives
+              </div>
+              <div style={{ fontSize: '10px', color: '#6b7280', lineHeight: 1.4 }}>
+                <div>
+                  🌐 <strong>Globals:</strong> {aiInstructionPanel.globalInstructions ? '✅ Definides' : '⭕ Buides'}
+                </div>
+                <div>
+                  📋 <strong>Per Secció:</strong> {Object.keys(aiInstructionPanel.sectionInstructions).length} configurades
+                </div>
+                {Object.entries(aiInstructionPanel.sectionInstructions).map(([sectionId, instructions]) => (
+                  instructions && (
+                    <div key={sectionId} style={{ marginLeft: '16px', fontSize: '9px' }}>
+                      • Secció {sectionId}: {instructions.substring(0, 30)}...
+                    </div>
+                  )
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       <style jsx global>{`
         /* 🚀 CSS NET I ELEGANT - POST-PROCESSAT HTML PERFECT */
@@ -181,19 +528,82 @@ export function GoogleDocsRenderer({
           color: #333333;
         }
         
-        /* ESTRUCTURA DE SECCIONS */
+        /* ESTRUCTURA DE SECCIONS AMB HOVER COMPLET */
         .section-content {
           margin-left: 0.5cm;
-          padding-left: 0.3cm;
-          border-left: 1px solid #e0e0e0;
+          padding: 0.3cm;
+          border-left: 3px solid #e0e0e0;
           margin-bottom: 1cm;
+          transition: all 0.3s ease;
+          border-radius: 0 4px 4px 0;
+          position: relative;
         }
         
         .subsection-content {
           margin-left: 1cm;
-          padding-left: 0.3cm;
-          border-left: 1px dotted #d0d0d0;
+          padding: 0.3cm;
+          border-left: 2px dotted #d0d0d0;
           margin-bottom: 0.5cm;
+          transition: all 0.2s ease;
+          border-radius: 0 3px 3px 0;
+        }
+        
+        /* HOVER EFECTES SOBRE TOTA LA SECCIÓ */
+        .section-content:hover {
+          background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+          border-left: 4px solid #3b82f6;
+          padding: 0.5cm;
+          margin: 0.2cm 0 1.2cm 0.3cm;
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+          transform: translateX(2px);
+        }
+        
+        .subsection-content:hover {
+          background: linear-gradient(135deg, #fafafa 0%, #f1f5f9 100%);
+          border-left: 3px solid #10b981;
+          padding: 0.4cm;
+          margin: 0.1cm 0 0.6cm 0.8cm;
+          box-shadow: 0 2px 8px rgba(16, 185, 129, 0.12);
+          transform: translateX(2px);
+        }
+        
+        /* IDENTIFICACIÓ VISUAL SUBTIL DE SECCIONS */
+        .section-content::before {
+          content: "Secció " attr(data-section);
+          position: absolute;
+          top: -8px;
+          right: 0;
+          background: #3b82f6;
+          color: white;
+          font-size: 7pt;
+          font-weight: bold;
+          padding: 2px 6px;
+          border-radius: 3px;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+        
+        .section-content:hover::before {
+          opacity: 0.8;
+        }
+        
+        .subsection-content::before {
+          content: attr(data-section) "." attr(data-subsection);
+          position: absolute;
+          top: -6px;
+          right: 0;
+          background: #10b981;
+          color: white;
+          font-size: 6pt;
+          font-weight: bold;
+          padding: 1px 4px;
+          border-radius: 2px;
+          opacity: 0;
+          transition: opacity 0.2s ease;
+        }
+        
+        .subsection-content:hover::before {
+          opacity: 0.7;
         }
         
         /* NAVEGACIÓ DE SECCIONS */
@@ -227,6 +637,75 @@ export function GoogleDocsRenderer({
         .section-nav a:hover {
           background-color: #f0f8ff;
           padding-left: 0.2cm;
+        }
+        
+        /* SISTEMA D'INSTRUCCIONS AI */
+        .ai-instruction-global {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+          color: white;
+          padding: 0.3cm;
+          border-radius: 6px;
+          font-size: 8pt;
+          font-weight: bold;
+          box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+          z-index: 1000;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+        
+        .ai-instruction-global:hover {
+          transform: scale(1.05);
+          box-shadow: 0 6px 16px rgba(124, 58, 237, 0.4);
+        }
+        
+        .ai-instruction-section {
+          position: absolute;
+          top: -10px;
+          left: -10px;
+          background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+          color: white;
+          padding: 0.2cm;
+          border-radius: 4px;
+          font-size: 7pt;
+          font-weight: bold;
+          box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+          opacity: 0;
+          transition: all 0.3s ease;
+          pointer-events: none;
+        }
+        
+        .section-content:hover .ai-instruction-section,
+        .subsection-content:hover .ai-instruction-section {
+          opacity: 1;
+          pointer-events: auto;
+          transform: translateY(-2px);
+        }
+        
+        /* INDICADORS DE TIPUS D'INSTRUCCIÓ */
+        .ai-instruction-global::before {
+          content: "🌐 ";
+          font-size: 10pt;
+        }
+        
+        .ai-instruction-section::before {
+          content: "📋 ";
+          font-size: 8pt;
+        }
+        
+        /* HOVER MILLOR PER IDENTIFICAR SECCIONS SENCERES */
+        .section-content:hover,
+        .section-content:hover * {
+          outline: 1px dotted #3b82f6;
+          outline-offset: 2px;
+        }
+        
+        .subsection-content:hover,
+        .subsection-content:hover * {
+          outline: 1px dotted #10b981;
+          outline-offset: 1px;
         }
 
         /* IMATGES PERFETES - OPTIMITZADES PER VISIBILITAT */
@@ -516,6 +995,138 @@ export function GoogleDocsRenderer({
         .google-docs-renderer--editor .doc-h2:hover,
         .google-docs-renderer--editor .doc-h3:hover {
           position: relative;
+        }
+
+        /* 🤖 AI INSTRUCTION SYSTEM - Visual styling for instruction indicators */
+        .ai-instruction-panel {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          width: 320px;
+          max-height: 80vh;
+          background: linear-gradient(145deg, #ffffff, #f8fafc);
+          border: 2px solid #e2e8f0;
+          border-radius: 16px;
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+          z-index: 1000;
+          overflow: hidden;
+          transform: translateX(100%);
+          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .ai-instruction-panel.active {
+          transform: translateX(0);
+        }
+
+        .ai-instruction-header {
+          background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+          color: white;
+          padding: 16px 20px;
+          font-weight: 600;
+          font-size: 14px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .ai-instruction-close {
+          background: none;
+          border: none;
+          color: white;
+          font-size: 18px;
+          cursor: pointer;
+          padding: 0;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 4px;
+          transition: background 0.2s ease;
+        }
+
+        .ai-instruction-close:hover {
+          background: rgba(255, 255, 255, 0.2);
+        }
+
+        .ai-instruction-content {
+          padding: 20px;
+          overflow-y: auto;
+          max-height: calc(80vh - 80px);
+        }
+
+        .ai-instruction-section {
+          margin-bottom: 24px;
+          padding: 16px;
+          background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+          border-radius: 12px;
+          border-left: 4px solid #10b981;
+        }
+
+        .ai-instruction-section.global {
+          border-left-color: #3b82f6;
+        }
+
+        .ai-instruction-section.specific {
+          border-left-color: #f59e0b;
+        }
+
+        .ai-instruction-title {
+          font-weight: 600;
+          font-size: 12px;
+          color: #1f2937;
+          margin-bottom: 12px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .ai-instruction-textarea {
+          width: 100%;
+          min-height: 80px;
+          padding: 12px;
+          border: 2px solid #e5e7eb;
+          border-radius: 8px;
+          font-size: 11px;
+          font-family: system-ui, -apple-system, sans-serif;
+          resize: vertical;
+          transition: border-color 0.2s ease;
+        }
+
+        .ai-instruction-textarea:focus {
+          outline: none;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .ai-instruction-save {
+          background: linear-gradient(135deg, #10b981, #047857);
+          color: white;
+          border: none;
+          padding: 8px 16px;
+          border-radius: 6px;
+          font-size: 10px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          margin-top: 8px;
+        }
+
+        .ai-instruction-save:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .section-instruction-badge {
+          display: inline-block;
+          background: linear-gradient(135deg, #f59e0b, #d97706);
+          color: white;
+          padding: 2px 6px;
+          border-radius: 6px;
+          font-size: 9px;
+          font-weight: 500;
+          margin-left: 8px;
+          opacity: 0.8;
         }
       `}</style>
     </>
@@ -1257,7 +1868,7 @@ function createSectionStructure($: cheerio.Root) {
       // Crear contenidor de secció
       const sectionId = `section-${sectionCount}`;
       $heading.attr('id', sectionId);
-      $heading.attr('data-section-number', sectionCount);
+      $heading.attr('data-section-number', sectionCount.toString());
       
       console.log(`📋 SECCIÓ ${sectionCount}: "${text.substring(0, 40)}..."`);
       
@@ -1277,7 +1888,7 @@ function createSectionStructure($: cheerio.Root) {
       // Afegir classe CSS per estilitzar secció
       sectionContent.forEach($el => {
         $el.addClass('section-content');
-        $el.attr('data-section', sectionCount);
+        $el.attr('data-section', sectionCount.toString());
       });
       
     } else if (level === 3) {
@@ -1286,8 +1897,8 @@ function createSectionStructure($: cheerio.Root) {
       // Crear contenidor de subsecció
       const subsectionId = `section-${sectionCount}-${subsectionCount}`;
       $heading.attr('id', subsectionId);
-      $heading.attr('data-section-number', sectionCount);
-      $heading.attr('data-subsection-number', subsectionCount);
+      $heading.attr('data-section-number', sectionCount.toString());
+      $heading.attr('data-subsection-number', subsectionCount.toString());
       
       console.log(`📋   SUBSECCIÓ ${sectionCount}.${subsectionCount}: "${text.substring(0, 40)}..."`);
       
@@ -1295,8 +1906,8 @@ function createSectionStructure($: cheerio.Root) {
       let currentElement = $heading.next();
       while (currentElement.length && !currentElement.is('h2, h3')) {
         currentElement.addClass('subsection-content');
-        currentElement.attr('data-section', sectionCount);
-        currentElement.attr('data-subsection', subsectionCount);
+        currentElement.attr('data-section', sectionCount.toString());
+        currentElement.attr('data-subsection', subsectionCount.toString());
         currentElement = currentElement.next();
       }
     }
