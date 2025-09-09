@@ -121,15 +121,18 @@ export function GoogleDocsRenderer({
           color: #333333;
         }
 
-        /* IMATGES PERFETES */
-        .doc-image {
-          max-width: 100%;
-          height: auto;
-          display: inline-block;
-          vertical-align: top;
-          margin: 0;
-          border: none;
-          padding: 0;
+        /* IMATGES PERFETES - ULTRA AGRESSIVES */
+        .google-docs-renderer .doc-image,
+        .google-docs-renderer img.doc-image,
+        .google-docs-renderer img {
+          max-width: 100% !important;
+          height: auto !important;
+          display: block !important;
+          vertical-align: top !important;
+          margin: 0 !important;
+          border: none !important;
+          padding: 0 !important;
+          line-height: 0 !important;
         }
         
         /* CONTENIDORS D'IMATGES - ZERO MARGINS ULTRA AGRESSIU */
