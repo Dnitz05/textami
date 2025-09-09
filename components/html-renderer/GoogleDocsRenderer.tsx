@@ -135,10 +135,34 @@ export function GoogleDocsRenderer({
           background-color: #f8f9fa;
           padding: 0.4cm 0.5cm;
           font-weight: bold !important;
+          position: relative;
+        }
+        
+        /* Numeració automàtica de seccions */
+        .doc-h2::before {
+          content: attr(data-section-number) ". ";
+          color: #0066cc;
+          font-weight: bold;
+          margin-right: 0.2cm;
         }
         
         /* H3+: Subseccions (SEMPRE > 11pt text normal) */
-        .doc-h3 { font-size: 15pt !important; color: #444444; margin: 1cm 0 0.5cm 0; font-weight: bold !important; }
+        .doc-h3 { 
+          font-size: 15pt !important; 
+          color: #444444; 
+          margin: 1cm 0 0.5cm 0; 
+          font-weight: bold !important;
+          position: relative;
+        }
+        
+        /* Numeració automàtica de subseccions */
+        .doc-h3::before {
+          content: attr(data-section-number) "." attr(data-subsection-number) " ";
+          color: #666666;
+          font-weight: normal;
+          margin-right: 0.2cm;
+        }
+        
         .doc-h4 { font-size: 14pt !important; color: #555555; margin: 0.8cm 0 0.4cm 0; font-weight: bold !important; }
         .doc-h5 { font-size: 13pt !important; color: #666666; margin: 0.6cm 0 0.3cm 0; font-weight: bold !important; }
         .doc-h6 { font-size: 12pt !important; color: #777777; margin: 0.5cm 0 0.25cm 0; font-style: italic; font-weight: bold !important; }
@@ -155,6 +179,54 @@ export function GoogleDocsRenderer({
           line-height: 1.5;
           font-size: 11pt;
           color: #333333;
+        }
+        
+        /* ESTRUCTURA DE SECCIONS */
+        .section-content {
+          margin-left: 0.5cm;
+          padding-left: 0.3cm;
+          border-left: 1px solid #e0e0e0;
+          margin-bottom: 1cm;
+        }
+        
+        .subsection-content {
+          margin-left: 1cm;
+          padding-left: 0.3cm;
+          border-left: 1px dotted #d0d0d0;
+          margin-bottom: 0.5cm;
+        }
+        
+        /* NAVEGACIÓ DE SECCIONS */
+        .section-nav {
+          position: sticky;
+          top: 20px;
+          float: right;
+          width: 200px;
+          background: #f9f9f9;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          padding: 1cm;
+          margin: 0 0 1cm 1cm;
+          font-size: 9pt;
+        }
+        
+        .section-nav h4 {
+          margin: 0 0 0.5cm 0;
+          font-size: 10pt;
+          color: #333;
+        }
+        
+        .section-nav a {
+          display: block;
+          color: #0066cc;
+          text-decoration: none;
+          padding: 0.1cm 0;
+          border-bottom: 1px dotted #eee;
+        }
+        
+        .section-nav a:hover {
+          background-color: #f0f8ff;
+          padding-left: 0.2cm;
         }
 
         /* IMATGES PERFETES - OPTIMITZADES PER VISIBILITAT */
@@ -710,9 +782,10 @@ function normalizeHeadingsAndAlignment($: cheerio.Root) {
   // FASE 1: Intentar detectar Google Docs Headings reals
   const googleHeadingsDetected = detectGoogleDocsHeadings($);
   
+  // Convertir headings detectats i crear estructura de seccions
   googleHeadingsDetected.forEach(({element, level, text, fontSize, className}) => {
     const content = element.html() || '';
-    element.replaceWith(`<h${level} class="doc-heading doc-h${level}">${content}</h${level}>`);
+    element.replaceWith(`<h${level} class="doc-heading doc-h${level}" data-section-level="${level}">${content}</h${level}>`);
     
     if (level === 1) h1Count++;
     else if (level === 2) h2Count++;
@@ -720,6 +793,11 @@ function normalizeHeadingsAndAlignment($: cheerio.Root) {
     
     console.log(`🎯 GOOGLE DOCS H${level} DETECTAT: "${text.substring(0, 50)}..." (font=${fontSize}pt, class="${className}")`);
   });
+  
+  // CREAR ESTRUCTURA DE SECCIONS: H2 inaugura secció fins proper H2
+  if (googleHeadingsDetected.length > 0) {
+    createSectionStructure($);
+  }
   
   // FASE 2: Fallback per títols no detectats (semàntica)
   if (googleHeadingsDetected.length === 0) {
@@ -1156,6 +1234,75 @@ function detectGoogleDocsHeadings($: cheerio.Root): Array<{element: cheerio.Chee
   
   console.log(`✅ GOOGLE DOCS HEADINGS DETECTATS: ${detectedHeadings.length}`);
   return detectedHeadings;
+}
+
+function createSectionStructure($: cheerio.Root) {
+  console.log('📋 CREANT ESTRUCTURA DE SECCIONS: H2 → secció, H3 → subsecció');
+  
+  let sectionCount = 0;
+  let subsectionCount = 0;
+  
+  // Trobar tots els headings en ordre d'aparició
+  const headings = $('h1, h2, h3').toArray();
+  
+  headings.forEach((heading, index) => {
+    const $heading = $(heading);
+    const level = parseInt($heading.prop('tagName')?.slice(1) || '0');
+    const text = $heading.text().trim();
+    
+    if (level === 2) {
+      sectionCount++;
+      subsectionCount = 0; // Reset subsections en nova secció
+      
+      // Crear contenidor de secció
+      const sectionId = `section-${sectionCount}`;
+      $heading.attr('id', sectionId);
+      $heading.attr('data-section-number', sectionCount);
+      
+      console.log(`📋 SECCIÓ ${sectionCount}: "${text.substring(0, 40)}..."`);
+      
+      // Wrapar contingut de la secció fins al proper H2 o final
+      const nextH2Index = headings.findIndex((h, i) => i > index && $(h).prop('tagName')?.toLowerCase() === 'h2');
+      const endElement = nextH2Index >= 0 ? $(headings[nextH2Index]).prev() : $heading.parent().children().last();
+      
+      // Crear contenidor per al contingut de la secció
+      const sectionContent: cheerio.Cheerio[] = [];
+      let currentElement = $heading.next();
+      
+      while (currentElement.length && !currentElement.is('h2') && currentElement[0] !== endElement[0]) {
+        sectionContent.push(currentElement);
+        currentElement = currentElement.next();
+      }
+      
+      // Afegir classe CSS per estilitzar secció
+      sectionContent.forEach($el => {
+        $el.addClass('section-content');
+        $el.attr('data-section', sectionCount);
+      });
+      
+    } else if (level === 3) {
+      subsectionCount++;
+      
+      // Crear contenidor de subsecció
+      const subsectionId = `section-${sectionCount}-${subsectionCount}`;
+      $heading.attr('id', subsectionId);
+      $heading.attr('data-section-number', sectionCount);
+      $heading.attr('data-subsection-number', subsectionCount);
+      
+      console.log(`📋   SUBSECCIÓ ${sectionCount}.${subsectionCount}: "${text.substring(0, 40)}..."`);
+      
+      // Marcar contingut de subsecció
+      let currentElement = $heading.next();
+      while (currentElement.length && !currentElement.is('h2, h3')) {
+        currentElement.addClass('subsection-content');
+        currentElement.attr('data-section', sectionCount);
+        currentElement.attr('data-subsection', subsectionCount);
+        currentElement = currentElement.next();
+      }
+    }
+  });
+  
+  console.log(`📊 ESTRUCTURA CREADA: ${sectionCount} seccions amb subseccions`);
 }
 
 function detectSemanticHeadingLevel(text: string, currentH1Count: number): number | null {
