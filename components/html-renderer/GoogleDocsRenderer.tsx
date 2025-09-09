@@ -700,70 +700,75 @@ function optimizeImagesSimple($: cheerio.Root) {
 
 // 1️⃣ NORMALITZAR TÍTOLS I ALINEACIONS
 function normalizeHeadingsAndAlignment($: cheerio.Root) {
-  // Convertir elements amb estils de títol a títols semàntics - DETECCIÓ SEMÀNTICA
-  console.log('🏷️ INICIANT DETECCIÓ DE TÍTOLS - Prioritat: semàntica > mida font');
+  // NOVA ESTRATÈGIA: Detectar Google Docs Heading 1/2/3 REALS PRIMER
+  console.log('🏷️ INICIANT DETECCIÓ GOOGLE DOCS HEADINGS - Prioritat: Heading 1/2/3 > semàntica');
   
   let h1Count = 0;
   let h2Count = 0;
-  let potentialHeadings: Array<{element: cheerio.Cheerio, text: string, fontSize: number | null, isBold: boolean, semanticLevel: number | null}> = [];
+  let h3Count = 0;
   
-  // FASE 1: Recopilar tots els candidats a títol
-  $('p, div, span').each((_, el) => {
-    const $el = $(el);
-    const style = $el.attr('style') || '';
-    const text = $el.text().trim();
+  // FASE 1: Intentar detectar Google Docs Headings reals
+  const googleHeadingsDetected = detectGoogleDocsHeadings($);
+  
+  googleHeadingsDetected.forEach(({element, level, text, fontSize, className}) => {
+    const content = element.html() || '';
+    element.replaceWith(`<h${level} class="doc-heading doc-h${level}">${content}</h${level}>`);
     
-    // Saltar si no té contingut text
-    if (!text) return;
+    if (level === 1) h1Count++;
+    else if (level === 2) h2Count++;
+    else if (level === 3) h3Count++;
     
-    const fontSize = extractFontSize(style);
-    const isBold = detectBoldText($el, style);
-    
-    // Només considerar elements negreta com a títols potencials
-    if (isBold) {
-      const semanticLevel = detectSemanticHeadingLevel(text, h1Count);
-      potentialHeadings.push({
-        element: $el,
-        text,
-        fontSize,
-        isBold,
-        semanticLevel
-      });
-    }
+    console.log(`🎯 GOOGLE DOCS H${level} DETECTAT: "${text.substring(0, 50)}..." (font=${fontSize}pt, class="${className}")`);
   });
   
-  console.log(`🔍 Candidats a títol trobats: ${potentialHeadings.length}`);
-  
-  // FASE 2: Aplicar jerarquia semàntica
-  potentialHeadings.forEach(({element, text, fontSize, semanticLevel}) => {
-    let headingLevel = semanticLevel;
+  // FASE 2: Fallback per títols no detectats (semàntica)
+  if (googleHeadingsDetected.length === 0) {
+    console.log('⚠️ Cap Google Docs Heading detectat - usant detecció semàntica fallback');
     
-    // Si la detecció semàntica no és clara, usar mida de font com a fallback
-    if (!headingLevel && fontSize) {
-      headingLevel = getHeadingLevel(fontSize);
-    }
+    let potentialHeadings: Array<{element: cheerio.Cheerio, text: string, fontSize: number | null, isBold: boolean, semanticLevel: number | null}> = [];
     
-    // Si encara no hi ha nivell, assignar per defecte basat en característiques
-    if (!headingLevel) {
-      if (text.length < 30 && text.split(' ').length <= 4) {
-        headingLevel = 2; // Títols molt curts → H2
-      } else if (text.length < 60) {
-        headingLevel = 3; // Títols curts → H3
-      }
-    }
-    
-    // Aplicar el títol detectat
-    if (headingLevel) {
-      if (headingLevel === 1) h1Count++;
-      if (headingLevel === 2) h2Count++;
+    $('p, div, span').each((_, el) => {
+      const $el = $(el);
+      const style = $el.attr('style') || '';
+      const text = $el.text().trim();
       
-      const content = element.html() || '';
-      element.replaceWith(`<h${headingLevel} class="doc-heading doc-h${headingLevel}">${content}</h${headingLevel}>`);
-      console.log(`🏷️ Títol H${headingLevel} ${fontSize ? `(${fontSize}pt)` : '(sense font-size)'}: "${text.substring(0, 50)}..."`);
-    }
-  });
+      if (!text) return;
+      
+      const fontSize = extractFontSize(style);
+      const isBold = detectBoldText($el, style);
+      
+      if (isBold) {
+        const semanticLevel = detectSemanticHeadingLevel(text, h1Count);
+        potentialHeadings.push({
+          element: $el,
+          text,
+          fontSize,
+          isBold,
+          semanticLevel
+        });
+      }
+    });
+    
+    potentialHeadings.forEach(({element, text, fontSize, semanticLevel}) => {
+      let headingLevel = semanticLevel || (fontSize ? getHeadingLevel(fontSize) : null);
+      
+      if (!headingLevel) {
+        if (text.length < 30 && text.split(' ').length <= 4) headingLevel = 2;
+        else if (text.length < 60) headingLevel = 3;
+      }
+      
+      if (headingLevel) {
+        if (headingLevel === 1) h1Count++;
+        if (headingLevel === 2) h2Count++;
+        
+        const content = element.html() || '';
+        element.replaceWith(`<h${headingLevel} class="doc-heading doc-h${headingLevel}">${content}</h${headingLevel}>`);
+        console.log(`🏷️ FALLBACK H${headingLevel} ${fontSize ? `(${fontSize}pt)` : '(sense font-size)'}: "${text.substring(0, 50)}..."`);
+      }
+    });
+  }
   
-  console.log(`📊 RESUM TÍTOLS DETECTATS: H1=${h1Count}, H2=${h2Count}`);
+  console.log(`📊 RESUM FINAL: H1=${h1Count}, H2=${h2Count}, H3=${h3Count}`);
   
   // Normalitzar alineacions inline a classes
   $('[style*="text-align"]').each((_, el) => {
@@ -1075,6 +1080,82 @@ function detectBoldText($el: cheerio.Cheerio, style: string): boolean {
   }
   
   return false;
+}
+
+function detectGoogleDocsHeadings($: cheerio.Root): Array<{element: cheerio.Cheerio, level: number, text: string, fontSize: number | null, className: string}> {
+  console.log('🎯 DETECTANT GOOGLE DOCS HEADING 1/2/3 ESPECÍFICS...');
+  
+  const detectedHeadings: Array<{element: cheerio.Cheerio, level: number, text: string, fontSize: number | null, className: string}> = [];
+  
+  // ESTRATÈGIA: Google Docs exporta Headings com elements amb:
+  // - Classes específiques (potser c1, c2, c3 o heading-1, heading-2...)
+  // - Font sizes consistents per cada nivell
+  // - Font-weight bold
+  // - Posició destacada en document
+  
+  $('*').each((_, el) => {
+    const $el = $(el);
+    const text = $el.text().trim();
+    
+    // Saltar elements sense text
+    if (!text || text.length === 0) return;
+    
+    const tagName = $el.prop('tagName')?.toLowerCase();
+    const className = $el.attr('class') || '';
+    const style = $el.attr('style') || '';
+    const fontSize = extractFontSize(style);
+    const isBold = detectBoldText($el, style);
+    
+    // CRITERIS ESPECÍFICS GOOGLE DOCS HEADINGS:
+    let headingLevel = null;
+    
+    // 1. Classes explícites de heading
+    if (/heading[-_]?[123]/i.test(className)) {
+      if (/heading[-_]?1/i.test(className)) headingLevel = 1;
+      else if (/heading[-_]?2/i.test(className)) headingLevel = 2;
+      else if (/heading[-_]?3/i.test(className)) headingLevel = 3;
+    }
+    
+    // 2. Tags HTML semàntics ja presents
+    else if (['h1', 'h2', 'h3'].includes(tagName || '')) {
+      headingLevel = parseInt(tagName?.slice(1) || '0');
+    }
+    
+    // 3. Combinació font-size + bold que indica heading
+    else if (isBold && fontSize) {
+      // Detectar patrons típics de Google Docs Headings
+      if (fontSize >= 20 && text.length > 10 && text.length < 100) {
+        headingLevel = 1; // Heading 1: típicament 20-26pt
+      } else if (fontSize >= 16 && fontSize < 20 && text.length > 5 && text.length < 80) {
+        headingLevel = 2; // Heading 2: típicament 16-19pt  
+      } else if (fontSize >= 13 && fontSize < 16 && text.length > 3 && text.length < 60) {
+        headingLevel = 3; // Heading 3: típicament 13-15pt
+      }
+    }
+    
+    // 4. Patrons de classes Google Docs (c1, c2, c3 amb combinació específica)
+    if (!headingLevel && /^c\d+/.test(className) && isBold && fontSize) {
+      // Classes c* amb font gran + bold probablement són headings
+      if (fontSize >= 18) headingLevel = 1;
+      else if (fontSize >= 14) headingLevel = 2;
+      else if (fontSize >= 12) headingLevel = 3;
+    }
+    
+    if (headingLevel) {
+      console.log(`🎯 GOOGLE HEADING TROBAT: H${headingLevel} "${text.substring(0, 40)}..." class="${className}" font=${fontSize}pt`);
+      
+      detectedHeadings.push({
+        element: $el,
+        level: headingLevel,
+        text,
+        fontSize,
+        className
+      });
+    }
+  });
+  
+  console.log(`✅ GOOGLE DOCS HEADINGS DETECTATS: ${detectedHeadings.length}`);
+  return detectedHeadings;
 }
 
 function detectSemanticHeadingLevel(text: string, currentH1Count: number): number | null {
