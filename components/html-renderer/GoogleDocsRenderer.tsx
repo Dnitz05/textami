@@ -121,7 +121,7 @@ export function GoogleDocsRenderer({
           color: #333333;
         }
 
-        /* IMATGES PERFETES - ULTRA AGRESSIVES */
+        /* IMATGES PERFETES - OPTIMITZADES PER VISIBILITAT */
         .google-docs-renderer .doc-image,
         .google-docs-renderer img.doc-image,
         .google-docs-renderer img {
@@ -129,10 +129,12 @@ export function GoogleDocsRenderer({
           height: auto !important;
           display: block !important;
           vertical-align: top !important;
-          margin: 0 !important;
+          margin: 0 auto !important;
           border: none !important;
           padding: 0 !important;
           line-height: 0 !important;
+          opacity: 1 !important;
+          visibility: visible !important;
         }
         
         /* CONTENIDORS D'IMATGES - ZERO MARGINS ULTRA AGRESSIU */
@@ -544,16 +546,25 @@ function optimizeImagesSimple($: cheerio.Root) {
       if (['p', 'div', 'span'].includes(parentTagName)) {
         // Verificar si el parent només conté la imatge i espais
         const parentText = $parent.text().trim();
-        const hasOnlyImage = !parentText || /^[\s\u00A0]*$/.test(parentText);
+        const parentChildren = $parent.children();
+        const imageChildren = $parent.find('img');
         
-        if (hasOnlyImage) {
+        // Només alliberar la imatge si el parent REALMENT només conté la imatge
+        const hasOnlyImageAndSpaces = !parentText || /^[\s\u00A0]*$/.test(parentText);
+        const isImageOnlyContainer = parentChildren.length === imageChildren.length;
+        
+        if (hasOnlyImageAndSpaces && isImageOnlyContainer) {
           // Reemplaçar el parent amb la imatge directament
           $parent.replaceWith($img);
           console.log('🔥 Parent eliminat i imatge alliberada:', parentTagName);
         } else {
-          // Netejar estils del parent per evitar separacions
-          $parent.attr('style', 'margin:0!important;padding:0!important;line-height:1!important;');
-          console.log('🧽 Parent netejat:', parentTagName);
+          // Netejar estils del parent per evitar separacions però mantenir contenidor
+          $parent.css({
+            'margin': '0',
+            'padding': '0', 
+            'line-height': '1.2'
+          });
+          console.log('🧽 Parent netejat (conservat):', parentTagName);
         }
       }
     }
@@ -572,19 +583,40 @@ function optimizeImagesSimple($: cheerio.Root) {
 
 // 1️⃣ NORMALITZAR TÍTOLS I ALINEACIONS
 function normalizeHeadingsAndAlignment($: cheerio.Root) {
-  // Convertir elements amb estils de títol a títols semàntics
-  $('p, div').each((_, el) => {
+  // Convertir elements amb estils de títol a títols semàntics - MILLORAT
+  $('p, div, span').each((_, el) => {
     const $el = $(el);
     const style = $el.attr('style') || '';
-    const fontSize = extractFontSize(style);
-    const isBold = style.includes('font-weight') && (style.includes('bold') || /font-weight:\s*[7-9]00/.test(style));
+    const text = $el.text().trim();
     
+    // Saltar si no té contingut text
+    if (!text) return;
+    
+    const fontSize = extractFontSize(style);
+    const isBold = detectBoldText($el, style);
+    
+    // Detecció més flexible de títols
+    let headingLevel = null;
+    
+    // Per mida de font
     if (fontSize && isBold) {
-      let headingLevel = getHeadingLevel(fontSize);
-      if (headingLevel) {
-        const content = $el.html() || '';
-        $el.replaceWith(`<h${headingLevel} class="doc-heading doc-h${headingLevel}">${content}</h${headingLevel}>`);
+      headingLevel = getHeadingLevel(fontSize);
+    }
+    
+    // Per patrons de text comuns (títols sense estils explícits)
+    if (!headingLevel && isBold) {
+      if (text.length < 100 && !text.includes('.') && text === text.toUpperCase()) {
+        headingLevel = 2; // Títols en majúscules
+      } else if (text.length < 60 && text.split(' ').length <= 8) {
+        headingLevel = 3; // Títols curts
       }
+    }
+    
+    // Aplicar el títol detectat
+    if (headingLevel) {
+      const content = $el.html() || '';
+      $el.replaceWith(`<h${headingLevel} class="doc-heading doc-h${headingLevel}">${content}</h${headingLevel}>`);
+      console.log(`🏷️ Títol H${headingLevel} detectat: "${text.substring(0, 50)}..."`);
     }
   });
   
@@ -808,13 +840,19 @@ function removeProblematicInlineStyles($: cheerio.Root) {
 function finalWhitespaceCleanup($: cheerio.Root) {
   console.log('🔥 NETEJA FINAL: Eliminant tots els espais massius...');
   
-  // 1. Eliminar tots els elements que només contenen whitespace
+  // 1. Eliminar tots els elements que només contenen whitespace (PROTEGINT IMATGES)
   $('*').each((_, el) => {
     const $el = $(el);
     const tagName = $el.prop('tagName')?.toLowerCase();
     
-    // Saltar imatges i altres elements que no haurien de ser eliminats
-    if (!tagName || ['img', 'br', 'hr', 'input', 'meta', 'link'].includes(tagName)) {
+    // PROTECCIÓ TOTAL: Saltar elements que mai haurien de ser eliminats
+    if (!tagName || ['img', 'br', 'hr', 'input', 'meta', 'link', 'figure', 'picture'].includes(tagName)) {
+      return;
+    }
+    
+    // PROTECCIÓ EXTRA: Si conté imatges, mai eliminar
+    if ($el.find('img').length > 0) {
+      console.log(`🛡️ Protegint ${tagName} amb imatges`);
       return;
     }
     
@@ -830,7 +868,7 @@ function finalWhitespaceCleanup($: cheerio.Root) {
         const childTag = $child.prop('tagName')?.toLowerCase();
         
         // Conservar imatges i altres elements importants
-        if (['img', 'br', 'hr'].includes(childTag || '')) return true;
+        if (['img', 'br', 'hr', 'figure', 'picture'].includes(childTag || '')) return true;
         
         // Si té contingut text real, conservar
         return Boolean(childText && !/^[\s\u00A0]*$/.test(childText));
@@ -871,6 +909,27 @@ function finalWhitespaceCleanup($: cheerio.Root) {
 function extractFontSize(style: string): number | null {
   const match = style.match(/font-size:\s*(\d+)pt/);
   return match ? parseInt(match[1]) : null;
+}
+
+function detectBoldText($el: cheerio.Cheerio<cheerio.Element>, style: string): boolean {
+  // Detectar negreta per estil inline
+  if (style.includes('font-weight')) {
+    if (style.includes('bold') || /font-weight:\s*[7-9]00/.test(style)) {
+      return true;
+    }
+  }
+  
+  // Detectar negreta per elements HTML semàntics
+  if ($el.find('strong, b').length > 0) {
+    return true;
+  }
+  
+  // Detectar si l'element està dins d'un strong o b
+  if ($el.closest('strong, b').length > 0) {
+    return true;
+  }
+  
+  return false;
 }
 
 function getHeadingLevel(fontSize: number): number | null {
