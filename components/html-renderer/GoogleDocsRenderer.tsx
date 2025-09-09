@@ -911,7 +911,7 @@ function extractFontSize(style: string): number | null {
   return match ? parseInt(match[1]) : null;
 }
 
-function detectBoldText($el: cheerio.Cheerio<any>, style: string): boolean {
+function detectBoldText($el: cheerio.Cheerio, style: string): boolean {
   // Detectar negreta per estil inline
   if (style.includes('font-weight')) {
     if (style.includes('bold') || /font-weight:\s*[7-9]00/.test(style)) {
