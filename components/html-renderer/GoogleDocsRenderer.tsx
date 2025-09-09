@@ -833,7 +833,7 @@ function finalWhitespaceCleanup($: cheerio.Root) {
         if (['img', 'br', 'hr'].includes(childTag || '')) return true;
         
         // Si té contingut text real, conservar
-        return childText && !/^[\s\u00A0]*$/.test(childText);
+        return Boolean(childText && !/^[\s\u00A0]*$/.test(childText));
       });
       
       // Si no té fills significatius, eliminar l'element
