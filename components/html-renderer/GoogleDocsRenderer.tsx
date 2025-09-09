@@ -488,20 +488,44 @@ function intelligentPreprocessing($: cheerio.Root) {
 function optimizeImagesSimple($: cheerio.Root) {
   console.log('🖼️ OPTIMITZACIÓ SIMPLE: Processant imatges ja netes...');
   
-  $('img').each((_, img) => {
+  $('img').each((imgIndex, img) => {
     const $img = $(img);
     
-    // Netejar tots els atributs problemàtics i afegir classe predictible
+    // 🚨 DEBUG NUCLEAR: Mostrar TOTA la informació de la imatge
+    console.log(`\n🔍 === IMATGE ${imgIndex + 1} DEBUG NUCLEAR ===`);
+    console.log('📦 HTML complet:', $img.prop('outerHTML')?.substring(0, 300) + '...');
+    console.log('🎨 Style original:', $img.attr('style') || 'cap');
+    console.log('📏 Parent element:', $img.parent().prop('tagName'), $img.parent().attr('class'));
+    console.log('🎯 Parent style:', ($img.parent().attr('style') || 'cap').substring(0, 200));
+    
+    // Netejar tots els atributs problemàtics
     $img.removeAttr('style');
     $img.addClass('doc-image');
+    
+    // 🚨 APLICAR ESTILS INLINE DIRECTES ULTRA AGRESSIUS
+    $img.attr('style', 'margin:0!important;padding:0!important;display:block!important;line-height:0!important;');
+    
+    // Netejar el parent també
+    const $parent = $img.parent();
+    if ($parent.length && ['p', 'div', 'span'].includes($parent.prop('tagName')?.toLowerCase() || '')) {
+      $parent.css({
+        'margin': '0',
+        'padding': '0',
+        'line-height': '1'
+      });
+      console.log('🧽 Parent netejat:', $parent.prop('tagName'));
+    }
     
     // Assegurar atributs bàsics
     if (!$img.attr('alt')) {
       $img.attr('alt', 'Document image');
     }
+    
+    console.log('✅ Imatge processada amb estils inline directes');
+    console.log(`🔍 === FI IMATGE ${imgIndex + 1} ===\n`);
   });
   
-  console.log('✅ IMATGES OPTIMITZADES: Classes i atributs nets aplicats');
+  console.log('✅ IMATGES OPTIMITZADES: Classes i estils inline ultra agressius aplicats');
 }
 
 // 1️⃣ NORMALITZAR TÍTOLS I ALINEACIONS
