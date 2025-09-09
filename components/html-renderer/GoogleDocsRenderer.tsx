@@ -92,20 +92,40 @@ export function GoogleDocsRenderer({
         .google-docs-renderer > *:last-child { margin-bottom: 0; }
         .google-docs-renderer hr { display: none; }
 
-        /* TÍTOLS NETS - CLASSES PREDICTIBLES */
+        /* TÍTOLS NETS - JERARQUIA CORRECTA */
         .doc-heading,
         .doc-h1, .doc-h2, .doc-h3, .doc-h4, .doc-h5, .doc-h6 {
           font-weight: bold;
-          line-height: 1.2;
+          line-height: 1.3;
           margin: 1cm 0 0.5cm 0;
         }
         
-        .doc-h1 { font-size: 18pt; color: #000000; margin: 1.5cm 0 1cm 0; }
-        .doc-h2 { font-size: 14pt; color: #444444; }
-        .doc-h3 { font-size: 12pt; color: #555555; margin: 0.75cm 0 0.4cm 0; }
-        .doc-h4 { font-size: 13pt; color: #555555; margin: 0.8cm 0 0.4cm 0; }
-        .doc-h5 { font-size: 12pt; color: #666666; margin: 0.6cm 0 0.3cm 0; }
-        .doc-h6 { font-size: 11pt; color: #666666; margin: 0.5cm 0 0.25cm 0; font-style: italic; }
+        /* H1: Títol principal del document (únic) */
+        .doc-h1 { 
+          font-size: 20pt; 
+          color: #000000; 
+          margin: 2cm 0 1.5cm 0; 
+          text-align: center;
+          border-bottom: 2px solid #333333;
+          padding-bottom: 0.5cm;
+        }
+        
+        /* H2: Títols de secció (PRIORITARIS) */
+        .doc-h2 { 
+          font-size: 16pt; 
+          color: #222222; 
+          margin: 1.5cm 0 0.8cm 0;
+          border-left: 4px solid #0066cc;
+          padding-left: 0.5cm;
+          background-color: #f8f9fa;
+          padding: 0.4cm 0.5cm;
+        }
+        
+        /* H3: Subseccions */
+        .doc-h3 { font-size: 13pt; color: #444444; margin: 1cm 0 0.5cm 0; }
+        .doc-h4 { font-size: 12pt; color: #555555; margin: 0.8cm 0 0.4cm 0; }
+        .doc-h5 { font-size: 11pt; color: #666666; margin: 0.6cm 0 0.3cm 0; }
+        .doc-h6 { font-size: 10pt; color: #777777; margin: 0.5cm 0 0.25cm 0; font-style: italic; }
 
         /* ALINEACIONS NETES */
         .text-left { text-align: left; }
@@ -629,7 +649,12 @@ function optimizeImagesSimple($: cheerio.Root) {
 
 // 1️⃣ NORMALITZAR TÍTOLS I ALINEACIONS
 function normalizeHeadingsAndAlignment($: cheerio.Root) {
-  // Convertir elements amb estils de títol a títols semàntics - MILLORAT
+  // Convertir elements amb estils de títol a títols semàntics - ESTRUCTURA CORRECTA
+  console.log('🏷️ INICIANT DETECCIÓ DE TÍTOLS - Estructura: H1 únic, H2 seccions, H3+ subseccions');
+  
+  let h1Count = 0;
+  let h2Count = 0;
+  
   $('p, div, span').each((_, el) => {
     const $el = $(el);
     const style = $el.attr('style') || '';
@@ -641,30 +666,43 @@ function normalizeHeadingsAndAlignment($: cheerio.Root) {
     const fontSize = extractFontSize(style);
     const isBold = detectBoldText($el, style);
     
-    // Detecció més flexible de títols
+    // Detecció més flexible de títols amb JERARQUIA CORRECTA
     let headingLevel = null;
     
-    // Per mida de font
+    // PRIORITAT 1: Títols per mida de font (més precisos)
     if (fontSize && isBold) {
       headingLevel = getHeadingLevel(fontSize);
     }
     
-    // Per patrons de text comuns (títols sense estils explícits)
+    // PRIORITAT 2: Patrons semàntics per títols de secció (H2)
     if (!headingLevel && isBold) {
-      if (text.length < 100 && !text.includes('.') && text === text.toUpperCase()) {
-        headingLevel = 2; // Títols en majúscules
-      } else if (text.length < 60 && text.split(' ').length <= 8) {
-        headingLevel = 3; // Títols curts
+      // Títols principals de secció - SEMPRE H2
+      if (text.length < 100 && !text.includes('.') && (
+          text === text.toUpperCase() || // Majúscules 
+          text.split(' ').length <= 6 ||  // Títols curts
+          /^\d+\./.test(text) ||          // Numerats: "1. Secció"
+          /^[A-Z][a-z]+:/.test(text)      // Format: "Secció:"
+      )) {
+        headingLevel = 2; // SEMPRE H2 per seccions
+      }
+      // Subseccions dins de seccions
+      else if (text.length < 80 && text.split(' ').length <= 10) {
+        headingLevel = 3; // H3 per subseccions
       }
     }
     
-    // Aplicar el títol detectat
+    // Aplicar el títol detectat amb comptadors
     if (headingLevel) {
+      if (headingLevel === 1) h1Count++;
+      if (headingLevel === 2) h2Count++;
+      
       const content = $el.html() || '';
       $el.replaceWith(`<h${headingLevel} class="doc-heading doc-h${headingLevel}">${content}</h${headingLevel}>`);
       console.log(`🏷️ Títol H${headingLevel} detectat: "${text.substring(0, 50)}..."`);
     }
   });
+  
+  console.log(`📊 RESUM TÍTOLS DETECTATS: H1=${h1Count}, H2=${h2Count}`);
   
   // Normalitzar alineacions inline a classes
   $('[style*="text-align"]').each((_, el) => {
