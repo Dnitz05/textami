@@ -400,11 +400,15 @@ function postProcessGoogleDocsHTML(html: string): string {
   try {
     const $ = cheerio.load(html);
     
+    // 🚀 ETAPA 0: PREPROCESSAMENT INTEL·LIGENT - NETEJAR ESTRUCTURA CORRUPTA
+    console.log('🧹 PREPROCESSAMENT: Netejant HTML corrupte de Google Docs...');
+    intelligentPreprocessing($);
+    
     // 1️⃣ NORMALITZAR TÍTOLS I ALINEACIONS
     normalizeHeadingsAndAlignment($);
     
-    // 2️⃣ OPTIMITZAR IMATGES
-    optimizeImages($);
+    // 2️⃣ OPTIMITZAR IMATGES (ara molt més simple)
+    optimizeImagesSimple($);
     
     // 3️⃣ ESTANDARDITZAR TAULES
     standardizeTables($);
@@ -418,15 +422,83 @@ function postProcessGoogleDocsHTML(html: string): string {
     // 6️⃣ ELIMINAR ESTILS INLINE PROBLEMÀTICS
     removeProblematicInlineStyles($);
     
-    // 7️⃣ NETEJA ABSOLUTA D'IMATGES - CLEAN SLATE
-    absoluteImageCleanup($);
-    
     return $.html();
     
   } catch (error) {
     console.warn('Error in HTML post-processing, falling back to original:', error);
     return html;
   }
+}
+
+// 🚀 ETAPA 0: PREPROCESSAMENT INTEL·LIGENT
+function intelligentPreprocessing($: cheerio.Root) {
+  console.log('🧹 FASE 1: Movent imatges mal ubicades...');
+  
+  // 1️⃣ MOURE TOTES les imatges del HEAD/STYLE al body ABANS del processat
+  let movedImages = 0;
+  $('head img, style img').each((_, img) => {
+    const $img = $(img);
+    
+    // Trobar el primer element del body per insertar la imatge després
+    const $firstBodyElement = $('body').children().first();
+    if ($firstBodyElement.length) {
+      $firstBodyElement.after($img);
+    } else {
+      $('body').prepend($img);
+    }
+    movedImages++;
+  });
+  console.log(`📍 Imatges mogudes del HEAD/STYLE: ${movedImages}`);
+  
+  console.log('🧹 FASE 2: Eliminant CSS massiu...');
+  
+  // 2️⃣ ELIMINAR tots els <style> tags que contaminen l'HTML
+  let removedStyles = $('style').length;
+  $('style').remove();
+  console.log(`🗑️ Tags <style> eliminats: ${removedStyles}`);
+  
+  // 3️⃣ NETEJAR atributs style massius (>200 chars) que fan malbé el layout
+  let cleanedStyles = 0;
+  $('[style]').each((_, el) => {
+    const $el = $(el);
+    const style = $el.attr('style') || '';
+    
+    if (style.length > 200 || style.includes('@import') || style.includes('list-style-type')) {
+      $el.removeAttr('style');
+      cleanedStyles++;
+    }
+  });
+  console.log(`🧽 Atributs style massius netejats: ${cleanedStyles}`);
+  
+  // 4️⃣ ELIMINAR elements completament buits que creen espais
+  let removedEmpty = 0;
+  $('p:empty, div:empty, span:empty').each((_, el) => {
+    $(el).remove();
+    removedEmpty++;
+  });
+  console.log(`🗑️ Elements buits eliminats: ${removedEmpty}`);
+  
+  console.log('✅ PREPROCESSAMENT COMPLETAT: HTML net i estructurat!');
+}
+
+// 2️⃣ OPTIMITZAR IMATGES SIMPLE (després del preprocessament)
+function optimizeImagesSimple($: cheerio.Root) {
+  console.log('🖼️ OPTIMITZACIÓ SIMPLE: Processant imatges ja netes...');
+  
+  $('img').each((_, img) => {
+    const $img = $(img);
+    
+    // Netejar tots els atributs problemàtics i afegir classe predictible
+    $img.removeAttr('style');
+    $img.addClass('doc-image');
+    
+    // Assegurar atributs bàsics
+    if (!$img.attr('alt')) {
+      $img.attr('alt', 'Document image');
+    }
+  });
+  
+  console.log('✅ IMATGES OPTIMITZADES: Classes i atributs nets aplicats');
 }
 
 // 1️⃣ NORMALITZAR TÍTOLS I ALINEACIONS
@@ -652,96 +724,6 @@ function removeProblematicInlineStyles($: cheerio.Root) {
   });
 }
 
-// 7️⃣ NETEJA ABSOLUTA D'IMATGES - CLEAN SLATE STRATEGY
-function absoluteImageCleanup($: cheerio.Root) {
-  console.log('🚀 NETEJA ABSOLUTA: Extraient i recreant imatges...');
-  
-  $('img').each((_, img) => {
-    const $img = $(img);
-    
-    // 1️⃣ EXTREURE: Guardar només dades essencials
-    const src = $img.attr('src');
-    const alt = $img.attr('alt') || 'Document image';
-    const width = $img.attr('width');
-    const height = $img.attr('height');
-    
-    if (!src) {
-      console.warn('⚠️ Imatge sense src, saltant...');
-      return;
-    }
-    
-    // 2️⃣ CREAR: Nova imatge completament neta
-    let cleanImgAttrs = `src="${src}" alt="${alt}" class="doc-image"`;
-    if (width) cleanImgAttrs += ` width="${width}"`;
-    if (height) cleanImgAttrs += ` height="${height}"`;
-    
-    const cleanImg = $(`<img ${cleanImgAttrs}>`);
-    
-    // 3️⃣ SOLUCIÓ DEFINITIVA: Moure imatges fora del HEAD/CSS al BODY
-    const currentContainer = $img.parent();
-    const isInHead = $img.closest('head').length > 0;
-    const isInStyle = $img.closest('style').length > 0;
-    
-    console.log(`🔍 Imatge ubicació: head=${isInHead}, style=${isInStyle}, parent=${currentContainer[0] && 'tagName' in currentContainer[0] ? currentContainer[0].tagName : 'unknown'}`);
-    
-    if (isInHead || isInStyle) {
-      // 🚀 IMATGE MALLOCADA AL HEAD: Trobar lloc adequat al body
-      console.log('⚠️ IMATGE AL HEAD/STYLE: Buscant lloc adequat al body');
-      
-      // Buscar el primer paràgraf del body per insertar la imatge després
-      const $firstBodyParagraph = $('body').find('p, div, h1, h2, h3').first();
-      if ($firstBodyParagraph.length) {
-        console.log('📍 INSERTANT imatge després del primer element del body');
-        $firstBodyParagraph.after(cleanImg);
-      } else {
-        console.log('📍 INSERTANT imatge al començament del body');
-        $('body').prepend(cleanImg);
-      }
-      $img.remove();
-    } else {
-      // Si està al body, aplicar neteja normal
-      let $problemContainer = $img.closest('p, div');
-      
-      if ($problemContainer.length) {
-        const rawText = $problemContainer.text() || '';
-        const hasCSS = rawText.includes('@import') || rawText.includes('list-style-type') || rawText.length > 500;
-        
-        console.log(`🔍 Contenidor: CSS=${hasCSS}, chars=${rawText.length}`);
-        
-        if (hasCSS) {
-          // Contenidor té CSS + contingut: estratègia intel·ligent
-          console.log('🚀 CONTENIDOR AMB CSS: Aplicant estratègia intel·ligent');
-          
-          // 1️⃣ NOMÉS afegir la imatge neta al contenidor, eliminant la original
-          $img.replaceWith(cleanImg);
-          
-          // 2️⃣ Eliminar tots els elements <style> dins del contenidor per netejar CSS
-          $problemContainer.find('style').remove();
-          
-          // 3️⃣ Netejar atributs style massivs del contenidor
-          const currentStyle = $problemContainer.attr('style') || '';
-          if (currentStyle.includes('@import') || currentStyle.length > 100) {
-            $problemContainer.removeAttr('style');
-          }
-          
-          console.log('✅ Imatge reemplaçada dins del contenidor, CSS netejat');
-        } else if (rawText.trim().length < 20) {
-          // Contenidor normal sense text
-          console.log('🗑️ ELIMINANT contenidor buit');
-          $problemContainer.replaceWith(cleanImg);
-        } else {
-          // Contenidor amb text real
-          console.log('📝 Mantenint imatge en contenidor amb text');
-          $img.replaceWith(cleanImg);
-        }
-      } else {
-        $img.replaceWith(cleanImg);
-      }
-    }
-  });
-  
-  console.log('✅ NETEJA ABSOLUTA: Completada!');
-}
 
 // UTILITATS
 function extractFontSize(style: string): number | null {
