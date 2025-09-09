@@ -147,12 +147,26 @@ export function GoogleDocsRenderer({
           border: none !important;
         }
         
-        /* ELIMINAR SEPARACIONS ABANS I DESPRÉS DE IMATGES */
+        /* ELIMINAR SEPARACIONS ABANS I DESPRÉS DE IMATGES - NUCLEAR */
         .google-docs-renderer .doc-image {
           margin: 0 !important;
           padding: 0 !important;
           display: block !important;
           vertical-align: top !important;
+        }
+        
+        /* NUCLEAR: ELIMINAR ESPAIS ENTRE IMATGES CONSECUTIVES */
+        .google-docs-renderer img + img,
+        .google-docs-renderer .doc-image + .doc-image {
+          margin-top: 0 !important;
+        }
+        
+        /* NUCLEAR: PARÀGRAFS QUE NOMÉS CONTENEN IMATGES */
+        .google-docs-renderer p:has(img):not(:has(*:not(img))):not(:has(text)) {
+          margin: 0 !important;
+          padding: 0 !important;
+          line-height: 0 !important;
+          font-size: 0 !important;
         }
         
         .doc-figure {
@@ -425,6 +439,9 @@ function postProcessGoogleDocsHTML(html: string): string {
     // 6️⃣ ELIMINAR ESTILS INLINE PROBLEMÀTICS
     removeProblematicInlineStyles($);
     
+    // 7️⃣ NETEJA FINAL ULTRA AGRESSIVA D'ESPAIS MASSIUS
+    finalWhitespaceCleanup($);
+    
     return $.html();
     
   } catch (error) {
@@ -473,13 +490,27 @@ function intelligentPreprocessing($: cheerio.Root) {
   });
   console.log(`🧽 Atributs style massius netejats: ${cleanedStyles}`);
   
-  // 4️⃣ ELIMINAR elements completament buits que creen espais
+  // 4️⃣ ELIMINAR elements completament buits i espais massius
   let removedEmpty = 0;
   $('p:empty, div:empty, span:empty').each((_, el) => {
     $(el).remove();
     removedEmpty++;
   });
-  console.log(`🗑️ Elements buits eliminats: ${removedEmpty}`);
+  
+  // ELIMINAR paràgrafs que només contenen espais en blanc o &nbsp;
+  $('p, div').each((_, el) => {
+    const $el = $(el);
+    const text = $el.text().trim();
+    const html = $el.html() || '';
+    
+    // Si només conté espais en blanc, &nbsp;, o està buit
+    if (!text || /^[\s\u00A0]*$/.test(text) || /^(&nbsp;|\s|<br\s*\/?\s*>)*$/i.test(html)) {
+      $el.remove();
+      removedEmpty++;
+    }
+  });
+  
+  console.log(`🗑️ Elements buits/espais eliminats: ${removedEmpty}`);
   
   console.log('✅ PREPROCESSAMENT COMPLETAT: HTML net i estructurat!');
 }
@@ -503,17 +534,28 @@ function optimizeImagesSimple($: cheerio.Root) {
     $img.addClass('doc-image');
     
     // 🚨 APLICAR ESTILS INLINE DIRECTES ULTRA AGRESSIUS
-    $img.attr('style', 'margin:0!important;padding:0!important;display:block!important;line-height:0!important;');
+    $img.attr('style', 'margin:0!important;padding:0!important;display:block!important;line-height:0!important;vertical-align:top!important;');
     
-    // Netejar el parent també
+    // Netejar el parent i eliminar espais massius
     const $parent = $img.parent();
-    if ($parent.length && ['p', 'div', 'span'].includes($parent.prop('tagName')?.toLowerCase() || '')) {
-      $parent.css({
-        'margin': '0',
-        'padding': '0',
-        'line-height': '1'
-      });
-      console.log('🧽 Parent netejat:', $parent.prop('tagName'));
+    if ($parent.length) {
+      const parentTagName = $parent.prop('tagName')?.toLowerCase() || '';
+      
+      if (['p', 'div', 'span'].includes(parentTagName)) {
+        // Verificar si el parent només conté la imatge i espais
+        const parentText = $parent.text().trim();
+        const hasOnlyImage = !parentText || /^[\s\u00A0]*$/.test(parentText);
+        
+        if (hasOnlyImage) {
+          // Reemplaçar el parent amb la imatge directament
+          $parent.replaceWith($img);
+          console.log('🔥 Parent eliminat i imatge alliberada:', parentTagName);
+        } else {
+          // Netejar estils del parent per evitar separacions
+          $parent.attr('style', 'margin:0!important;padding:0!important;line-height:1!important;');
+          console.log('🧽 Parent netejat:', parentTagName);
+        }
+      }
     }
     
     // Assegurar atributs bàsics
@@ -698,16 +740,27 @@ function cleanRedundantSpans($: cheerio.Root) {
   });
 }
 
-// 5️⃣ NORMALITZAR PARÀGRAFS
+// 5️⃣ NORMALITZAR PARÀGRAFS I ELIMINAR ESPAIS MASSIUS
 function normalizeParagraphs($: cheerio.Root) {
   $('p').each((_, el) => {
     const $p = $(el);
+    
+    // Verificar si el paràgraf només conté espais en blanc
+    const text = $p.text().trim();
+    const html = $p.html() || '';
+    
+    // Eliminar paràgrafs que només contenen espais o &nbsp;
+    if (!text || /^[\s\u00A0]*$/.test(text) || /^(&nbsp;|\s|<br\s*\/?\s*>)*$/i.test(html)) {
+      $p.remove();
+      return;
+    }
     
     // Eliminar marges i paddings inline
     let style = $p.attr('style') || '';
     style = style.replace(/margin[^;]*;?/gi, '');
     style = style.replace(/padding[^;]*;?/gi, '');
     style = style.replace(/text-indent[^;]*;?/gi, ''); // ← ELIMINAR TEXT-INDENT!
+    style = style.replace(/line-height[^;]*;?/gi, ''); // Eliminar line-height problematics
     
     if (style.trim()) {
       $p.attr('style', style.trim());
@@ -749,6 +802,68 @@ function removeProblematicInlineStyles($: cheerio.Root) {
       $el.removeAttr('style');
     }
   });
+}
+
+// 7️⃣ NETEJA FINAL ULTRA AGRESSIVA D'ESPAIS MASSIUS
+function finalWhitespaceCleanup($: cheerio.Root) {
+  console.log('🔥 NETEJA FINAL: Eliminant tots els espais massius...');
+  
+  // 1. Eliminar tots els elements que només contenen whitespace
+  $('*').each((_, el) => {
+    const $el = $(el);
+    const tagName = $el.prop('tagName')?.toLowerCase();
+    
+    // Saltar imatges i altres elements que no haurien de ser eliminats
+    if (!tagName || ['img', 'br', 'hr', 'input', 'meta', 'link'].includes(tagName)) {
+      return;
+    }
+    
+    const text = $el.text().trim();
+    const html = $el.html() || '';
+    
+    // Verificar si l'element només conté espais en blanc o &nbsp;
+    if (!text || /^[\s\u00A0]*$/.test(text)) {
+      // Comptar fills que no siguin només whitespace
+      const meaningfulChildren = $el.children().filter((_, child) => {
+        const $child = $(child);
+        const childText = $child.text().trim();
+        const childTag = $child.prop('tagName')?.toLowerCase();
+        
+        // Conservar imatges i altres elements importants
+        if (['img', 'br', 'hr'].includes(childTag || '')) return true;
+        
+        // Si té contingut text real, conservar
+        return childText && !/^[\s\u00A0]*$/.test(childText);
+      });
+      
+      // Si no té fills significatius, eliminar l'element
+      if (meaningfulChildren.length === 0) {
+        console.log(`🗑️ Eliminant element buit: ${tagName}`);
+        $el.remove();
+      }
+    }
+  });
+  
+  // 2. Neteja final de l'HTML generat
+  let finalHtml = $.html();
+  
+  // Eliminar múltiples &nbsp; consecutius
+  finalHtml = finalHtml.replace(/(&nbsp;\s*){2,}/g, ' ');
+  finalHtml = finalHtml.replace(/&nbsp;/g, ' ');
+  
+  // Eliminar múltiples espais consecutius
+  finalHtml = finalHtml.replace(/\s{2,}/g, ' ');
+  
+  // Eliminar salts de línia múltiples
+  finalHtml = finalHtml.replace(/\n\s*\n/g, '\n');
+  
+  // Eliminar espais entre tags
+  finalHtml = finalHtml.replace(/>\s+</g, '><');
+  
+  // Actualitzar el DOM amb l'HTML netejat
+  $ = cheerio.load(finalHtml);
+  
+  console.log('✅ NETEJA FINAL COMPLETADA: Espais massius eliminats!');
 }
 
 

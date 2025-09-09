@@ -363,10 +363,14 @@ function removeEmptyElements(html: string, removedElements: string[]): string {
  */
 function normalizeWhitespace(html: string): string {
   return html
-    .replace(/\s+/g, ' ') // Multiple spaces to single space
+    .replace(/(&nbsp;\s*){2,}/g, ' ') // Replace 2+ consecutive &nbsp; with single space
+    .replace(/&nbsp;/g, ' ') // Replace remaining &nbsp; with regular spaces
+    .replace(/\s{2,}/g, ' ') // Multiple spaces to single space
     .replace(/>\s+</g, '><') // Remove whitespace between tags
     .replace(/^\s+|\s+$/g, '') // Trim start and end
-    .replace(/\n\s*\n/g, '\n'); // Multiple newlines to single
+    .replace(/\n\s*\n/g, '\n') // Multiple newlines to single
+    .replace(/\s*<br\s*\/?\s*>\s*/gi, '<br>') // Normalize line breaks
+    .replace(/(<br>\s*){2,}/gi, '<br>'); // Remove multiple consecutive line breaks
 }
 
 /**
