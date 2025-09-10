@@ -87,130 +87,25 @@ export function GoogleDocsRenderer({
     });
   };
 
-  // 🎯 SECTION-WIDE HOVER EFFECTS - Add interactive functionality
+  // 🎯 HOVER ULTRA SIMPLE
   React.useEffect(() => {
-    console.log('🔍 DEBUGGING HOVER: useEffect called with context:', context);
-    // Enable hover in ALL contexts except export
-    if (context === 'export') {
-      console.log('🔍 DEBUGGING HOVER: Skipping because context is export');
-      return; // Only disable for export
-    }
-    
-    const addSectionHoverEffects = () => {
-      console.log('🔍 DEBUGGING HOVER: addSectionHoverEffects called');
+    const timer = setTimeout(() => {
+      // Trobar TOTS els elements amb data-section
+      const allElements = document.querySelectorAll('[data-section]');
       
-      // Find all section headers (H2) - NOMÉS H2, SENSE H3
-      const sectionHeaders = document.querySelectorAll('.google-docs-renderer--editor .doc-h2[data-section-number]');
-      console.log('🔍 DEBUGGING HOVER: Found', sectionHeaders.length, 'headers');
-      
-      // Add section hover effects for H2 (full sections)
-      sectionHeaders.forEach((header) => {
-        const sectionNumber = header.getAttribute('data-section-number');
-        console.log('🔍 DEBUGGING HOVER: Processing section', sectionNumber);
-        
-        // Detectar si la secció original està numerada
-        const headerText = header.textContent?.trim() || '';
-        const isNumbered = /^(\d+[\.\)]\s|[IVX]+[\.\)]\s|[a-zA-Z][\.\)]\s)/.test(headerText);
-        
-        // Create section badge - només mostrar numeració si l'original està numerat
-        const sectionBadge = document.createElement('div');
-        sectionBadge.className = 'section-badge';
-        sectionBadge.innerHTML = isNumbered ? `Secció ${sectionNumber}` : 'Secció';
-        sectionBadge.style.cssText = `
-          position: absolute;
-          top: -20px;
-          right: 0;
-          background: rgba(59, 130, 246, 0.9);
-          color: white;
-          padding: 3px 8px;
-          border-radius: 6px;
-          font-size: 8pt;
-          font-weight: 500;
-          opacity: 0;
-          transition: opacity 0.25s ease;
-          pointer-events: none;
-          z-index: 10;
-        `;
-        
-        // Add AI instruction indicator - més subtil
-        const aiIndicator = document.createElement('div');
-        aiIndicator.className = 'ai-instruction-indicator';
-        aiIndicator.innerHTML = `📋`;
-        aiIndicator.style.cssText = `
-          position: absolute;
-          top: -20px;
-          left: 0;
-          background: rgba(16, 185, 129, 0.9);
-          color: white;
-          padding: 3px 6px;
-          border-radius: 4px;
-          font-size: 7pt;
-          font-weight: 500;
-          opacity: 0;
-          transition: opacity 0.25s ease;
-          cursor: pointer;
-          z-index: 10;
-        `;
-        
-        // Append indicators to header
-        (header as HTMLElement).style.position = 'relative';
-        header.appendChild(sectionBadge);
-        header.appendChild(aiIndicator);
-        
-        // HOVER SIMPLE I NET - UN SOL EFECTE
-        const handleSectionHover = (isHovering: boolean) => {
-          console.log('🔍 DEBUGGING HOVER: handleSectionHover called for section', sectionNumber, 'isHovering:', isHovering);
-          const sectionElements = document.querySelectorAll(`[data-section="${sectionNumber}"]`);
-          console.log('🔍 DEBUGGING HOVER: Found', sectionElements.length, 'elements for section', sectionNumber);
-          
-          sectionElements.forEach((element) => {
-            if (isHovering) {
-              console.log('🔍 DEBUGGING HOVER: Setting background for element:', element.tagName);
-              (element as HTMLElement).style.background = 'rgba(59, 130, 246, 0.1)';
-            } else {
-              (element as HTMLElement).style.background = '';
-            }
-          });
-          
-          sectionBadge.style.opacity = isHovering ? '1' : '0';
-          aiIndicator.style.opacity = isHovering ? '1' : '0';
-        };
-        
-        // Afegir event listeners a TOTS els elements de la secció
-        const allSectionElements = document.querySelectorAll(`[data-section="${sectionNumber}"]`);
-        console.log('🔍 DEBUGGING HOVER: Adding listeners to', allSectionElements.length, 'elements for section', sectionNumber);
-        allSectionElements.forEach((element) => {
-          element.addEventListener('mouseenter', () => handleSectionHover(true));
-          element.addEventListener('mouseleave', () => handleSectionHover(false));
+      allElements.forEach((element) => {
+        element.addEventListener('mouseenter', () => {
+          (element as HTMLElement).style.background = 'rgba(59, 130, 246, 0.2)';
         });
         
-        // Add click handler for AI instructions
-        aiIndicator.addEventListener('click', (e) => {
-          e.stopPropagation();
-          handleAiInstructionPanel(parseInt(sectionNumber || '0'));
+        element.addEventListener('mouseleave', () => {
+          (element as HTMLElement).style.background = '';
         });
       });
-      
-      // SENSE SUBSECCIONS - NOMÉS SECCIONS PRINCIPALS (H2)
-      
-      // Hover simplificat: qualsevol element de la secció activa l'ombrejat de tota la secció
-    };
-    
-    
-    
-    // Add effects after DOM is ready
-    console.log('🔍 DEBUGGING HOVER: Setting timeout for addSectionHoverEffects');
-    const timer = setTimeout(() => {
-      console.log('🔍 DEBUGGING HOVER: Timeout fired, calling addSectionHoverEffects');
-      addSectionHoverEffects();
     }, 100);
     
-    return () => {
-      clearTimeout(timer);
-      // Cleanup indicators on unmount
-      document.querySelectorAll('.section-badge, .ai-instruction-indicator').forEach(el => el.remove());
-    };
-  }, [processedHTML, context]);
+    return () => clearTimeout(timer);
+  }, [processedHTML]);
 
   const handleClick = (event: React.MouseEvent) => {
     if (!enablePlaceholders || !onPlaceholderClick) return;
