@@ -91,9 +91,8 @@ export function GoogleDocsRenderer({
     if (context !== 'editor') return; // Only enable in editor context
     
     const addSectionHoverEffects = () => {
-      // Find all section headers (H2) and subsection headers (H3)
+      // Find all section headers (H2) - NOMÉS H2, SENSE H3
       const sectionHeaders = document.querySelectorAll('.google-docs-renderer--editor .doc-h2[data-section-number]');
-      const subsectionHeaders = document.querySelectorAll('.google-docs-renderer--editor .doc-h3[data-section-number]');
       
       // Add section hover effects for H2 (full sections)
       sectionHeaders.forEach((header) => {
@@ -148,32 +147,18 @@ export function GoogleDocsRenderer({
         header.appendChild(sectionBadge);
         header.appendChild(aiIndicator);
         
-        // Add hover event listeners for entire section - MILLORED AMB EFECTES MÉS PRONUNCIATS
+        // HOVER SIMPLE I NET - UN SOL EFECTE
         const handleSectionHover = (isHovering: boolean) => {
           const sectionElements = document.querySelectorAll(`[data-section="${sectionNumber}"]`);
           
-          // 🎯 SOMBREJAT SUBTIL DE TOTA LA SECCIÓ (TÍTOL + COS)
           sectionElements.forEach((element) => {
             if (isHovering) {
-              (element as HTMLElement).style.cssText += `
-                background: rgba(59, 130, 246, 0.015) !important;
-                border-radius: 8px !important;
-                padding: 8px 12px !important;
-                margin: 2px -12px !important;
-                transition: all 0.3s ease-out !important;
-                box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.08) !important;
-              `;
+              (element as HTMLElement).style.background = 'rgba(59, 130, 246, 0.02)';
             } else {
-              // Reset styles
               (element as HTMLElement).style.background = '';
-              (element as HTMLElement).style.borderRadius = '';
-              (element as HTMLElement).style.padding = '';
-              (element as HTMLElement).style.margin = '';
-              (element as HTMLElement).style.boxShadow = '';
             }
           });
           
-          // Show/hide indicators de manera subtil
           sectionBadge.style.opacity = isHovering ? '1' : '0';
           aiIndicator.style.opacity = isHovering ? '1' : '0';
         };
@@ -192,134 +177,7 @@ export function GoogleDocsRenderer({
         });
       });
       
-      // Add subsection hover effects for H3  
-      subsectionHeaders.forEach((header) => {
-        const sectionNumber = header.getAttribute('data-section-number');
-        const subsectionNumber = header.getAttribute('data-subsection-number');
-        
-        // Detectar si la subsecció original està numerada
-        const subHeaderText = header.textContent?.trim() || '';
-        const isSubNumbered = /^(\d+\.\d+[\.\)]\s|[IVX]+\.[IVX]+[\.\)]\s|[a-zA-Z]\.[a-zA-Z][\.\)]\s)/.test(subHeaderText);
-        
-        // Create subsection badge - només mostrar numeració si l'original està numerat
-        const subsectionBadge = document.createElement('div');
-        subsectionBadge.className = 'subsection-badge';
-        subsectionBadge.innerHTML = isSubNumbered ? `${sectionNumber}.${subsectionNumber}` : 'Subsecció';
-        subsectionBadge.style.cssText = `
-          position: absolute;
-          top: -16px;
-          right: 0;
-          background: rgba(139, 92, 246, 0.9);
-          color: white;
-          padding: 2px 6px;
-          border-radius: 4px;
-          font-size: 7pt;
-          font-weight: 500;
-          opacity: 0;
-          transition: opacity 0.25s ease;
-          pointer-events: none;
-          z-index: 10;
-        `;
-        
-        // Add subsection AI indicator - més subtil
-        const subsectionAiIndicator = document.createElement('div');
-        subsectionAiIndicator.className = 'ai-subsection-indicator';
-        subsectionAiIndicator.innerHTML = `📋`;
-        subsectionAiIndicator.style.cssText = `
-          position: absolute;
-          top: -16px;
-          left: 0;
-          background: rgba(245, 158, 11, 0.9);
-          color: white;
-          padding: 2px 5px;
-          border-radius: 3px;
-          font-size: 6pt;
-          opacity: 0;
-          transition: opacity 0.25s ease;
-          cursor: pointer;
-          z-index: 10;
-        `;
-        
-        (header as HTMLElement).style.position = 'relative';
-        header.appendChild(subsectionBadge);
-        header.appendChild(subsectionAiIndicator);
-        
-        // Add subsection hover effects - MILLORED AMB EFECTES MÉS PRONUNCIATS
-        const handleSubsectionHover = (isHovering: boolean) => {
-          const subsectionElements = document.querySelectorAll(`[data-section="${sectionNumber}"][data-subsection="${subsectionNumber}"]`);
-          const headerElement = header as HTMLElement;
-          
-          // 🎯 EFECTE SUBTIL PER SUBSECCIONS COM UNITATS
-          subsectionElements.forEach((element) => {
-            if (isHovering) {
-              (element as HTMLElement).style.cssText += `
-                background: rgba(139, 92, 246, 0.025) !important;
-                border-left: 2px solid rgba(139, 92, 246, 0.3) !important;
-                padding: 0.25cm 0.4cm !important;
-                margin-left: -0.25cm !important;
-                border-radius: 4px !important;
-                box-shadow: 
-                  0 1px 6px rgba(139, 92, 246, 0.06),
-                  inset 1px 0 0 rgba(139, 92, 246, 0.08) !important;
-                transform: translateX(2px) !important;
-                transition: all 0.2s ease-out !important;
-                position: relative !important;
-              `;
-              
-            } else {
-              // Netejar estils de subsecció
-              (element as HTMLElement).style.background = '';
-              (element as HTMLElement).style.borderLeft = '';
-              (element as HTMLElement).style.padding = '';
-              (element as HTMLElement).style.marginLeft = '';
-              (element as HTMLElement).style.borderRadius = '';
-              (element as HTMLElement).style.boxShadow = '';
-              (element as HTMLElement).style.transform = '';
-              (element as HTMLElement).style.position = '';
-            }
-          });
-          
-          // 🎯 EFECTE SUBTIL PER A LA CAPÇALERA DE SUBSECCIÓ
-          if (isHovering) {
-            headerElement.style.cssText += `
-              background: rgba(139, 92, 246, 0.06) !important;
-              border-left: 3px solid rgba(139, 92, 246, 0.5) !important;
-              padding: 0.3cm 0.5cm !important;
-              margin-left: -0.3cm !important;
-              border-radius: 6px !important;
-              box-shadow: 0 2px 8px rgba(139, 92, 246, 0.12) !important;
-              transform: translateX(1px) !important;
-              transition: all 0.25s ease-out !important;
-              position: relative !important;
-            `;
-          } else {
-            // Reset subsection header styles
-            headerElement.style.background = '';
-            headerElement.style.borderLeft = '';
-            headerElement.style.padding = '';
-            headerElement.style.marginLeft = '';
-            headerElement.style.borderRadius = '';
-            headerElement.style.boxShadow = '';
-            headerElement.style.transform = '';
-            headerElement.style.position = 'relative';
-          }
-          
-          // Show/hide indicators de subsecció subtilment
-          subsectionBadge.style.opacity = isHovering ? '1' : '0';
-          subsectionAiIndicator.style.opacity = isHovering ? '1' : '0';
-        };
-        
-        header.addEventListener('mouseenter', () => handleSubsectionHover(true));
-        header.addEventListener('mouseleave', () => handleSubsectionHover(false));
-        
-        subsectionAiIndicator.addEventListener('click', (e) => {
-          e.stopPropagation();
-          handleAiInstructionPanel(
-            parseInt(sectionNumber || '0'), 
-            parseInt(subsectionNumber || '0')
-          );
-        });
-      });
+      // SENSE SUBSECCIONS - NOMÉS SECCIONS PRINCIPALS (H2)
       
       // Hover simplificat: qualsevol element de la secció activa l'ombrejat de tota la secció
     };
@@ -332,7 +190,7 @@ export function GoogleDocsRenderer({
     return () => {
       clearTimeout(timer);
       // Cleanup indicators on unmount
-      document.querySelectorAll('.section-badge, .subsection-badge, .ai-instruction-indicator, .ai-subsection-indicator, .paragraph-indicator').forEach(el => el.remove());
+      document.querySelectorAll('.section-badge, .ai-instruction-indicator').forEach(el => el.remove());
     };
   }, [processedHTML, context]);
 
@@ -1185,156 +1043,14 @@ export function GoogleDocsRenderer({
           opacity: 0.8;
         }
 
-        /* 🎨 ANIMACIONS MODERNES I SUBTILS */
-        @keyframes fadeInScale {
-          0% {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          100% {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
+        /* SENSE ANIMACIONS COMPLEXES - NOMÉS HOVER SIMPLE */
 
-        @keyframes fadeInUp {
-          0% {
-            opacity: 0;
-            transform: translateY(4px);
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes section-pulse {
-          0%, 100% {
-            background: linear-gradient(45deg, transparent, rgba(59, 130, 246, 0.08), transparent);
-            transform: scale(1);
-          }
-          50% {
-            background: linear-gradient(45deg, transparent, rgba(59, 130, 246, 0.15), transparent);
-            transform: scale(1.005);
-          }
-        }
-
-        @keyframes subsection-pulse {
-          0%, 100% {
-            background: linear-gradient(45deg, transparent, rgba(139, 92, 246, 0.06), transparent);
-            transform: scale(1);
-          }
-          50% {
-            background: linear-gradient(45deg, transparent, rgba(139, 92, 246, 0.12), transparent);
-            transform: scale(1.003);
-          }
-        }
-
-        @keyframes section-glow {
-          0%, 100% {
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
-          }
-          50% {
-            box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
-          }
-        }
-
-        @keyframes subsection-glow {
-          0%, 100% {
-            box-shadow: 0 0 15px rgba(139, 92, 246, 0.25);
-          }
-          50% {
-            box-shadow: 0 0 25px rgba(139, 92, 246, 0.4);
-          }
-        }
-
-        /* MILLORES DE TRANSICIONS GLOBALS PER SMOOTH EXPERIENCE */
-        .section-content, .subsection-content {
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          will-change: transform, background, box-shadow, border;
-        }
-
-        .doc-h1, .doc-h2, .doc-h3, .doc-h4, .doc-h5, .doc-h6 {
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          will-change: transform, background, box-shadow, color;
-        }
-
-        /* OPTIMITZACIONS PER RENDIMENT */
-        .section-hover-overlay, .subsection-hover-overlay {
-          will-change: transform, opacity;
-          backface-visibility: hidden;
-          perspective: 1000px;
-        }
-
-        /* EFECTES ESPECIALITZATS PER MILLOR UX */
+        /* CONTAINER SIMPLE */
         .google-docs-renderer--editor {
-          overflow: visible; /* Permetre que els efectes hover surtin del contenidor */
-          position: relative; /* Necessari per posicionar les caixes de punts */
-        }
-
-        /* HOVER STATES GLOBALS AMB JERARQUIA VISUAL */
-        .section-content:hover {
-          z-index: 5;
-        }
-
-        .subsection-content:hover {
-          z-index: 4;
-        }
-
-        .doc-h2:hover {
-          z-index: 10;
-        }
-
-        .doc-h3:hover {
-          z-index: 9;
-        }
-
-        /* 🎯 PARÀGRAFS INDIVIDUALS - Hover subtil quan hi ha múltiples */
-        .paragraph-indicator {
-          font-family: 'Georgia', serif;
-          font-weight: 300;
-          user-select: none;
-        }
-
-        /* Evitar conflicte entre hover de secció i paràgraf */
-        .google-docs-renderer--editor p.paragraph-hover-active {
-          z-index: 8 !important;
-          position: relative !important;
-        }
-
-        /* Transicions ultra suaus i modernes per paràgrafs */
-        .google-docs-renderer--editor p[data-section]:not([data-subsection]) {
-          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        /* Assegurar que l'hover de secció tingui prioritat sobre paràgrafs */
-        .google-docs-renderer--editor .section-content:hover p {
-          pointer-events: auto;
-        }
-
-        /* Subtil feedback visual per paràgrafs clickables */
-        .google-docs-renderer--editor p.multiple-paragraph-context {
           position: relative;
         }
 
-        .google-docs-renderer--editor p.multiple-paragraph-context::before {
-          content: '';
-          position: absolute;
-          left: -8px;
-          top: 50%;
-          width: 1px;
-          height: 0;
-          background: rgba(59, 130, 246, 0.2);
-          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-          transform: translateY(-50%);
-          border-radius: 1px;
-        }
-
-        .google-docs-renderer--editor p.multiple-paragraph-context:hover::before {
-          height: 70%;
-          background: rgba(59, 130, 246, 0.35);
-          box-shadow: 0 0 4px rgba(59, 130, 246, 0.15);
-        }
+        /* SENSE CSS COMPLEX DE PARÀGRAFS - NOMÉS UN HOVER SIMPLE */
       `}</style>
     </>
   );
