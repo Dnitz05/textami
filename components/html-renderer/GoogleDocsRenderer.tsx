@@ -153,7 +153,7 @@ export function GoogleDocsRenderer({
           
           sectionElements.forEach((element) => {
             if (isHovering) {
-              (element as HTMLElement).style.background = 'rgba(59, 130, 246, 0.02)';
+              (element as HTMLElement).style.background = 'rgba(59, 130, 246, 0.08)';
             } else {
               (element as HTMLElement).style.background = '';
             }
