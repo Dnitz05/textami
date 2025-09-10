@@ -351,6 +351,135 @@ export function GoogleDocsRenderer({
           );
         });
       });
+      
+      // 🎯 PARÀGRAFS INDIVIDUALS - Seleccionables quan n'hi ha múltiples
+      addIndividualParagraphEffects();
+    };
+    
+    const addIndividualParagraphEffects = () => {
+      // Processament per secció - trobar seccions úniques
+      const sectionNumbers = new Set<string>();
+      document.querySelectorAll('.google-docs-renderer--editor [data-section]').forEach(el => {
+        const sectionNumber = el.getAttribute('data-section');
+        if (sectionNumber && !el.hasAttribute('data-subsection')) {
+          sectionNumbers.add(sectionNumber);
+        }
+      });
+      
+      sectionNumbers.forEach(sectionNumber => {
+        // Trobar tots els paràgrafs d'aquesta secció (excloent capçaleres i subseccions)
+        const sectionParagraphs = Array.from(
+          document.querySelectorAll(`[data-section="${sectionNumber}"]:not([data-subsection])`)
+        ).filter(el => {
+          const tagName = el.tagName?.toLowerCase();
+          return (
+            (tagName === 'p' || el.classList.contains('doc-paragraph')) &&
+            !el.classList.contains('doc-h1') &&
+            !el.classList.contains('doc-h2') &&
+            !el.classList.contains('doc-h3') &&
+            !el.classList.contains('doc-heading')
+          );
+        });
+        
+        console.log(`🔍 Secció ${sectionNumber}: ${sectionParagraphs.length} paràgrafs trobats`);
+        
+        // Només afegir hover individual si hi ha múltiples paràgrafs (>1)
+        if (sectionParagraphs.length > 1) {
+          console.log(`✅ Activant hover individual per ${sectionParagraphs.length} paràgrafs a la secció ${sectionNumber}`);
+          sectionParagraphs.forEach((paragraph, index) => {
+            // Afegir classe per identificar context múltiple
+            (paragraph as HTMLElement).classList.add('multiple-paragraph-context');
+            addParagraphHoverEffect(paragraph as HTMLElement, sectionNumber, index + 1);
+          });
+        } else {
+          console.log(`⭕ Secció ${sectionNumber} té només ${sectionParagraphs.length} paràgraf(s) - no cal hover individual`);
+          // Assegurar que no tingui la classe multiple-paragraph-context
+          if (sectionParagraphs.length === 1) {
+            (sectionParagraphs[0] as HTMLElement).classList.remove('multiple-paragraph-context');
+          }
+        }
+      });
+    };
+    
+    const addParagraphHoverEffect = (paragraph: HTMLElement, sectionNumber: string | null, paragraphIndex: number) => {
+      let hoverIndicator: HTMLElement | null = null;
+      
+      const handleParagraphHover = (isHovering: boolean) => {
+        if (isHovering) {
+          // Afegir classe per hover actiu
+          paragraph.classList.add('paragraph-hover-active');
+          
+          // Efecte hover més subtil per al paràgraf
+          paragraph.style.cssText += `
+            background: rgba(59, 130, 246, 0.015) !important;
+            border-left: 1px solid rgba(59, 130, 246, 0.15) !important;
+            padding-left: 0.15cm !important;
+            margin-left: -0.15cm !important;
+            border-radius: 2px !important;
+            box-shadow: 0 1px 3px rgba(59, 130, 246, 0.03) !important;
+            cursor: pointer !important;
+          `;
+          
+          // Crear indicador de paràgraf més subtil
+          if (!hoverIndicator) {
+            hoverIndicator = document.createElement('div');
+            hoverIndicator.className = 'paragraph-indicator';
+            hoverIndicator.innerHTML = `¶`;
+            hoverIndicator.style.cssText = `
+              position: absolute;
+              top: -10px;
+              right: 2px;
+              background: rgba(59, 130, 246, 0.7);
+              color: white;
+              padding: 1px 3px;
+              border-radius: 2px;
+              font-size: 6pt;
+              font-weight: 400;
+              opacity: 1;
+              z-index: 8;
+              pointer-events: none;
+              transition: opacity 0.2s ease;
+            `;
+            paragraph.appendChild(hoverIndicator);
+          } else {
+            hoverIndicator.style.opacity = '1';
+          }
+          
+        } else {
+          // Eliminar classe hover actiu
+          paragraph.classList.remove('paragraph-hover-active');
+          
+          // Reset paragraph styles de manera subtil
+          paragraph.style.background = '';
+          paragraph.style.borderLeft = '';
+          paragraph.style.paddingLeft = '';
+          paragraph.style.marginLeft = '';
+          paragraph.style.borderRadius = '';
+          paragraph.style.boxShadow = '';
+          paragraph.style.cursor = '';
+          
+          // Amagar indicador amb transició
+          if (hoverIndicator) {
+            hoverIndicator.style.opacity = '0';
+            setTimeout(() => {
+              if (hoverIndicator && hoverIndicator.style.opacity === '0') {
+                hoverIndicator.remove();
+                hoverIndicator = null;
+              }
+            }, 200);
+          }
+        }
+      };
+      
+      paragraph.addEventListener('mouseenter', () => handleParagraphHover(true));
+      paragraph.addEventListener('mouseleave', () => handleParagraphHover(false));
+      
+      // Click handler for paragraph selection
+      paragraph.addEventListener('click', (e) => {
+        e.stopPropagation();
+        console.log(`🎯 Paràgraf seleccionat: Secció ${sectionNumber}, Paràgraf ${paragraphIndex}`);
+        // TODO: Implementar selecció de paràgraf
+      });
     };
     
     // Add effects after DOM is ready
@@ -359,7 +488,7 @@ export function GoogleDocsRenderer({
     return () => {
       clearTimeout(timer);
       // Cleanup indicators on unmount
-      document.querySelectorAll('.section-badge, .subsection-badge, .ai-instruction-indicator, .ai-subsection-indicator').forEach(el => el.remove());
+      document.querySelectorAll('.section-badge, .subsection-badge, .ai-instruction-indicator, .ai-subsection-indicator, .paragraph-indicator').forEach(el => el.remove());
     };
   }, [processedHTML, context]);
 
@@ -1291,6 +1420,50 @@ export function GoogleDocsRenderer({
 
         .doc-h3:hover {
           z-index: 9;
+        }
+
+        /* 🎯 PARÀGRAFS INDIVIDUALS - Hover subtil quan hi ha múltiples */
+        .paragraph-indicator {
+          font-family: 'Georgia', serif;
+          font-weight: 300;
+          user-select: none;
+        }
+
+        /* Evitar conflicte entre hover de secció i paràgraf */
+        .google-docs-renderer--editor p.paragraph-hover-active {
+          z-index: 8 !important;
+          position: relative !important;
+        }
+
+        /* Transicions suaus per paràgrafs */
+        .google-docs-renderer--editor p[data-section]:not([data-subsection]) {
+          transition: all 0.15s ease-out;
+        }
+
+        /* Assegurar que l'hover de secció tingui prioritat sobre paràgrafs */
+        .google-docs-renderer--editor .section-content:hover p {
+          pointer-events: auto;
+        }
+
+        /* Subtil feedback visual per paràgrafs clickables */
+        .google-docs-renderer--editor p.multiple-paragraph-context {
+          position: relative;
+        }
+
+        .google-docs-renderer--editor p.multiple-paragraph-context::before {
+          content: '';
+          position: absolute;
+          left: -10px;
+          top: 50%;
+          width: 2px;
+          height: 0;
+          background: rgba(59, 130, 246, 0.3);
+          transition: height 0.2s ease-out;
+          transform: translateY(-50%);
+        }
+
+        .google-docs-renderer--editor p.multiple-paragraph-context:hover::before {
+          height: 80%;
         }
       `}</style>
     </>
