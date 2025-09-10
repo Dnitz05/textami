@@ -99,42 +99,46 @@ export function GoogleDocsRenderer({
       sectionHeaders.forEach((header) => {
         const sectionNumber = header.getAttribute('data-section-number');
         
-        // Create section badge
+        // Detectar si la secció original està numerada
+        const headerText = header.textContent?.trim() || '';
+        const isNumbered = /^(\d+[\.\)]\s|[IVX]+[\.\)]\s|[a-zA-Z][\.\)]\s)/.test(headerText);
+        
+        // Create section badge - només mostrar numeració si l'original està numerat
         const sectionBadge = document.createElement('div');
         sectionBadge.className = 'section-badge';
-        sectionBadge.innerHTML = `🌐 Secció ${sectionNumber}`;
+        sectionBadge.innerHTML = isNumbered ? `Secció ${sectionNumber}` : 'Secció';
         sectionBadge.style.cssText = `
           position: absolute;
-          top: -25px;
+          top: -20px;
           right: 0;
-          background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+          background: rgba(59, 130, 246, 0.9);
           color: white;
-          padding: 4px 12px;
-          border-radius: 12px;
+          padding: 3px 8px;
+          border-radius: 6px;
           font-size: 8pt;
-          font-weight: 600;
+          font-weight: 500;
           opacity: 0;
-          transition: opacity 0.3s ease;
+          transition: opacity 0.25s ease;
           pointer-events: none;
           z-index: 10;
         `;
         
-        // Add AI instruction indicator
+        // Add AI instruction indicator - més subtil
         const aiIndicator = document.createElement('div');
         aiIndicator.className = 'ai-instruction-indicator';
-        aiIndicator.innerHTML = `📋 IA Global`;
+        aiIndicator.innerHTML = `📋`;
         aiIndicator.style.cssText = `
           position: absolute;
-          top: -25px;
+          top: -20px;
           left: 0;
-          background: linear-gradient(135deg, #10b981, #047857);
+          background: rgba(16, 185, 129, 0.9);
           color: white;
-          padding: 4px 10px;
-          border-radius: 10px;
+          padding: 3px 6px;
+          border-radius: 4px;
           font-size: 7pt;
           font-weight: 500;
           opacity: 0;
-          transition: opacity 0.3s ease;
+          transition: opacity 0.25s ease;
           cursor: pointer;
           z-index: 10;
         `;
@@ -149,108 +153,64 @@ export function GoogleDocsRenderer({
           const sectionElements = document.querySelectorAll(`[data-section="${sectionNumber}"]`);
           const headerElement = header as HTMLElement;
           
-          // 🎯 AFECTAR TOTA LA SECCIÓ AMB EFECTES ULTRA VISUALS
+          // 🎯 EFECTE SUBTIL PER PERCEBRE SECCIONS COM UNITATS
           sectionElements.forEach((element) => {
             if (isHovering) {
               (element as HTMLElement).style.cssText += `
-                background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 50%, #dbeafe 100%) !important;
-                border: 3px solid #3b82f6 !important;
-                border-left: 6px solid #1e40af !important;
-                padding: 0.75cm 1cm !important;
-                margin: 0.3cm -0.5cm 0.5cm -0.5cm !important;
-                border-radius: 12px !important;
+                background: rgba(59, 130, 246, 0.03) !important;
+                border-left: 3px solid rgba(59, 130, 246, 0.4) !important;
+                padding: 0.3cm 0.5cm !important;
+                margin-left: -0.3cm !important;
+                border-radius: 6px !important;
                 box-shadow: 
-                  0 8px 25px rgba(59, 130, 246, 0.25),
-                  0 4px 12px rgba(59, 130, 246, 0.15),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
-                transform: translateX(8px) translateY(-2px) scale(1.02) !important;
-                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-                outline: 2px dotted #60a5fa !important;
-                outline-offset: 4px !important;
+                  0 2px 8px rgba(59, 130, 246, 0.08),
+                  inset 1px 0 0 rgba(59, 130, 246, 0.1) !important;
+                transform: translateX(3px) !important;
+                transition: all 0.25s ease-out !important;
                 position: relative !important;
-                z-index: 5 !important;
               `;
-              
-              // Afegir overlay visual per destacar encara més
-              const overlay = document.createElement('div');
-              overlay.className = 'section-hover-overlay';
-              overlay.style.cssText = `
-                position: absolute;
-                top: -4px;
-                left: -4px;
-                right: -4px;
-                bottom: -4px;
-                background: linear-gradient(45deg, transparent, rgba(59, 130, 246, 0.1), transparent);
-                border-radius: 16px;
-                pointer-events: none;
-                z-index: -1;
-                animation: section-pulse 2s infinite;
-              `;
-              element.appendChild(overlay);
               
             } else {
-              // Netejar tots els estils
+              // Netejar estils de manera subtil
               (element as HTMLElement).style.background = '';
-              (element as HTMLElement).style.border = '';
               (element as HTMLElement).style.borderLeft = '';
               (element as HTMLElement).style.padding = '';
-              (element as HTMLElement).style.margin = '';
+              (element as HTMLElement).style.marginLeft = '';
               (element as HTMLElement).style.borderRadius = '';
               (element as HTMLElement).style.boxShadow = '';
               (element as HTMLElement).style.transform = '';
-              (element as HTMLElement).style.transition = '';
-              (element as HTMLElement).style.outline = '';
-              (element as HTMLElement).style.outlineOffset = '';
               (element as HTMLElement).style.position = '';
-              (element as HTMLElement).style.zIndex = '';
-              
-              // Eliminar overlay
-              const overlay = element.querySelector('.section-hover-overlay');
-              if (overlay) overlay.remove();
             }
           });
           
-          // 🎯 EFECTE ESPECIAL PER A LA CAPÇALERA
+          // 🎯 EFECTE SUBTIL PER A LA CAPÇALERA 
           if (isHovering) {
             headerElement.style.cssText += `
-              background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%) !important;
-              color: white !important;
-              padding: 0.75cm 1.25cm !important;
-              margin: 0.5cm -1.25cm 1cm -1.25cm !important;
-              border-radius: 16px !important;
-              box-shadow: 
-                0 12px 35px rgba(30, 64, 175, 0.4),
-                0 6px 16px rgba(30, 64, 175, 0.2) !important;
-              transform: translateY(-4px) scale(1.05) !important;
-              transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-              z-index: 10 !important;
+              background: rgba(59, 130, 246, 0.08) !important;
+              border-left: 4px solid rgba(59, 130, 246, 0.6) !important;
+              padding: 0.4cm 0.6cm !important;
+              margin-left: -0.4cm !important;
+              border-radius: 8px !important;
+              box-shadow: 0 3px 12px rgba(59, 130, 246, 0.15) !important;
+              transform: translateX(2px) !important;
+              transition: all 0.3s ease-out !important;
               position: relative !important;
             `;
           } else {
-            // Reset header styles
+            // Reset header styles suau
             headerElement.style.background = '';
-            headerElement.style.color = '';
+            headerElement.style.borderLeft = '';
             headerElement.style.padding = '';
-            headerElement.style.margin = '';
+            headerElement.style.marginLeft = '';
             headerElement.style.borderRadius = '';
             headerElement.style.boxShadow = '';
             headerElement.style.transform = '';
-            headerElement.style.transition = '';
-            headerElement.style.zIndex = '';
-            headerElement.style.position = 'relative'; // Mantenir position per als badges
+            headerElement.style.position = 'relative';
           }
           
-          // Show/hide indicators amb millors efectes
-          sectionBadge.style.cssText += `
-            opacity: ${isHovering ? '1' : '0'};
-            transform: ${isHovering ? 'translateY(-2px) scale(1.1)' : 'translateY(0) scale(1)'};
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          `;
-          aiIndicator.style.cssText += `
-            opacity: ${isHovering ? '1' : '0'};
-            transform: ${isHovering ? 'translateY(-2px) scale(1.1)' : 'translateY(0) scale(1)'};
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          `;
+          // Show/hide indicators de manera subtil
+          sectionBadge.style.opacity = isHovering ? '1' : '0';
+          aiIndicator.style.opacity = isHovering ? '1' : '0';
         };
         
         header.addEventListener('mouseenter', () => handleSectionHover(true));
@@ -268,41 +228,45 @@ export function GoogleDocsRenderer({
         const sectionNumber = header.getAttribute('data-section-number');
         const subsectionNumber = header.getAttribute('data-subsection-number');
         
-        // Create subsection badge
+        // Detectar si la subsecció original està numerada
+        const subHeaderText = header.textContent?.trim() || '';
+        const isSubNumbered = /^(\d+\.\d+[\.\)]\s|[IVX]+\.[IVX]+[\.\)]\s|[a-zA-Z]\.[a-zA-Z][\.\)]\s)/.test(subHeaderText);
+        
+        // Create subsection badge - només mostrar numeració si l'original està numerat
         const subsectionBadge = document.createElement('div');
         subsectionBadge.className = 'subsection-badge';
-        subsectionBadge.innerHTML = `📄 ${sectionNumber}.${subsectionNumber}`;
+        subsectionBadge.innerHTML = isSubNumbered ? `${sectionNumber}.${subsectionNumber}` : 'Subsecció';
         subsectionBadge.style.cssText = `
           position: absolute;
-          top: -20px;
+          top: -16px;
           right: 0;
-          background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+          background: rgba(139, 92, 246, 0.9);
           color: white;
-          padding: 3px 10px;
-          border-radius: 10px;
+          padding: 2px 6px;
+          border-radius: 4px;
           font-size: 7pt;
-          font-weight: 600;
+          font-weight: 500;
           opacity: 0;
-          transition: opacity 0.3s ease;
+          transition: opacity 0.25s ease;
           pointer-events: none;
           z-index: 10;
         `;
         
-        // Add subsection AI indicator
+        // Add subsection AI indicator - més subtil
         const subsectionAiIndicator = document.createElement('div');
         subsectionAiIndicator.className = 'ai-subsection-indicator';
         subsectionAiIndicator.innerHTML = `📋`;
         subsectionAiIndicator.style.cssText = `
           position: absolute;
-          top: -20px;
+          top: -16px;
           left: 0;
-          background: linear-gradient(135deg, #f59e0b, #d97706);
+          background: rgba(245, 158, 11, 0.9);
           color: white;
-          padding: 3px 8px;
-          border-radius: 8px;
+          padding: 2px 5px;
+          border-radius: 3px;
           font-size: 6pt;
           opacity: 0;
-          transition: opacity 0.3s ease;
+          transition: opacity 0.25s ease;
           cursor: pointer;
           z-index: 10;
         `;
@@ -316,108 +280,64 @@ export function GoogleDocsRenderer({
           const subsectionElements = document.querySelectorAll(`[data-section="${sectionNumber}"][data-subsection="${subsectionNumber}"]`);
           const headerElement = header as HTMLElement;
           
-          // 🎯 AFECTAR TOTA LA SUBSECCIÓ AMB EFECTES ULTRA VISUALS
+          // 🎯 EFECTE SUBTIL PER SUBSECCIONS COM UNITATS
           subsectionElements.forEach((element) => {
             if (isHovering) {
               (element as HTMLElement).style.cssText += `
-                background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 50%, #e9d5ff 100%) !important;
-                border: 2px solid #8b5cf6 !important;
-                border-left: 5px solid #7c3aed !important;
-                padding: 0.6cm 0.8cm !important;
-                margin: 0.25cm -0.4cm 0.4cm -0.4cm !important;
-                border-radius: 10px !important;
+                background: rgba(139, 92, 246, 0.025) !important;
+                border-left: 2px solid rgba(139, 92, 246, 0.3) !important;
+                padding: 0.25cm 0.4cm !important;
+                margin-left: -0.25cm !important;
+                border-radius: 4px !important;
                 box-shadow: 
-                  0 6px 20px rgba(139, 92, 246, 0.2),
-                  0 3px 10px rgba(139, 92, 246, 0.12),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
-                transform: translateX(6px) translateY(-1px) scale(1.015) !important;
-                transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
-                outline: 1px dotted #a855f7 !important;
-                outline-offset: 3px !important;
+                  0 1px 6px rgba(139, 92, 246, 0.06),
+                  inset 1px 0 0 rgba(139, 92, 246, 0.08) !important;
+                transform: translateX(2px) !important;
+                transition: all 0.2s ease-out !important;
                 position: relative !important;
-                z-index: 4 !important;
               `;
-              
-              // Afegir overlay visual per subseccions
-              const overlay = document.createElement('div');
-              overlay.className = 'subsection-hover-overlay';
-              overlay.style.cssText = `
-                position: absolute;
-                top: -3px;
-                left: -3px;
-                right: -3px;
-                bottom: -3px;
-                background: linear-gradient(45deg, transparent, rgba(139, 92, 246, 0.08), transparent);
-                border-radius: 12px;
-                pointer-events: none;
-                z-index: -1;
-                animation: subsection-pulse 2.5s infinite;
-              `;
-              element.appendChild(overlay);
               
             } else {
-              // Netejar tots els estils de subsecció
+              // Netejar estils de subsecció
               (element as HTMLElement).style.background = '';
-              (element as HTMLElement).style.border = '';
               (element as HTMLElement).style.borderLeft = '';
               (element as HTMLElement).style.padding = '';
-              (element as HTMLElement).style.margin = '';
+              (element as HTMLElement).style.marginLeft = '';
               (element as HTMLElement).style.borderRadius = '';
               (element as HTMLElement).style.boxShadow = '';
               (element as HTMLElement).style.transform = '';
-              (element as HTMLElement).style.transition = '';
-              (element as HTMLElement).style.outline = '';
-              (element as HTMLElement).style.outlineOffset = '';
               (element as HTMLElement).style.position = '';
-              (element as HTMLElement).style.zIndex = '';
-              
-              // Eliminar overlay de subsecció
-              const overlay = element.querySelector('.subsection-hover-overlay');
-              if (overlay) overlay.remove();
             }
           });
           
-          // 🎯 EFECTE ESPECIAL PER A LA CAPÇALERA DE SUBSECCIÓ
+          // 🎯 EFECTE SUBTIL PER A LA CAPÇALERA DE SUBSECCIÓ
           if (isHovering) {
             headerElement.style.cssText += `
-              background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 50%, #a855f7 100%) !important;
-              color: white !important;
-              padding: 0.6cm 1cm !important;
-              margin: 0.4cm -1cm 0.8cm -1cm !important;
-              border-radius: 12px !important;
-              box-shadow: 
-                0 10px 30px rgba(124, 58, 237, 0.35),
-                0 5px 14px rgba(124, 58, 237, 0.18) !important;
-              transform: translateY(-3px) scale(1.03) !important;
-              transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
-              z-index: 9 !important;
+              background: rgba(139, 92, 246, 0.06) !important;
+              border-left: 3px solid rgba(139, 92, 246, 0.5) !important;
+              padding: 0.3cm 0.5cm !important;
+              margin-left: -0.3cm !important;
+              border-radius: 6px !important;
+              box-shadow: 0 2px 8px rgba(139, 92, 246, 0.12) !important;
+              transform: translateX(1px) !important;
+              transition: all 0.25s ease-out !important;
               position: relative !important;
             `;
           } else {
             // Reset subsection header styles
             headerElement.style.background = '';
-            headerElement.style.color = '';
+            headerElement.style.borderLeft = '';
             headerElement.style.padding = '';
-            headerElement.style.margin = '';
+            headerElement.style.marginLeft = '';
             headerElement.style.borderRadius = '';
             headerElement.style.boxShadow = '';
             headerElement.style.transform = '';
-            headerElement.style.transition = '';
-            headerElement.style.zIndex = '';
-            headerElement.style.position = 'relative'; // Mantenir position per als badges
+            headerElement.style.position = 'relative';
           }
           
-          // Show/hide indicators amb millors efectes per subseccions
-          subsectionBadge.style.cssText += `
-            opacity: ${isHovering ? '1' : '0'};
-            transform: ${isHovering ? 'translateY(-2px) scale(1.08)' : 'translateY(0) scale(1)'};
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          `;
-          subsectionAiIndicator.style.cssText += `
-            opacity: ${isHovering ? '1' : '0'};
-            transform: ${isHovering ? 'translateY(-2px) scale(1.08)' : 'translateY(0) scale(1)'};
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          `;
+          // Show/hide indicators de subsecció subtilment
+          subsectionBadge.style.opacity = isHovering ? '1' : '0';
+          subsectionAiIndicator.style.opacity = isHovering ? '1' : '0';
         };
         
         header.addEventListener('mouseenter', () => handleSubsectionHover(true));
