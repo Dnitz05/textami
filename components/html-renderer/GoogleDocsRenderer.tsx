@@ -91,12 +91,16 @@ export function GoogleDocsRenderer({
     if (context !== 'editor') return; // Only enable in editor context
     
     const addSectionHoverEffects = () => {
+      console.log('🔍 DEBUGGING HOVER: addSectionHoverEffects called');
+      
       // Find all section headers (H2) - NOMÉS H2, SENSE H3
       const sectionHeaders = document.querySelectorAll('.google-docs-renderer--editor .doc-h2[data-section-number]');
+      console.log('🔍 DEBUGGING HOVER: Found', sectionHeaders.length, 'headers');
       
       // Add section hover effects for H2 (full sections)
       sectionHeaders.forEach((header) => {
         const sectionNumber = header.getAttribute('data-section-number');
+        console.log('🔍 DEBUGGING HOVER: Processing section', sectionNumber);
         
         // Detectar si la secció original està numerada
         const headerText = header.textContent?.trim() || '';
@@ -149,10 +153,13 @@ export function GoogleDocsRenderer({
         
         // HOVER SIMPLE I NET - UN SOL EFECTE
         const handleSectionHover = (isHovering: boolean) => {
+          console.log('🔍 DEBUGGING HOVER: handleSectionHover called for section', sectionNumber, 'isHovering:', isHovering);
           const sectionElements = document.querySelectorAll(`[data-section="${sectionNumber}"]`);
+          console.log('🔍 DEBUGGING HOVER: Found', sectionElements.length, 'elements for section', sectionNumber);
           
           sectionElements.forEach((element) => {
             if (isHovering) {
+              console.log('🔍 DEBUGGING HOVER: Setting background for element:', element.tagName);
               (element as HTMLElement).style.background = 'rgba(59, 130, 246, 0.1)';
             } else {
               (element as HTMLElement).style.background = '';
@@ -165,6 +172,7 @@ export function GoogleDocsRenderer({
         
         // Afegir event listeners a TOTS els elements de la secció
         const allSectionElements = document.querySelectorAll(`[data-section="${sectionNumber}"]`);
+        console.log('🔍 DEBUGGING HOVER: Adding listeners to', allSectionElements.length, 'elements for section', sectionNumber);
         allSectionElements.forEach((element) => {
           element.addEventListener('mouseenter', () => handleSectionHover(true));
           element.addEventListener('mouseleave', () => handleSectionHover(false));
