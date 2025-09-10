@@ -144,32 +144,113 @@ export function GoogleDocsRenderer({
         header.appendChild(sectionBadge);
         header.appendChild(aiIndicator);
         
-        // Add hover event listeners for entire section
+        // Add hover event listeners for entire section - MILLORED AMB EFECTES MÉS PRONUNCIATS
         const handleSectionHover = (isHovering: boolean) => {
           const sectionElements = document.querySelectorAll(`[data-section="${sectionNumber}"]`);
+          const headerElement = header as HTMLElement;
           
+          // 🎯 AFECTAR TOTA LA SECCIÓ AMB EFECTES ULTRA VISUALS
           sectionElements.forEach((element) => {
             if (isHovering) {
               (element as HTMLElement).style.cssText += `
-                background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-                border-left: 4px solid #3b82f6;
-                padding-left: 1cm;
-                margin-left: -1cm;
-                border-radius: 6px;
-                transition: all 0.3s ease;
+                background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 50%, #dbeafe 100%) !important;
+                border: 3px solid #3b82f6 !important;
+                border-left: 6px solid #1e40af !important;
+                padding: 0.75cm 1cm !important;
+                margin: 0.3cm -0.5cm 0.5cm -0.5cm !important;
+                border-radius: 12px !important;
+                box-shadow: 
+                  0 8px 25px rgba(59, 130, 246, 0.25),
+                  0 4px 12px rgba(59, 130, 246, 0.15),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+                transform: translateX(8px) translateY(-2px) scale(1.02) !important;
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                outline: 2px dotted #60a5fa !important;
+                outline-offset: 4px !important;
+                position: relative !important;
+                z-index: 5 !important;
               `;
+              
+              // Afegir overlay visual per destacar encara més
+              const overlay = document.createElement('div');
+              overlay.className = 'section-hover-overlay';
+              overlay.style.cssText = `
+                position: absolute;
+                top: -4px;
+                left: -4px;
+                right: -4px;
+                bottom: -4px;
+                background: linear-gradient(45deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+                border-radius: 16px;
+                pointer-events: none;
+                z-index: -1;
+                animation: section-pulse 2s infinite;
+              `;
+              element.appendChild(overlay);
+              
             } else {
+              // Netejar tots els estils
               (element as HTMLElement).style.background = '';
+              (element as HTMLElement).style.border = '';
               (element as HTMLElement).style.borderLeft = '';
-              (element as HTMLElement).style.paddingLeft = '';
-              (element as HTMLElement).style.marginLeft = '';
+              (element as HTMLElement).style.padding = '';
+              (element as HTMLElement).style.margin = '';
               (element as HTMLElement).style.borderRadius = '';
+              (element as HTMLElement).style.boxShadow = '';
+              (element as HTMLElement).style.transform = '';
+              (element as HTMLElement).style.transition = '';
+              (element as HTMLElement).style.outline = '';
+              (element as HTMLElement).style.outlineOffset = '';
+              (element as HTMLElement).style.position = '';
+              (element as HTMLElement).style.zIndex = '';
+              
+              // Eliminar overlay
+              const overlay = element.querySelector('.section-hover-overlay');
+              if (overlay) overlay.remove();
             }
           });
           
-          // Show/hide indicators
-          sectionBadge.style.opacity = isHovering ? '1' : '0';
-          aiIndicator.style.opacity = isHovering ? '1' : '0';
+          // 🎯 EFECTE ESPECIAL PER A LA CAPÇALERA
+          if (isHovering) {
+            headerElement.style.cssText += `
+              background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%) !important;
+              color: white !important;
+              padding: 0.75cm 1.25cm !important;
+              margin: 0.5cm -1.25cm 1cm -1.25cm !important;
+              border-radius: 16px !important;
+              box-shadow: 
+                0 12px 35px rgba(30, 64, 175, 0.4),
+                0 6px 16px rgba(30, 64, 175, 0.2) !important;
+              transform: translateY(-4px) scale(1.05) !important;
+              transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+              z-index: 10 !important;
+              position: relative !important;
+            `;
+          } else {
+            // Reset header styles
+            headerElement.style.background = '';
+            headerElement.style.color = '';
+            headerElement.style.padding = '';
+            headerElement.style.margin = '';
+            headerElement.style.borderRadius = '';
+            headerElement.style.boxShadow = '';
+            headerElement.style.transform = '';
+            headerElement.style.transition = '';
+            headerElement.style.zIndex = '';
+            headerElement.style.position = 'relative'; // Mantenir position per als badges
+          }
+          
+          // Show/hide indicators amb millors efectes
+          sectionBadge.style.cssText += `
+            opacity: ${isHovering ? '1' : '0'};
+            transform: ${isHovering ? 'translateY(-2px) scale(1.1)' : 'translateY(0) scale(1)'};
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          `;
+          aiIndicator.style.cssText += `
+            opacity: ${isHovering ? '1' : '0'};
+            transform: ${isHovering ? 'translateY(-2px) scale(1.1)' : 'translateY(0) scale(1)'};
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          `;
         };
         
         header.addEventListener('mouseenter', () => handleSectionHover(true));
@@ -230,31 +311,113 @@ export function GoogleDocsRenderer({
         header.appendChild(subsectionBadge);
         header.appendChild(subsectionAiIndicator);
         
-        // Add subsection hover effects
+        // Add subsection hover effects - MILLORED AMB EFECTES MÉS PRONUNCIATS
         const handleSubsectionHover = (isHovering: boolean) => {
           const subsectionElements = document.querySelectorAll(`[data-section="${sectionNumber}"][data-subsection="${subsectionNumber}"]`);
+          const headerElement = header as HTMLElement;
           
+          // 🎯 AFECTAR TOTA LA SUBSECCIÓ AMB EFECTES ULTRA VISUALS
           subsectionElements.forEach((element) => {
             if (isHovering) {
               (element as HTMLElement).style.cssText += `
-                background: linear-gradient(135deg, #fefefe 0%, #f8fafc 100%);
-                border-left: 2px solid #8b5cf6;
-                padding-left: 0.5cm;
-                margin-left: -0.5cm;
-                border-radius: 4px;
-                transition: all 0.25s ease;
+                background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 50%, #e9d5ff 100%) !important;
+                border: 2px solid #8b5cf6 !important;
+                border-left: 5px solid #7c3aed !important;
+                padding: 0.6cm 0.8cm !important;
+                margin: 0.25cm -0.4cm 0.4cm -0.4cm !important;
+                border-radius: 10px !important;
+                box-shadow: 
+                  0 6px 20px rgba(139, 92, 246, 0.2),
+                  0 3px 10px rgba(139, 92, 246, 0.12),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
+                transform: translateX(6px) translateY(-1px) scale(1.015) !important;
+                transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                outline: 1px dotted #a855f7 !important;
+                outline-offset: 3px !important;
+                position: relative !important;
+                z-index: 4 !important;
               `;
+              
+              // Afegir overlay visual per subseccions
+              const overlay = document.createElement('div');
+              overlay.className = 'subsection-hover-overlay';
+              overlay.style.cssText = `
+                position: absolute;
+                top: -3px;
+                left: -3px;
+                right: -3px;
+                bottom: -3px;
+                background: linear-gradient(45deg, transparent, rgba(139, 92, 246, 0.08), transparent);
+                border-radius: 12px;
+                pointer-events: none;
+                z-index: -1;
+                animation: subsection-pulse 2.5s infinite;
+              `;
+              element.appendChild(overlay);
+              
             } else {
+              // Netejar tots els estils de subsecció
               (element as HTMLElement).style.background = '';
+              (element as HTMLElement).style.border = '';
               (element as HTMLElement).style.borderLeft = '';
-              (element as HTMLElement).style.paddingLeft = '';
-              (element as HTMLElement).style.marginLeft = '';
+              (element as HTMLElement).style.padding = '';
+              (element as HTMLElement).style.margin = '';
               (element as HTMLElement).style.borderRadius = '';
+              (element as HTMLElement).style.boxShadow = '';
+              (element as HTMLElement).style.transform = '';
+              (element as HTMLElement).style.transition = '';
+              (element as HTMLElement).style.outline = '';
+              (element as HTMLElement).style.outlineOffset = '';
+              (element as HTMLElement).style.position = '';
+              (element as HTMLElement).style.zIndex = '';
+              
+              // Eliminar overlay de subsecció
+              const overlay = element.querySelector('.subsection-hover-overlay');
+              if (overlay) overlay.remove();
             }
           });
           
-          subsectionBadge.style.opacity = isHovering ? '1' : '0';
-          subsectionAiIndicator.style.opacity = isHovering ? '1' : '0';
+          // 🎯 EFECTE ESPECIAL PER A LA CAPÇALERA DE SUBSECCIÓ
+          if (isHovering) {
+            headerElement.style.cssText += `
+              background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 50%, #a855f7 100%) !important;
+              color: white !important;
+              padding: 0.6cm 1cm !important;
+              margin: 0.4cm -1cm 0.8cm -1cm !important;
+              border-radius: 12px !important;
+              box-shadow: 
+                0 10px 30px rgba(124, 58, 237, 0.35),
+                0 5px 14px rgba(124, 58, 237, 0.18) !important;
+              transform: translateY(-3px) scale(1.03) !important;
+              transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+              z-index: 9 !important;
+              position: relative !important;
+            `;
+          } else {
+            // Reset subsection header styles
+            headerElement.style.background = '';
+            headerElement.style.color = '';
+            headerElement.style.padding = '';
+            headerElement.style.margin = '';
+            headerElement.style.borderRadius = '';
+            headerElement.style.boxShadow = '';
+            headerElement.style.transform = '';
+            headerElement.style.transition = '';
+            headerElement.style.zIndex = '';
+            headerElement.style.position = 'relative'; // Mantenir position per als badges
+          }
+          
+          // Show/hide indicators amb millors efectes per subseccions
+          subsectionBadge.style.cssText += `
+            opacity: ${isHovering ? '1' : '0'};
+            transform: ${isHovering ? 'translateY(-2px) scale(1.08)' : 'translateY(0) scale(1)'};
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          `;
+          subsectionAiIndicator.style.cssText += `
+            opacity: ${isHovering ? '1' : '0'};
+            transform: ${isHovering ? 'translateY(-2px) scale(1.08)' : 'translateY(0) scale(1)'};
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          `;
         };
         
         header.addEventListener('mouseenter', () => handleSubsectionHover(true));
@@ -1127,6 +1290,87 @@ export function GoogleDocsRenderer({
           font-weight: 500;
           margin-left: 8px;
           opacity: 0.8;
+        }
+
+        /* 🎨 ANIMACIONS PER EFECTES HOVER ULTRA VISUALS */
+        @keyframes section-pulse {
+          0%, 100% {
+            background: linear-gradient(45deg, transparent, rgba(59, 130, 246, 0.08), transparent);
+            transform: scale(1);
+          }
+          50% {
+            background: linear-gradient(45deg, transparent, rgba(59, 130, 246, 0.15), transparent);
+            transform: scale(1.005);
+          }
+        }
+
+        @keyframes subsection-pulse {
+          0%, 100% {
+            background: linear-gradient(45deg, transparent, rgba(139, 92, 246, 0.06), transparent);
+            transform: scale(1);
+          }
+          50% {
+            background: linear-gradient(45deg, transparent, rgba(139, 92, 246, 0.12), transparent);
+            transform: scale(1.003);
+          }
+        }
+
+        @keyframes section-glow {
+          0%, 100% {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+          }
+          50% {
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
+          }
+        }
+
+        @keyframes subsection-glow {
+          0%, 100% {
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.25);
+          }
+          50% {
+            box-shadow: 0 0 25px rgba(139, 92, 246, 0.4);
+          }
+        }
+
+        /* MILLORES DE TRANSICIONS GLOBALS PER SMOOTH EXPERIENCE */
+        .section-content, .subsection-content {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          will-change: transform, background, box-shadow, border;
+        }
+
+        .doc-h1, .doc-h2, .doc-h3, .doc-h4, .doc-h5, .doc-h6 {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          will-change: transform, background, box-shadow, color;
+        }
+
+        /* OPTIMITZACIONS PER RENDIMENT */
+        .section-hover-overlay, .subsection-hover-overlay {
+          will-change: transform, opacity;
+          backface-visibility: hidden;
+          perspective: 1000px;
+        }
+
+        /* EFECTES ESPECIALITZATS PER MILLOR UX */
+        .google-docs-renderer--editor {
+          overflow: visible; /* Permetre que els efectes hover surtin del contenidor */
+        }
+
+        /* HOVER STATES GLOBALS AMB JERARQUIA VISUAL */
+        .section-content:hover {
+          z-index: 5;
+        }
+
+        .subsection-content:hover {
+          z-index: 4;
+        }
+
+        .doc-h2:hover {
+          z-index: 10;
+        }
+
+        .doc-h3:hover {
+          z-index: 9;
         }
       `}</style>
     </>
