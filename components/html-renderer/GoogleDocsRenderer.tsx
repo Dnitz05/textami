@@ -174,32 +174,41 @@ export function GoogleDocsRenderer({
                   outline.setAttribute('data-section-outline', sectionNumber);
                   outline.style.cssText = `
                     position: absolute;
-                    border: 2px dashed rgba(59, 130, 246, 0.5);
-                    background: rgba(59, 130, 246, 0.02);
+                    border: 1px dashed rgba(59, 130, 246, 0.25);
+                    background: rgba(59, 130, 246, 0.005);
                     pointer-events: none;
-                    z-index: 5;
-                    border-radius: 8px;
-                    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.1);
-                    transition: all 0.3s ease-out;
-                    top: ${firstRect.top - containerRect.top - 8}px;
-                    left: ${Math.min(firstRect.left, lastRect.left) - containerRect.left - 12}px;
-                    width: ${Math.max(firstRect.width, lastRect.width) + 24}px;
-                    height: ${(lastRect.bottom - firstRect.top) + 16}px;
+                    z-index: 2;
+                    border-radius: 12px;
+                    backdrop-filter: blur(0.5px);
+                    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+                    opacity: 0;
+                    transform: scale(0.98);
+                    animation: fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                    top: ${firstRect.top - containerRect.top - 6}px;
+                    left: ${Math.min(firstRect.left, lastRect.left) - containerRect.left - 8}px;
+                    width: ${Math.max(firstRect.width, lastRect.width) + 16}px;
+                    height: ${(lastRect.bottom - firstRect.top) + 12}px;
                   `;
                   
                   // Afegir etiqueta de secció
                   const label = document.createElement('div');
                   label.style.cssText = `
                     position: absolute;
-                    top: -10px;
-                    left: 12px;
-                    background: rgba(59, 130, 246, 0.9);
-                    color: white;
-                    padding: 3px 10px;
-                    font-size: 9pt;
-                    border-radius: 6px;
-                    font-weight: 500;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    top: -8px;
+                    left: 8px;
+                    background: rgba(255, 255, 255, 0.95);
+                    color: rgba(59, 130, 246, 0.8);
+                    padding: 2px 8px;
+                    font-size: 8pt;
+                    border-radius: 8px;
+                    font-weight: 400;
+                    letter-spacing: 0.5px;
+                    border: 1px solid rgba(59, 130, 246, 0.15);
+                    backdrop-filter: blur(8px);
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+                    opacity: 0;
+                    transform: translateY(4px);
+                    animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
                   `;
                   label.textContent = `Secció ${sectionNumber}`;
                   outline.appendChild(label);
@@ -209,15 +218,16 @@ export function GoogleDocsRenderer({
               }
             }
             
-            // 🎯 DESTACAR LLEUGERAMENT LA CAPÇALERA (EFECTE PRINCIPAL AL HOVER)
+            // 🎯 DESTACAR SUBTILMENT LA CAPÇALERA (EFECTE MODERN I SUAU)
             headerElement.style.cssText += `
-              background: rgba(59, 130, 246, 0.06) !important;
-              border-left: 3px solid rgba(59, 130, 246, 0.6) !important;
-              padding-left: 12px !important;
-              border-radius: 6px !important;
-              transition: all 0.25s ease-out !important;
+              background: rgba(59, 130, 246, 0.02) !important;
+              border-left: 2px solid rgba(59, 130, 246, 0.3) !important;
+              padding-left: 8px !important;
+              border-radius: 8px !important;
+              transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
               position: relative !important;
-              box-shadow: 0 1px 3px rgba(59, 130, 246, 0.1) !important;
+              box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.05) !important;
+              transform: translateX(2px) !important;
             `;
             
           } else {
@@ -437,15 +447,17 @@ export function GoogleDocsRenderer({
           // Afegir classe per hover actiu
           paragraph.classList.add('paragraph-hover-active');
           
-          // Efecte hover més subtil per al paràgraf
+          // Efecte hover ultra subtil i modern per al paràgraf
           paragraph.style.cssText += `
-            background: rgba(59, 130, 246, 0.015) !important;
-            border-left: 1px solid rgba(59, 130, 246, 0.15) !important;
-            padding-left: 0.15cm !important;
-            margin-left: -0.15cm !important;
-            border-radius: 2px !important;
-            box-shadow: 0 1px 3px rgba(59, 130, 246, 0.03) !important;
+            background: rgba(59, 130, 246, 0.008) !important;
+            border-left: 1px solid rgba(59, 130, 246, 0.08) !important;
+            padding-left: 6px !important;
+            margin-left: -6px !important;
+            border-radius: 6px !important;
+            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.02) !important;
             cursor: pointer !important;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            transform: translateX(1px) !important;
           `;
           
           // Crear indicador de paràgraf més subtil
@@ -455,23 +467,32 @@ export function GoogleDocsRenderer({
             hoverIndicator.innerHTML = `¶`;
             hoverIndicator.style.cssText = `
               position: absolute;
-              top: -10px;
-              right: 2px;
-              background: rgba(59, 130, 246, 0.7);
-              color: white;
-              padding: 1px 3px;
-              border-radius: 2px;
-              font-size: 6pt;
-              font-weight: 400;
-              opacity: 1;
-              z-index: 8;
+              top: -6px;
+              right: 4px;
+              background: rgba(255, 255, 255, 0.9);
+              color: rgba(59, 130, 246, 0.6);
+              padding: 1px 4px;
+              border-radius: 4px;
+              font-size: 5pt;
+              font-weight: 300;
+              opacity: 0;
+              z-index: 3;
               pointer-events: none;
-              transition: opacity 0.2s ease;
+              border: 1px solid rgba(59, 130, 246, 0.1);
+              backdrop-filter: blur(4px);
+              transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+              transform: translateY(2px) scale(0.9);
             `;
             paragraph.appendChild(hoverIndicator);
-          } else {
-            hoverIndicator.style.opacity = '1';
           }
+          
+          // Animar l'entrada de l'indicador
+          setTimeout(() => {
+            if (hoverIndicator) {
+              hoverIndicator.style.opacity = '1';
+              hoverIndicator.style.transform = 'translateY(0) scale(1)';
+            }
+          }, 50);
           
         } else {
           // Eliminar classe hover actiu
@@ -1369,7 +1390,29 @@ export function GoogleDocsRenderer({
           opacity: 0.8;
         }
 
-        /* 🎨 ANIMACIONS PER EFECTES HOVER ULTRA VISUALS */
+        /* 🎨 ANIMACIONS MODERNES I SUBTILS */
+        @keyframes fadeInScale {
+          0% {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        @keyframes fadeInUp {
+          0% {
+            opacity: 0;
+            transform: translateY(4px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
         @keyframes section-pulse {
           0%, 100% {
             background: linear-gradient(45deg, transparent, rgba(59, 130, 246, 0.08), transparent);
@@ -1464,9 +1507,9 @@ export function GoogleDocsRenderer({
           position: relative !important;
         }
 
-        /* Transicions suaus per paràgrafs */
+        /* Transicions ultra suaus i modernes per paràgrafs */
         .google-docs-renderer--editor p[data-section]:not([data-subsection]) {
-          transition: all 0.15s ease-out;
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         /* Assegurar que l'hover de secció tingui prioritat sobre paràgrafs */
@@ -1482,17 +1525,20 @@ export function GoogleDocsRenderer({
         .google-docs-renderer--editor p.multiple-paragraph-context::before {
           content: '';
           position: absolute;
-          left: -10px;
+          left: -8px;
           top: 50%;
-          width: 2px;
+          width: 1px;
           height: 0;
-          background: rgba(59, 130, 246, 0.3);
-          transition: height 0.2s ease-out;
+          background: rgba(59, 130, 246, 0.2);
+          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
           transform: translateY(-50%);
+          border-radius: 1px;
         }
 
         .google-docs-renderer--editor p.multiple-paragraph-context:hover::before {
-          height: 80%;
+          height: 70%;
+          background: rgba(59, 130, 246, 0.35);
+          box-shadow: 0 0 4px rgba(59, 130, 246, 0.15);
         }
       `}</style>
     </>
