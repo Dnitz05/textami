@@ -88,7 +88,11 @@ export function GoogleDocsRenderer({
 
   // 🎯 SECTION-WIDE HOVER EFFECTS - Add interactive functionality
   React.useEffect(() => {
-    if (context !== 'editor') return; // Only enable in editor context
+    console.log('🔍 DEBUGGING HOVER: useEffect called with context:', context);
+    if (context !== 'editor') {
+      console.log('🔍 DEBUGGING HOVER: Skipping because context is not editor');
+      return; // Only enable in editor context
+    }
     
     const addSectionHoverEffects = () => {
       console.log('🔍 DEBUGGING HOVER: addSectionHoverEffects called');
@@ -193,7 +197,11 @@ export function GoogleDocsRenderer({
     
     
     // Add effects after DOM is ready
-    const timer = setTimeout(addSectionHoverEffects, 100);
+    console.log('🔍 DEBUGGING HOVER: Setting timeout for addSectionHoverEffects');
+    const timer = setTimeout(() => {
+      console.log('🔍 DEBUGGING HOVER: Timeout fired, calling addSectionHoverEffects');
+      addSectionHoverEffects();
+    }, 100);
     
     return () => {
       clearTimeout(timer);
