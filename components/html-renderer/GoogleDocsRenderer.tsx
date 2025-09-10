@@ -90,9 +90,10 @@ export function GoogleDocsRenderer({
   // 🎯 SECTION-WIDE HOVER EFFECTS - Add interactive functionality
   React.useEffect(() => {
     console.log('🔍 DEBUGGING HOVER: useEffect called with context:', context);
-    if (context !== 'editor') {
-      console.log('🔍 DEBUGGING HOVER: Skipping because context is not editor');
-      return; // Only enable in editor context
+    // Enable hover in ALL contexts
+    if (context === 'export' || context === 'print') {
+      console.log('🔍 DEBUGGING HOVER: Skipping because context is export/print');
+      return; // Only disable for export/print
     }
     
     const addSectionHoverEffects = () => {
