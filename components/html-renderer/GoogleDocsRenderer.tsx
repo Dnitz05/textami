@@ -36,6 +36,7 @@ export function GoogleDocsRenderer({
   placeholders = [],
   onPlaceholderClick
 }: GoogleDocsRendererProps) {
+  console.log('🔍 DEBUGGING HOVER: GoogleDocsRenderer component rendering with context:', context);
   // NOVA ESTRATÈGIA: Post-processat HTML complet
   const processedHTML = React.useMemo(() => {
     let html = htmlContent;
