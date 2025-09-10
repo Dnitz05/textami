@@ -151,108 +151,39 @@ export function GoogleDocsRenderer({
         // Add hover event listeners for entire section - MILLORED AMB EFECTES MÉS PRONUNCIATS
         const handleSectionHover = (isHovering: boolean) => {
           const sectionElements = document.querySelectorAll(`[data-section="${sectionNumber}"]`);
-          const headerElement = header as HTMLElement;
           
-          if (isHovering) {
-            // 🎯 CREAR CAIXA DE PUNTS PER MOSTRAR L'ABAST DEL COS DE LA SECCIÓ
-            let existingOutline = document.querySelector(`[data-section-outline="${sectionNumber}"]`);
-            if (!existingOutline && sectionElements.length > 1) {
-              // Trobar el primer i últim element de la secció
-              const elementsArray = Array.from(sectionElements);
-              const firstElement = elementsArray[0];
-              const lastElement = elementsArray[elementsArray.length - 1];
-              
-              if (firstElement && lastElement) {
-                const firstRect = (firstElement as HTMLElement).getBoundingClientRect();
-                const lastRect = (lastElement as HTMLElement).getBoundingClientRect();
-                const container = document.querySelector('.google-docs-renderer--editor');
-                const containerRect = container?.getBoundingClientRect();
-                
-                if (containerRect) {
-                  // Crear l'outline amb caixa de punts
-                  const outline = document.createElement('div');
-                  outline.setAttribute('data-section-outline', sectionNumber);
-                  outline.style.cssText = `
-                    position: absolute;
-                    border: 1px dashed rgba(59, 130, 246, 0.25);
-                    background: rgba(59, 130, 246, 0.005);
-                    pointer-events: none;
-                    z-index: 2;
-                    border-radius: 12px;
-                    backdrop-filter: blur(0.5px);
-                    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-                    opacity: 0;
-                    transform: scale(0.98);
-                    animation: fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-                    top: ${firstRect.top - containerRect.top - 6}px;
-                    left: ${Math.min(firstRect.left, lastRect.left) - containerRect.left - 8}px;
-                    width: ${Math.max(firstRect.width, lastRect.width) + 16}px;
-                    height: ${(lastRect.bottom - firstRect.top) + 12}px;
-                  `;
-                  
-                  // Afegir etiqueta de secció
-                  const label = document.createElement('div');
-                  label.style.cssText = `
-                    position: absolute;
-                    top: -8px;
-                    left: 8px;
-                    background: rgba(255, 255, 255, 0.95);
-                    color: rgba(59, 130, 246, 0.8);
-                    padding: 2px 8px;
-                    font-size: 8pt;
-                    border-radius: 8px;
-                    font-weight: 400;
-                    letter-spacing: 0.5px;
-                    border: 1px solid rgba(59, 130, 246, 0.15);
-                    backdrop-filter: blur(8px);
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-                    opacity: 0;
-                    transform: translateY(4px);
-                    animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
-                  `;
-                  label.textContent = `Secció ${sectionNumber}`;
-                  outline.appendChild(label);
-                  
-                  container.appendChild(outline);
-                }
-              }
+          // 🎯 SOMBREJAT SUBTIL DE TOTA LA SECCIÓ (TÍTOL + COS)
+          sectionElements.forEach((element) => {
+            if (isHovering) {
+              (element as HTMLElement).style.cssText += `
+                background: rgba(59, 130, 246, 0.015) !important;
+                border-radius: 8px !important;
+                padding: 8px 12px !important;
+                margin: 2px -12px !important;
+                transition: all 0.3s ease-out !important;
+                box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.08) !important;
+              `;
+            } else {
+              // Reset styles
+              (element as HTMLElement).style.background = '';
+              (element as HTMLElement).style.borderRadius = '';
+              (element as HTMLElement).style.padding = '';
+              (element as HTMLElement).style.margin = '';
+              (element as HTMLElement).style.boxShadow = '';
             }
-            
-            // 🎯 DESTACAR SUBTILMENT LA CAPÇALERA (EFECTE MODERN I SUAU)
-            headerElement.style.cssText += `
-              background: rgba(59, 130, 246, 0.02) !important;
-              border-left: 2px solid rgba(59, 130, 246, 0.3) !important;
-              padding-left: 8px !important;
-              border-radius: 8px !important;
-              transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
-              position: relative !important;
-              box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.05) !important;
-              transform: translateX(2px) !important;
-            `;
-            
-          } else {
-            // Eliminar la caixa de punts
-            const existingOutline = document.querySelector(`[data-section-outline="${sectionNumber}"]`);
-            if (existingOutline) {
-              existingOutline.remove();
-            }
-            
-            // Reset header styles
-            headerElement.style.background = '';
-            headerElement.style.borderLeft = '';
-            headerElement.style.paddingLeft = '';
-            headerElement.style.borderRadius = '';
-            headerElement.style.boxShadow = '';
-            headerElement.style.position = 'relative';
-          }
+          });
           
           // Show/hide indicators de manera subtil
           sectionBadge.style.opacity = isHovering ? '1' : '0';
           aiIndicator.style.opacity = isHovering ? '1' : '0';
         };
         
-        header.addEventListener('mouseenter', () => handleSectionHover(true));
-        header.addEventListener('mouseleave', () => handleSectionHover(false));
+        // Afegir event listeners a TOTS els elements de la secció
+        const allSectionElements = document.querySelectorAll(`[data-section="${sectionNumber}"]`);
+        allSectionElements.forEach((element) => {
+          element.addEventListener('mouseenter', () => handleSectionHover(true));
+          element.addEventListener('mouseleave', () => handleSectionHover(false));
+        });
         
         // Add click handler for AI instructions
         aiIndicator.addEventListener('click', (e) => {
@@ -390,146 +321,10 @@ export function GoogleDocsRenderer({
         });
       });
       
-      // 🎯 PARÀGRAFS INDIVIDUALS - Seleccionables quan n'hi ha múltiples
-      addIndividualParagraphEffects();
+      // Hover simplificat: qualsevol element de la secció activa l'ombrejat de tota la secció
     };
     
-    const addIndividualParagraphEffects = () => {
-      // Processament per secció - trobar seccions úniques
-      const sectionNumbers = new Set<string>();
-      document.querySelectorAll('.google-docs-renderer--editor [data-section]').forEach(el => {
-        const sectionNumber = el.getAttribute('data-section');
-        if (sectionNumber && !el.hasAttribute('data-subsection')) {
-          sectionNumbers.add(sectionNumber);
-        }
-      });
-      
-      sectionNumbers.forEach(sectionNumber => {
-        // Trobar tots els paràgrafs d'aquesta secció (excloent capçaleres i subseccions)
-        const sectionParagraphs = Array.from(
-          document.querySelectorAll(`[data-section="${sectionNumber}"]:not([data-subsection])`)
-        ).filter(el => {
-          const tagName = el.tagName?.toLowerCase();
-          return (
-            (tagName === 'p' || el.classList.contains('doc-paragraph')) &&
-            !el.classList.contains('doc-h1') &&
-            !el.classList.contains('doc-h2') &&
-            !el.classList.contains('doc-h3') &&
-            !el.classList.contains('doc-heading')
-          );
-        });
-        
-        console.log(`🔍 Secció ${sectionNumber}: ${sectionParagraphs.length} paràgrafs trobats`);
-        
-        // Només afegir hover individual si hi ha múltiples paràgrafs (>1)
-        if (sectionParagraphs.length > 1) {
-          console.log(`✅ Activant hover individual per ${sectionParagraphs.length} paràgrafs a la secció ${sectionNumber}`);
-          sectionParagraphs.forEach((paragraph, index) => {
-            // Afegir classe per identificar context múltiple
-            (paragraph as HTMLElement).classList.add('multiple-paragraph-context');
-            addParagraphHoverEffect(paragraph as HTMLElement, sectionNumber, index + 1);
-          });
-        } else {
-          console.log(`⭕ Secció ${sectionNumber} té només ${sectionParagraphs.length} paràgraf(s) - no cal hover individual`);
-          // Assegurar que no tingui la classe multiple-paragraph-context
-          if (sectionParagraphs.length === 1) {
-            (sectionParagraphs[0] as HTMLElement).classList.remove('multiple-paragraph-context');
-          }
-        }
-      });
-    };
     
-    const addParagraphHoverEffect = (paragraph: HTMLElement, sectionNumber: string | null, paragraphIndex: number) => {
-      let hoverIndicator: HTMLElement | null = null;
-      
-      const handleParagraphHover = (isHovering: boolean) => {
-        if (isHovering) {
-          // Afegir classe per hover actiu
-          paragraph.classList.add('paragraph-hover-active');
-          
-          // Efecte hover ultra subtil i modern per al paràgraf
-          paragraph.style.cssText += `
-            background: rgba(59, 130, 246, 0.008) !important;
-            border-left: 1px solid rgba(59, 130, 246, 0.08) !important;
-            padding-left: 6px !important;
-            margin-left: -6px !important;
-            border-radius: 6px !important;
-            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.02) !important;
-            cursor: pointer !important;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-            transform: translateX(1px) !important;
-          `;
-          
-          // Crear indicador de paràgraf més subtil
-          if (!hoverIndicator) {
-            hoverIndicator = document.createElement('div');
-            hoverIndicator.className = 'paragraph-indicator';
-            hoverIndicator.innerHTML = `¶`;
-            hoverIndicator.style.cssText = `
-              position: absolute;
-              top: -6px;
-              right: 4px;
-              background: rgba(255, 255, 255, 0.9);
-              color: rgba(59, 130, 246, 0.6);
-              padding: 1px 4px;
-              border-radius: 4px;
-              font-size: 5pt;
-              font-weight: 300;
-              opacity: 0;
-              z-index: 3;
-              pointer-events: none;
-              border: 1px solid rgba(59, 130, 246, 0.1);
-              backdrop-filter: blur(4px);
-              transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-              transform: translateY(2px) scale(0.9);
-            `;
-            paragraph.appendChild(hoverIndicator);
-          }
-          
-          // Animar l'entrada de l'indicador
-          setTimeout(() => {
-            if (hoverIndicator) {
-              hoverIndicator.style.opacity = '1';
-              hoverIndicator.style.transform = 'translateY(0) scale(1)';
-            }
-          }, 50);
-          
-        } else {
-          // Eliminar classe hover actiu
-          paragraph.classList.remove('paragraph-hover-active');
-          
-          // Reset paragraph styles de manera subtil
-          paragraph.style.background = '';
-          paragraph.style.borderLeft = '';
-          paragraph.style.paddingLeft = '';
-          paragraph.style.marginLeft = '';
-          paragraph.style.borderRadius = '';
-          paragraph.style.boxShadow = '';
-          paragraph.style.cursor = '';
-          
-          // Amagar indicador amb transició
-          if (hoverIndicator) {
-            hoverIndicator.style.opacity = '0';
-            setTimeout(() => {
-              if (hoverIndicator && hoverIndicator.style.opacity === '0') {
-                hoverIndicator.remove();
-                hoverIndicator = null;
-              }
-            }, 200);
-          }
-        }
-      };
-      
-      paragraph.addEventListener('mouseenter', () => handleParagraphHover(true));
-      paragraph.addEventListener('mouseleave', () => handleParagraphHover(false));
-      
-      // Click handler for paragraph selection
-      paragraph.addEventListener('click', (e) => {
-        e.stopPropagation();
-        console.log(`🎯 Paràgraf seleccionat: Secció ${sectionNumber}, Paràgraf ${paragraphIndex}`);
-        // TODO: Implementar selecció de paràgraf
-      });
-    };
     
     // Add effects after DOM is ready
     const timer = setTimeout(addSectionHoverEffects, 100);
