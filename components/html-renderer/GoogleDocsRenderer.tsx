@@ -153,58 +153,86 @@ export function GoogleDocsRenderer({
           const sectionElements = document.querySelectorAll(`[data-section="${sectionNumber}"]`);
           const headerElement = header as HTMLElement;
           
-          // 🎯 EFECTE SUBTIL PER PERCEBRE SECCIONS COM UNITATS
-          sectionElements.forEach((element) => {
-            if (isHovering) {
-              (element as HTMLElement).style.cssText += `
-                background: rgba(59, 130, 246, 0.03) !important;
-                border-left: 3px solid rgba(59, 130, 246, 0.4) !important;
-                padding: 0.3cm 0.5cm !important;
-                margin-left: -0.3cm !important;
-                border-radius: 6px !important;
-                box-shadow: 
-                  0 2px 8px rgba(59, 130, 246, 0.08),
-                  inset 1px 0 0 rgba(59, 130, 246, 0.1) !important;
-                transform: translateX(3px) !important;
-                transition: all 0.25s ease-out !important;
-                position: relative !important;
-              `;
-              
-            } else {
-              // Netejar estils de manera subtil
-              (element as HTMLElement).style.background = '';
-              (element as HTMLElement).style.borderLeft = '';
-              (element as HTMLElement).style.padding = '';
-              (element as HTMLElement).style.marginLeft = '';
-              (element as HTMLElement).style.borderRadius = '';
-              (element as HTMLElement).style.boxShadow = '';
-              (element as HTMLElement).style.transform = '';
-              (element as HTMLElement).style.position = '';
-            }
-          });
-          
-          // 🎯 EFECTE SUBTIL PER A LA CAPÇALERA 
           if (isHovering) {
+            // 🎯 CREAR CAIXA DE PUNTS PER MOSTRAR L'ABAST DEL COS DE LA SECCIÓ
+            let existingOutline = document.querySelector(`[data-section-outline="${sectionNumber}"]`);
+            if (!existingOutline && sectionElements.length > 1) {
+              // Trobar el primer i últim element de la secció
+              const elementsArray = Array.from(sectionElements);
+              const firstElement = elementsArray[0];
+              const lastElement = elementsArray[elementsArray.length - 1];
+              
+              if (firstElement && lastElement) {
+                const firstRect = (firstElement as HTMLElement).getBoundingClientRect();
+                const lastRect = (lastElement as HTMLElement).getBoundingClientRect();
+                const container = document.querySelector('.google-docs-renderer--editor');
+                const containerRect = container?.getBoundingClientRect();
+                
+                if (containerRect) {
+                  // Crear l'outline amb caixa de punts
+                  const outline = document.createElement('div');
+                  outline.setAttribute('data-section-outline', sectionNumber);
+                  outline.style.cssText = `
+                    position: absolute;
+                    border: 2px dashed rgba(59, 130, 246, 0.5);
+                    background: rgba(59, 130, 246, 0.02);
+                    pointer-events: none;
+                    z-index: 5;
+                    border-radius: 8px;
+                    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.1);
+                    transition: all 0.3s ease-out;
+                    top: ${firstRect.top - containerRect.top - 8}px;
+                    left: ${Math.min(firstRect.left, lastRect.left) - containerRect.left - 12}px;
+                    width: ${Math.max(firstRect.width, lastRect.width) + 24}px;
+                    height: ${(lastRect.bottom - firstRect.top) + 16}px;
+                  `;
+                  
+                  // Afegir etiqueta de secció
+                  const label = document.createElement('div');
+                  label.style.cssText = `
+                    position: absolute;
+                    top: -10px;
+                    left: 12px;
+                    background: rgba(59, 130, 246, 0.9);
+                    color: white;
+                    padding: 3px 10px;
+                    font-size: 9pt;
+                    border-radius: 6px;
+                    font-weight: 500;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                  `;
+                  label.textContent = `Secció ${sectionNumber}`;
+                  outline.appendChild(label);
+                  
+                  container.appendChild(outline);
+                }
+              }
+            }
+            
+            // 🎯 DESTACAR LLEUGERAMENT LA CAPÇALERA (EFECTE PRINCIPAL AL HOVER)
             headerElement.style.cssText += `
-              background: rgba(59, 130, 246, 0.08) !important;
-              border-left: 4px solid rgba(59, 130, 246, 0.6) !important;
-              padding: 0.4cm 0.6cm !important;
-              margin-left: -0.4cm !important;
-              border-radius: 8px !important;
-              box-shadow: 0 3px 12px rgba(59, 130, 246, 0.15) !important;
-              transform: translateX(2px) !important;
-              transition: all 0.3s ease-out !important;
+              background: rgba(59, 130, 246, 0.06) !important;
+              border-left: 3px solid rgba(59, 130, 246, 0.6) !important;
+              padding-left: 12px !important;
+              border-radius: 6px !important;
+              transition: all 0.25s ease-out !important;
               position: relative !important;
+              box-shadow: 0 1px 3px rgba(59, 130, 246, 0.1) !important;
             `;
+            
           } else {
-            // Reset header styles suau
+            // Eliminar la caixa de punts
+            const existingOutline = document.querySelector(`[data-section-outline="${sectionNumber}"]`);
+            if (existingOutline) {
+              existingOutline.remove();
+            }
+            
+            // Reset header styles
             headerElement.style.background = '';
             headerElement.style.borderLeft = '';
-            headerElement.style.padding = '';
-            headerElement.style.marginLeft = '';
+            headerElement.style.paddingLeft = '';
             headerElement.style.borderRadius = '';
             headerElement.style.boxShadow = '';
-            headerElement.style.transform = '';
             headerElement.style.position = 'relative';
           }
           
@@ -1403,6 +1431,7 @@ export function GoogleDocsRenderer({
         /* EFECTES ESPECIALITZATS PER MILLOR UX */
         .google-docs-renderer--editor {
           overflow: visible; /* Permetre que els efectes hover surtin del contenidor */
+          position: relative; /* Necessari per posicionar les caixes de punts */
         }
 
         /* HOVER STATES GLOBALS AMB JERARQUIA VISUAL */
